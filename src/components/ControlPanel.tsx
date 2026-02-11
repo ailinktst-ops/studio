@@ -69,14 +69,47 @@ export function ControlPanel() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Aumentado limite para 2MB (2048 * 1024 bytes)
+      // Limite de 2MB para o arquivo original
       if (file.size > 2 * 1024 * 1024) {
         alert("A imagem é muito grande. Escolha uma imagem de até 2MB.");
         return;
       }
+
       const reader = new FileReader();
-      reader.onloadend = () => {
-        updateBrandImage(reader.result as string);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Criar um canvas para redimensionar e comprimir a imagem
+          // Isso é necessário porque o Firestore tem um limite de 1MB por documento
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Definir um tamanho máximo razoável para a logo (ex: 800px)
+          const MAX_SIZE = 800;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Comprimir para JPEG com 70% de qualidade para garantir que o Base64 fique < 1MB
+            const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            updateBrandImage(optimizedDataUrl);
+          }
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
