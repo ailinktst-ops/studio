@@ -1,0 +1,11 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "trophy-bg",
+      "description": "Golden trophy background for winners",
+      "imageUrl": "https://picsum.photos/seed/trophy/1200/800",
+      "imageHint": "golden trophy"
+    }
+  ]
+}
