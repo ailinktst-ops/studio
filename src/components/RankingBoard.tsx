@@ -1,13 +1,47 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Trophy, Medal, Star, Flame } from 'lucide-react';
+import { Trophy, Medal, Star, Flame, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const { data, loading } = useCounter();
+  const [currentRaffleName, setCurrentRaffleName] = useState("");
+  const [showWinner, setShowWinner] = useState(false);
+
+  // Lógica da animação do sorteio
+  useEffect(() => {
+    if (data.raffle?.isRaffling) {
+      setShowWinner(false);
+      let interval: NodeJS.Timeout;
+      const candidates = data.raffle.candidates || [];
+      
+      if (candidates.length > 0) {
+        let i = 0;
+        interval = setInterval(() => {
+          setCurrentRaffleName(candidates[i % candidates.length]);
+          i++;
+        }, 100);
+
+        // Após 5 segundos de "giro", mostra o vencedor
+        setTimeout(() => {
+          clearInterval(interval);
+          const winner = data.participants.find(p => p.id === data.raffle?.winnerId);
+          if (winner) {
+            setCurrentRaffleName(winner.name);
+            setShowWinner(true);
+          }
+        }, 5000);
+      }
+
+      return () => clearInterval(interval);
+    } else {
+      setShowWinner(false);
+    }
+  }, [data.raffle?.isRaffling, data.raffle?.winnerId, data.participants, data.raffle?.candidates]);
 
   if (loading) {
     return (
@@ -45,9 +79,39 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   return (
     <div className={cn(
-      "flex flex-col items-center w-full transition-all duration-1000",
+      "flex flex-col items-center w-full transition-all duration-1000 relative",
       overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12"
     )}>
+      
+      {/* Raffle Overlay Animation */}
+      {data.raffle?.isRaffling && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500">
+          <div className="relative mb-12">
+            <Sparkles className="w-32 h-32 text-yellow-500 animate-pulse" />
+            <div className="absolute inset-0 bg-yellow-500/20 blur-3xl rounded-full"></div>
+          </div>
+          
+          <h2 className="text-4xl font-black italic text-white/60 uppercase tracking-widest mb-8">
+            {showWinner ? "🏆 O Vencedor do Sorteio é:" : "🎰 Sorteando entre o Top 6..."}
+          </h2>
+
+          <div className={cn(
+            "text-[12rem] font-black italic uppercase tracking-tighter leading-none transition-all duration-300",
+            showWinner ? "text-yellow-400 scale-110 drop-shadow-[0_0_50px_rgba(250,204,21,0.8)]" : "text-white/90"
+          )}>
+            {currentRaffleName}
+          </div>
+
+          {showWinner && (
+            <div className="mt-12 animate-bounce">
+              <span className="bg-yellow-500 text-black px-8 py-3 rounded-full font-black text-2xl uppercase italic">
+                Parabéns, lenda!
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="text-center space-y-4 mb-8">
         <h1 className={cn(
           "font-black italic text-white uppercase tracking-tighter transition-all duration-700 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]",

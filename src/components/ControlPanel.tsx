@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, Beer } from 'lucide-react';
+import { Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, Beer, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 export function ControlPanel() {
-  const { data, updateTitle, addParticipant, incrementCount, resetCounts, removeParticipant } = useCounter();
+  const { data, updateTitle, addParticipant, incrementCount, resetCounts, removeParticipant, triggerRaffle } = useCounter();
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Cerveja");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -33,6 +33,18 @@ export function ControlPanel() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
+      {/* Raffle Button - New Feature */}
+      <div className="flex justify-center mb-4">
+        <Button 
+          onClick={triggerRaffle} 
+          disabled={data.participants.length < 2 || data.raffle?.isRaffling}
+          className="w-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:to-red-600 h-16 rounded-2xl text-xl font-black uppercase italic tracking-tighter shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse"
+        >
+          <Sparkles className="mr-2 h-6 w-6" />
+          Sorteio entre o Top 6!
+        </Button>
+      </div>
+
       {/* Title Editor */}
       <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
