@@ -116,9 +116,9 @@ export function useCounter() {
 
   const resetCounts = () => {
     if (!counterRef || !data || !user) return;
-    const updatedParticipants = data.participants.map(p => ({ ...p, count: 0 }));
+    // Agora remove todos os participantes ao zerar
     updateDoc(counterRef, {
-      participants: updatedParticipants,
+      participants: [],
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null }
     });
