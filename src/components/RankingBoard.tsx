@@ -82,7 +82,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const sortedParticipants = [...data.participants].sort((a, b) => b.count - a.count);
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
-  const lanterninha = sortedParticipants.length > 3 ? sortedParticipants[sortedParticipants.length - 1] : null;
+  
+  // O lanterninha deve ser no máximo o sexto colocado. 
+  // Se houver 4, 5 ou 6 participantes, o último deles é o lanterninha.
+  // Se houver 7 ou mais, o lanterninha "abaixo disso" não aparece.
+  const lanterninha = (sortedParticipants.length > 3 && sortedParticipants.length <= 6) 
+    ? sortedParticipants[sortedParticipants.length - 1] 
+    : null;
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -102,7 +108,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           <CustomIcon className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
-        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-7xl md:text-8xl" : "text-5xl md:text-6xl")}>
+        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>
           {data.title}
         </h1>
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
@@ -131,7 +137,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       </div>
 
       {lanterninha && (
-        <div className="w-full max-w-md bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 flex items-center justify-between">
+        <div className="w-full max-w-md bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 flex items-center justify-between animate-in fade-in slide-in-from-bottom-4">
           <div className="flex items-center gap-4">
             <CryingIcon className="w-10 h-10 text-destructive animate-pulse" />
             <div>
