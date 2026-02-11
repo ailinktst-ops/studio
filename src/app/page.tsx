@@ -4,23 +4,31 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ControlPanel } from "@/components/ControlPanel";
 import { RankingBoard } from "@/components/RankingBoard";
-import { LayoutDashboard, Trophy, Beer } from "lucide-react";
+import { useCounter } from "@/hooks/useCounter";
+import { LayoutDashboard, Trophy, Beer, Wine, CupSoda, GlassWater, Flame, Music, Pizza, Star } from "lucide-react";
+
+const ICON_MAP: Record<string, any> = {
+  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
+};
 
 export default function Home() {
+  const { data } = useCounter();
+  const BrandIcon = ICON_MAP[data.brandIcon] || Beer;
+
   return (
     <main className="min-h-screen bg-transparent">
       <header className="py-10 px-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="bg-primary p-3 rounded-2xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.5)] rotate-3">
-              <Beer className="w-8 h-8" />
+              <BrandIcon className="w-8 h-8" />
             </div>
             <div>
               <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">
-                RankUp <span className="text-secondary drop-shadow-[0_0_8px_rgba(0,128,128,0.5)]">Counter</span>
+                {data.brandName.split(' ')[0]} <span className="text-secondary drop-shadow-[0_0_8px_rgba(0,128,128,0.5)]">{data.brandName.split(' ').slice(1).join(' ')}</span>
               </h1>
               <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">
-                A Elite da Resenha em Tempo Real
+                {data.customPhrases[0] || "A Elite da Resenha em Tempo Real"}
               </p>
             </div>
           </div>
@@ -55,7 +63,7 @@ export default function Home() {
       </div>
       
       <footer className="py-12 text-center text-white/20 text-xs font-bold uppercase tracking-[0.3em]">
-        &copy; {new Date().getFullYear()} RankUp • Desenvolvido para Momentos Épicos
+        &copy; {new Date().getFullYear()} {data.brandName} • Desenvolvido para Momentos Épicos
       </footer>
     </main>
   );

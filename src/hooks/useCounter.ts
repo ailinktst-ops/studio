@@ -24,17 +24,23 @@ export interface RaffleState {
 export interface CounterState {
   id: string;
   title: string;
+  brandName: string;
+  brandIcon: string;
   participants: Participant[];
   categories: string[];
+  customPhrases: string[];
   updatedAt: any;
   raffle?: RaffleState;
 }
 
 const DEFAULT_ID = "current";
 const DEFAULT_STATE: Omit<CounterState, 'id'> = {
-  title: "Quem Bebeu Mais",
+  title: "Resenha Épica",
+  brandName: "RankUp Counter",
+  brandIcon: "Beer",
   participants: [],
   categories: ["Cerveja", "Água", "Drink", "Shot", "Gelo"],
+  customPhrases: ["A Elite da Resenha em Tempo Real", "Siga o líder!", "Quem não bebe, não conta história"],
   updatedAt: Timestamp.now(),
   raffle: {
     isRaffling: false,
@@ -56,7 +62,6 @@ export function useCounter() {
   const { data, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
-  // Inicialização segura do documento
   useEffect(() => {
     if (!isDocLoading && !data && counterRef && user && !isUserLoading) {
       setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
@@ -70,37 +75,26 @@ export function useCounter() {
     }
   }, [isDocLoading, data, counterRef, user, isUserLoading]);
 
-  const updateTitle = (newTitle: string) => {
+  const updateDocField = (fields: Partial<CounterState>) => {
     if (!counterRef || !user || !data) return;
     updateDoc(counterRef, { 
-      title: newTitle,
+      ...fields,
       updatedAt: Timestamp.now() 
     });
   };
 
   const addParticipant = (name: string, category: string) => {
     if (!counterRef || !user) return;
-    
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
       name,
       count: 0,
       category: category || "Cerveja"
     };
-
-    if (!data) {
-      setDoc(counterRef, {
-        ...DEFAULT_STATE,
-        id: DEFAULT_ID,
-        participants: [newParticipant],
-        updatedAt: Timestamp.now()
-      });
-    } else {
-      updateDoc(counterRef, {
-        participants: [...(data.participants || []), newParticipant],
-        updatedAt: Timestamp.now()
-      });
-    }
+    updateDoc(counterRef, {
+      participants: [...(data?.participants || []), newParticipant],
+      updatedAt: Timestamp.now()
+    });
   };
 
   const incrementCount = (id: string) => {
@@ -115,8 +109,7 @@ export function useCounter() {
   };
 
   const resetCounts = () => {
-    if (!counterRef || !data || !user) return;
-    // Agora remove todos os participantes ao zerar
+    if (!counterRef || !user) return;
     updateDoc(counterRef, {
       participants: [],
       updatedAt: Timestamp.now(),
@@ -135,14 +128,9 @@ export function useCounter() {
 
   const triggerRaffle = () => {
     if (!counterRef || !data || !user || data.participants.length < 2) return;
-    
-    const top6 = [...data.participants]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
-    
+    const top6 = [...data.participants].sort((a, b) => b.count - a.count).slice(0, 6);
     const candidates = top6.map(p => p.name);
     const winner = top6[Math.floor(Math.random() * top6.length)];
-
     updateDoc(counterRef, {
       raffle: {
         isRaffling: true,
@@ -151,33 +139,20 @@ export function useCounter() {
         startTime: Date.now()
       }
     });
-
-    // O fim da animação é controlado no cliente, mas o estado de "sorteando" expira em 8s
-    setTimeout(() => {
-      updateDoc(counterRef, {
-        "raffle.isRaffling": false
-      });
-    }, 8000);
-  };
-
-  const clearRaffle = () => {
-    if (!counterRef || !user) return;
-    updateDoc(counterRef, {
-      "raffle.isRaffling": false,
-      "raffle.winnerId": null
-    });
+    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 8000);
   };
 
   return {
     data: data || { ...DEFAULT_STATE, id: DEFAULT_ID, participants: [] },
     loading: isLoading,
     isInitializing: isDocLoading && !data,
-    updateTitle,
+    updateTitle: (title: string) => updateDocField({ title }),
+    updateBrand: (brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }),
+    updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
     addParticipant,
     incrementCount,
     resetCounts,
     removeParticipant,
-    triggerRaffle,
-    clearRaffle
+    triggerRaffle
   };
 }
