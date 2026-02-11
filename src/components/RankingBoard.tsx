@@ -91,6 +91,18 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
+      {overlay && brandImageUrl && (
+        <div 
+          className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none scale-150 grayscale blur-[2px]"
+          style={{ 
+            backgroundImage: `url(${brandImageUrl})`,
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'contain',
+          }}
+        />
+      )}
+
       {data.raffle?.isRaffling && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500">
           <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />

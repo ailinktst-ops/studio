@@ -31,8 +31,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={cn(
-              "bg-primary rounded-2xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.5)] rotate-3 overflow-hidden flex items-center justify-center min-w-[56px] min-h-[56px]",
-              brandImageUrl ? "p-0" : "p-3"
+              "bg-primary rounded-xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.3)] rotate-3 overflow-hidden flex items-center justify-center transition-all",
+              brandImageUrl ? "w-12 h-12 p-0" : "w-14 h-14 p-3"
             )}>
               {brandImageUrl ? (
                 <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" />
