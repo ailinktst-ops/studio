@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -5,9 +6,10 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { RankingBoard } from "@/components/RankingBoard";
 import { useCounter } from "@/hooks/useCounter";
 import { LayoutDashboard, Trophy, Beer, Wine, CupSoda, GlassWater, Flame, Music, Pizza, Star } from "lucide-react";
+import { ThunderdomeIcon } from "@/components/ThunderdomeIcon";
 
 const ICON_MAP: Record<string, any> = {
-  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
+  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza, Thunderdome: ThunderdomeIcon
 };
 
 export default function Home() {

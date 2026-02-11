@@ -8,6 +8,7 @@ import {
   Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
   Trophy, Star, Flame, Music, Pizza, Settings2, X
 } from 'lucide-react';
+import { ThunderdomeIcon } from '@/components/ThunderdomeIcon';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import Link from 'next/link';
 
 const ICON_OPTIONS = [
+  { id: 'Thunderdome', icon: ThunderdomeIcon },
   { id: 'Beer', icon: Beer },
   { id: 'Wine', icon: Wine },
   { id: 'CupSoda', icon: CupSoda },

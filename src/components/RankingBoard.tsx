@@ -7,11 +7,12 @@ import {
   Trophy, Medal, Star, Flame, Sparkles, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza 
 } from 'lucide-react';
+import { ThunderdomeIcon } from '@/components/ThunderdomeIcon';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const ICON_MAP: Record<string, any> = {
-  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
+  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza, Thunderdome: ThunderdomeIcon
 };
 
 const CryingIcon = ({ className }: { className?: string }) => (
@@ -84,8 +85,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const leader = top3[0];
   
   // O lanterninha deve ser no máximo o sexto colocado. 
-  // Se houver 4, 5 ou 6 participantes, o último deles é o lanterninha.
-  // Se houver 7 ou mais, o lanterninha "abaixo disso" não aparece.
   const lanterninha = (sortedParticipants.length > 3 && sortedParticipants.length <= 6) 
     ? sortedParticipants[sortedParticipants.length - 1] 
     : null;
