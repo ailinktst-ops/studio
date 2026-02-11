@@ -19,6 +19,7 @@ export interface RaffleState {
   winnerId: string | null;
   candidates: string[];
   startTime: number | null;
+  type?: 'raffle' | 'challenge';
 }
 
 export interface CounterState {
@@ -48,7 +49,8 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
     isRaffling: false,
     winnerId: null,
     candidates: [],
-    startTime: null
+    startTime: null,
+    type: 'raffle'
   }
 };
 
@@ -127,7 +129,7 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: [],
       updatedAt: Timestamp.now(),
-      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null }
+      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle' }
     });
   };
 
@@ -150,7 +152,8 @@ export function useCounter() {
         isRaffling: true,
         winnerId: winner.id,
         candidates: candidates,
-        startTime: Date.now()
+        startTime: Date.now(),
+        type: 'raffle'
       }
     });
     setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 8000);
@@ -165,10 +168,12 @@ export function useCounter() {
         isRaffling: true,
         winnerId: winner.id,
         candidates: candidates,
-        startTime: Date.now()
+        startTime: Date.now(),
+        type: 'challenge'
       }
     });
-    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 8000);
+    // O desafio fica mais tempo na tela (15 segundos total, sendo 5 de sorteio e 10 de resultado)
+    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 15000);
   };
 
   return {

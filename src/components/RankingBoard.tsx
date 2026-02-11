@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Sparkles, Loader2, 
-  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle
+  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle, Zap
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -15,8 +15,9 @@ const ICON_MAP: Record<string, any> = {
 };
 
 const SOUND_URLS = {
-  point: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Ding sutil
-  leader: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3' // Trompete celebrativo
+  point: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
+  leader: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3',
+  challenge: 'https://assets.mixkit.co/active_storage/sfx/950/950-preview.mp3' // Alarme de emergência
 };
 
 const CryingIcon = ({ className }: { className?: string }) => (
@@ -36,7 +37,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [showWinner, setShowWinner] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
   
-  // Estado para notificações de pontos e liderança
   const [notification, setNotification] = useState<{ 
     userName: string; 
     count: number; 
@@ -46,17 +46,27 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   
   const lastParticipantsRef = useRef<Participant[]>([]);
   const lastLeaderIdRef = useRef<string | null>(null);
+  const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
 
-  // Função para tocar som
-  const playSound = (type: 'point' | 'leader') => {
+  const playSound = (type: 'point' | 'leader' | 'challenge') => {
     const audio = new Audio(SOUND_URLS[type]);
-    audio.play().catch(() => {}); // Silenciar erros de autoplay do navegador
+    if (type === 'challenge') {
+      audio.loop = true;
+      challengeAudioRef.current = audio;
+    }
+    audio.play().catch(() => {});
   };
 
-  // Efeito para detectar mudanças de pontos e liderança (Apenas no Overlay)
+  const stopChallengeSound = () => {
+    if (challengeAudioRef.current) {
+      challengeAudioRef.current.pause();
+      challengeAudioRef.current = null;
+    }
+  };
+
   useEffect(() => {
     if (!overlay || data.participants.length === 0) return;
 
@@ -70,18 +80,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     const prev = lastParticipantsRef.current;
     const current = data.participants;
 
-    // 1. Detectar quem ganhou ponto
     const updatedUser = current.find(p => {
       const prevP = prev.find(pp => pp.id === p.id);
       return prevP && p.count > prevP.count;
     });
 
-    // 2. Detectar se o líder mudou
     const sortedCurrent = [...current].sort((a, b) => b.count - a.count);
     const currentLeader = sortedCurrent[0];
 
     if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
-      // Prioridade para mudança de liderança
       playSound('leader');
       setNotification({
         userName: currentLeader.name,
@@ -92,7 +99,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       lastLeaderIdRef.current = currentLeader.id;
       setTimeout(() => setNotification(null), 5000);
     } else if (updatedUser) {
-      // Notificação de ponto normal
       playSound('point');
       setNotification({
         userName: updatedUser.name,
@@ -112,27 +118,39 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
     if (data.raffle?.isRaffling) {
       const candidates = data.raffle.candidates || [];
+      const isChallenge = data.raffle.type === 'challenge';
+
       if (candidates.length > 0) {
         let i = 0;
         interval = setInterval(() => {
           setCurrentRaffleName(candidates[i % candidates.length]);
           i++;
         }, 100);
+
         winnerTimeout = setTimeout(() => {
           clearInterval(interval);
           const winner = data.participants.find(p => p.id === data.raffle?.winnerId);
           if (winner) {
             setCurrentRaffleName(winner.name);
             setShowWinner(true);
-            playSound('leader'); // Som de vitória
+            if (isChallenge) {
+              playSound('challenge');
+            } else {
+              playSound('leader');
+            }
           }
         }, 5000);
       }
     } else {
       setShowWinner(false);
       setCurrentRaffleName("");
+      stopChallengeSound();
     }
-    return () => { if (interval) clearInterval(interval); if (winnerTimeout) clearTimeout(winnerTimeout); };
+    return () => { 
+      if (interval) clearInterval(interval); 
+      if (winnerTimeout) clearTimeout(winnerTimeout);
+      stopChallengeSound();
+    };
   }, [data.raffle?.isRaffling, data.raffle?.winnerId, data.participants]);
 
   useEffect(() => {
@@ -157,29 +175,22 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   
-  // Lógica do Lanterninha: menor pontuação entre os top 6
   const top6 = sortedParticipants.slice(0, 6);
   const lanterninha = (top6.length > 3) 
     ? top6[top6.length - 1] 
     : null;
 
+  const isChallengeType = data.raffle?.type === 'challenge';
+
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
-      {/* Marca d'água no fundo do Overlay */}
       {overlay && brandImageUrl && (
-        <div 
-          className="fixed inset-0 z-[-1] opacity-[0.05] pointer-events-none flex items-center justify-center overflow-hidden"
-        >
-          <img 
-            src={brandImageUrl} 
-            alt="Watermark" 
-            className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]"
-          />
+        <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
+          <img src={brandImageUrl} alt="Watermark" className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]" />
         </div>
       )}
 
-      {/* Notificação de Eventos em Tempo Real */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
@@ -188,59 +199,63 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" 
               : "bg-primary/95 border-primary-foreground/20 text-white"
           )}>
-            {notification.title && (
-              <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">
-                {notification.title}
-              </h2>
-            )}
-            
-            <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">
-              {notification.userName}
-            </h2>
-
+            {notification.title && <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">{notification.title}</h2>}
+            <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">{notification.userName}</h2>
             <div className="flex items-center gap-6 mt-4">
               <div className="flex flex-col items-end">
                 <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">Bebeu</span>
                 {notification.type === 'leader' && <Trophy className="w-8 h-8 mt-2" />}
               </div>
-              <span className={cn(
-                "text-8xl font-black italic uppercase tracking-tighter drop-shadow-md px-8 py-4 rounded-[2rem]",
-                notification.type === 'leader' ? "bg-black text-yellow-400" : "bg-white/20 text-white"
-              )}>
-                {notification.count}
-              </span>
+              <span className={cn("text-8xl font-black italic uppercase tracking-tighter drop-shadow-md px-8 py-4 rounded-[2rem]", notification.type === 'leader' ? "bg-black text-yellow-400" : "bg-white/20 text-white")}>{notification.count}</span>
             </div>
           </div>
         </div>
       )}
 
       {data.raffle?.isRaffling && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500">
-          <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />
-          <h2 className="text-4xl font-black italic text-white/60 uppercase mb-8">{showWinner ? "🏆 O Vencedor é:" : "🎰 Sorteando entre o Top 6..."}</h2>
-          <div className={cn("text-[10rem] font-black italic uppercase tracking-tighter transition-all", showWinner ? "text-yellow-400 drop-shadow-[0_0_50px_rgba(250,204,21,0.8)] scale-110" : "text-white")}>
+        <div className={cn(
+          "fixed inset-0 z-[100] flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500 backdrop-blur-3xl",
+          isChallengeType ? "bg-indigo-950/95" : "bg-black/95"
+        )}>
+          {isChallengeType ? (
+            <Zap className="w-32 h-32 text-blue-400 animate-bounce mb-8 drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]" />
+          ) : (
+            <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />
+          )}
+          
+          <h2 className="text-4xl font-black italic text-white/60 uppercase mb-8">
+            {showWinner 
+              ? (isChallengeType ? "⚡ DESAFIO ACEITO:" : "🏆 O Vencedor é:") 
+              : (isChallengeType ? "🎲 Escolhendo um Desafiado..." : "🎰 Sorteando entre o Top 6...")}
+          </h2>
+
+          <div className={cn(
+            "text-[10rem] font-black italic uppercase tracking-tighter transition-all duration-500",
+            showWinner 
+              ? (isChallengeType 
+                  ? "text-blue-400 drop-shadow-[0_0_60px_rgba(59,130,246,0.8)] scale-125" 
+                  : "text-yellow-400 drop-shadow-[0_0_50px_rgba(250,204,21,0.8)] scale-110")
+              : "text-white"
+          )}>
             {currentRaffleName || "..."}
           </div>
+
+          {showWinner && isChallengeType && (
+            <div className="mt-12 py-4 px-12 bg-blue-500/20 border border-blue-400/50 rounded-full animate-pulse">
+              <span className="text-4xl font-black italic text-blue-300 uppercase tracking-widest">FOI DESAFIADO! ⚡</span>
+            </div>
+          )}
         </div>
       )}
 
       <div className="text-center space-y-4 mb-8">
         <div className="flex items-center justify-center gap-4 mb-2">
-          <div className={cn(
-            "rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.3)] overflow-hidden flex items-center justify-center w-12 h-12",
-            brandImageUrl ? "p-0" : "p-2 bg-primary/20"
-          )}>
-            {brandImageUrl ? (
-              <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" />
-            ) : (
-              <CustomIcon className="w-full h-full text-primary" />
-            )}
+          <div className={cn("rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.3)] overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-primary/20")}>
+            {brandImageUrl ? <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" /> : <CustomIcon className="w-full h-full text-primary" />}
           </div>
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
-        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>
-          {data.title}
-        </h1>
+        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
       </div>
 
