@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useCounter } from '@/hooks/useCounter';
+import { useState, useEffect, useRef } from 'react';
+import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Sparkles, Loader2, 
-  Beer, Wine, CupSoda, GlassWater, Music, Pizza 
+  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -30,9 +30,60 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [showWinner, setShowWinner] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
+  
+  // Estado para notificações de pontos e liderança
+  const [notification, setNotification] = useState<{ title: string; subtitle: string; type: 'point' | 'leader' } | null>(null);
+  const lastParticipantsRef = useRef<Participant[]>([]);
+  const lastLeaderIdRef = useRef<string | null>(null);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
+
+  // Efeito para detectar mudanças de pontos e liderança (Apenas no Overlay)
+  useEffect(() => {
+    if (!overlay || data.participants.length === 0) return;
+
+    if (lastParticipantsRef.current.length === 0) {
+      lastParticipantsRef.current = data.participants;
+      const initialLeader = [...data.participants].sort((a, b) => b.count - a.count)[0];
+      lastLeaderIdRef.current = initialLeader?.id || null;
+      return;
+    }
+
+    const prev = lastParticipantsRef.current;
+    const current = data.participants;
+
+    // 1. Detectar quem ganhou ponto
+    const updatedUser = current.find(p => {
+      const prevP = prev.find(pp => pp.id === p.id);
+      return prevP && p.count > prevP.count;
+    });
+
+    // 2. Detectar se o líder mudou
+    const sortedCurrent = [...current].sort((a, b) => b.count - a.count);
+    const currentLeader = sortedCurrent[0];
+
+    if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
+      // Prioridade para mudança de liderança
+      setNotification({
+        title: "NOVO LÍDER NA ÁREA!",
+        subtitle: `${currentLeader.name.toUpperCase()} ASSUMIU O TOPO COM ${currentLeader.count} PONTOS! 🏆`,
+        type: 'leader'
+      });
+      lastLeaderIdRef.current = currentLeader.id;
+      setTimeout(() => setNotification(null), 5000);
+    } else if (updatedUser) {
+      // Notificação de ponto normal
+      setNotification({
+        title: "MAIS UMA FOI PARA...",
+        subtitle: `${updatedUser.name.toUpperCase()}! AGORA COM ${updatedUser.count} PONTOS! 🔥`,
+        type: 'point'
+      });
+      setTimeout(() => setNotification(null), 3500);
+    }
+
+    lastParticipantsRef.current = current;
+  }, [data.participants, overlay]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -103,6 +154,28 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         />
       )}
 
+      {/* Notificação de Eventos em Tempo Real */}
+      {overlay && notification && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
+          <div className={cn(
+            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1",
+            notification.type === 'leader' 
+              ? "bg-yellow-500/90 border-yellow-300 text-black animate-bounce" 
+              : "bg-primary/90 border-primary-foreground/20 text-white"
+          )}>
+            <div className="flex justify-center mb-6">
+              {notification.type === 'leader' ? <Trophy className="w-24 h-24" /> : <Flame className="w-24 h-24 animate-pulse" />}
+            </div>
+            <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4 drop-shadow-lg">
+              {notification.title}
+            </h2>
+            <p className="text-7xl font-black italic uppercase tracking-tighter drop-shadow-md">
+              {notification.subtitle}
+            </p>
+          </div>
+        </div>
+      )}
+
       {data.raffle?.isRaffling && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500">
           <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />
@@ -127,7 +200,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           </div>
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
-        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>
+        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-7xl md:text-8xl" : "text-5xl md:text-6xl")}>
           {data.title}
         </h1>
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
