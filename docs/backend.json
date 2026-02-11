@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "Counter": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Counter",
+      "type": "object",
+      "description": "Represents a counter with a title and a list of participants.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Counter entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the counter (e.g., 'Consumo da Noite')."
+        },
+        "participants": {
+          "type": "array",
+          "description": "List of participants in the counter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of the last update to the counter.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "participants",
+        "updatedAt"
+      ]
+    },
+    "Participant": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Participant",
+      "type": "object",
+      "description": "Represents a participant in the counter with their name and count.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Participant entity."
+        },
+        "counterId": {
+          "type": "string",
+          "description": "Reference to Counter. (Relationship: Counter 1:N Participant)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the participant."
+        },
+        "count": {
+          "type": "number",
+          "description": "The current count for the participant."
+        }
+      },
+      "required": [
+        "id",
+        "counterId",
+        "name",
+        "count"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/counters/{counterId}",
+        "definition": {
+          "entityName": "Counter",
+          "schema": {
+            "$ref": "#/backend/entities/Counter"
+          },
+          "description": "Stores the counter document containing the title, a list of participants with names and counts, and the last updated timestamp. Includes denormalized participant data for ease of ranking calculation and real-time updates to the overlay.",
+          "params": [
+            {
+              "name": "counterId",
+              "description": "Unique identifier for the counter document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/counters/{counterId}/participants/{participantId}",
+        "definition": {
+          "entityName": "Participant",
+          "schema": {
+            "$ref": "#/backend/entities/Participant"
+          },
+          "description": "Stores participant data (name and count) within the counter document. The data stored at this level should mirror the data in the 'Counter' document as well.",
+          "params": [
+            {
+              "name": "counterId",
+              "description": "Unique identifier for the counter document."
+            },
+            {
+              "name": "participantId",
+              "description": "Unique identifier for the participant."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support a real-time ranking system for participants in a counter. It leverages a single `counter` document to store the title, participants (with their names and counts), and last updated timestamp. This approach avoids subcollections, simplifying reads and writes for ranking updates. Since the app primarily focuses on displaying the top 3 participants, keeping all data in a single document optimizes read operations for the ranking overlay. Authorization independence isn't a primary concern here as the app's functionality doesn't clearly describe the need for different users to have different access privileges, it is assumed all users have equal access and the data is public. To secure this data, we can rely on Firebase Authentication and implement simple rules to allow only authenticated users to modify it. This structure supports QAPs by enabling efficient `list` operations (though, in this case, we are reading a single document instead of listing), due to all related data being stored in a single document."
+  }
+}

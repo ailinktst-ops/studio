@@ -1,0 +1,93 @@
+/**
+ * FIRESTORE SECURITY RULES
+ *
+ * Core Philosophy:
+ * This ruleset implements an open-read/authenticated-write model designed for a real-time 
+ * counter and ranking application. The primary goal is to allow any user (including 
+ * unauthenticated "overlay" views) to read data while restricting modification 
+ * to authenticated users.
+ *
+ * Data Structure:
+ * - /counters/{counterId}: The primary document containing counter metadata and denormalized participant stats.
+ * - /counters/{counterId}/participants/{participantId}: Granular participant records for detailed updates.
+ *
+ * Key Security Decisions:
+ * 1. Public Visibility: To support the "overlay" requirement, all counter and participant 
+ *    data is publicly readable (`allow get, list: if true`).
+ * 2. Authenticated Writes: Modification is permitted for any authenticated user. 
+ *    Note: The current schema does not define specific document ownership (e.g., an ownerId 
+ *    field), so any logged-in user can currently modify any counter.
+ * 3. Relational Integrity: Rules enforce that the `id` field within the document data 
+ *    matches the document ID in the path to ensure data consistency.
+ * 4. Prototyping Flexibility: Data types and specific schema shapes are not enforced, 
+ *    allowing for rapid front-end iteration.
+ *
+ * Denormalization for Authorization:
+ * Currently, no complex authorization (roles/ownership) is required by the IR. If 
+ * ownership is introduced, an `ownerId` should be denormalized onto every document 
+ * to avoid expensive `get()` calls in rules.
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the request is made by an authenticated user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Verifies if a document exists and the user is authenticated.
+     * Used for state-changing operations (update/delete).
+     */
+    function canModify() {
+      return isSignedIn() && resource != null;
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for the Counter collection. Supports public viewing for the overlay.
+     * @path /counters/{counterId}
+     * @allow get, list: if true (Public access for rankings and overlays).
+     * @allow create: if user is signed in and provides matching 'id' in data.
+     * @deny update/delete: if user is not signed in or document does not exist.
+     * @principle Public consumption with authenticated-only modification.
+     */
+    match /counters/{counterId} {
+      allow get, list: if true;
+      
+      // CRITICAL: The 'Counter' entity is missing a specific 'ownerId' field in the schema.
+      // Defaulting to allowing any authenticated user to create/edit for the prototype.
+      allow create: if isSignedIn() && request.resource.data.id == counterId;
+      
+      allow update: if canModify() && request.resource.data.id == resource.data.id;
+      
+      allow delete: if canModify();
+
+      /**
+       * @description Rules for participants within a specific counter.
+       * @path /counters/{counterId}/participants/{participantId}
+       * @allow get, list: if true.
+       * @allow create: if signed in and relational fields (id, counterId) match the path.
+       * @deny create/update: if path parameters do not match the internal document data.
+       * @principle Relational integrity enforcement within subcollections.
+       */
+      match /participants/{participantId} {
+        allow get, list: if true;
+        
+        allow create: if isSignedIn() && request.resource.data.id == participantId && request.resource.data.counterId == counterId;
+        
+        allow update: if canModify() && request.resource.data.id == resource.data.id && request.resource.data.counterId == resource.data.counterId;
+        
+        allow delete: if canModify();
+      }
+    }
+
+  }
+}
