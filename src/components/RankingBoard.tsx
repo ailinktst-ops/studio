@@ -157,8 +157,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   
-  const lanterninha = (sortedParticipants.length > 3 && sortedParticipants.length <= 6) 
-    ? sortedParticipants[sortedParticipants.length - 1] 
+  // Lógica do Lanterninha: menor pontuação entre os top 6
+  const top6 = sortedParticipants.slice(0, 6);
+  const lanterninha = (top6.length > 3) 
+    ? top6[top6.length - 1] 
     : null;
 
   return (
