@@ -7,12 +7,11 @@ import {
   Trophy, Medal, Star, Flame, Sparkles, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza 
 } from 'lucide-react';
-import { ThunderdomeIcon } from '@/components/ThunderdomeIcon';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const ICON_MAP: Record<string, any> = {
-  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza, Thunderdome: ThunderdomeIcon
+  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
 };
 
 const CryingIcon = ({ className }: { className?: string }) => (
@@ -33,6 +32,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [tickerIndex, setTickerIndex] = useState(0);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
+  const brandImageUrl = data.brandImageUrl || "";
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -64,7 +64,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   useEffect(() => {
     if (!overlay) return;
-    const totalPhrases = (data.customPhrases?.length || 0) + 1; // +1 para a liderança
+    const totalPhrases = (data.customPhrases?.length || 0) + 1;
     const interval = setInterval(() => {
       setTickerIndex((prev) => (prev + 1) % totalPhrases);
     }, 6000);
@@ -84,7 +84,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   
-  // O lanterninha deve ser no máximo o sexto colocado. 
   const lanterninha = (sortedParticipants.length > 3 && sortedParticipants.length <= 6) 
     ? sortedParticipants[sortedParticipants.length - 1] 
     : null;
@@ -104,7 +103,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       <div className="text-center space-y-4 mb-8">
         <div className="flex items-center justify-center gap-4 mb-2">
-          <CustomIcon className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+          {brandImageUrl ? (
+            <img src={brandImageUrl} className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" alt="Logo" />
+          ) : (
+            <CustomIcon className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+          )}
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>

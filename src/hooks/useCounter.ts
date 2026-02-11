@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -25,6 +26,7 @@ export interface CounterState {
   title: string;
   brandName: string;
   brandIcon: string;
+  brandImageUrl?: string;
   participants: Participant[];
   categories: string[];
   customPhrases: string[];
@@ -37,6 +39,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   title: "Resenha Épica",
   brandName: "RankUp Counter",
   brandIcon: "Beer",
+  brandImageUrl: "",
   participants: [],
   categories: ["Cerveja", "Água", "Drink", "Shot", "Gelo"],
   customPhrases: ["A Elite da Resenha em Tempo Real", "Siga o líder!", "Quem não bebe, não conta história"],
@@ -61,7 +64,6 @@ export function useCounter() {
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
-  // Mesclar dados do Firestore com os padrões para evitar campos undefined
   const data: CounterState = {
     ...DEFAULT_STATE,
     id: DEFAULT_ID,
@@ -160,6 +162,7 @@ export function useCounter() {
     isInitializing: isDocLoading && !rawData,
     updateTitle: (title: string) => updateDocField({ title }),
     updateBrand: (brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }),
+    updateBrandImage: (brandImageUrl: string) => updateDocField({ brandImageUrl }),
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
     addParticipant,
     incrementCount,

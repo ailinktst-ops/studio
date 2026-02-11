@@ -1,14 +1,13 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, 
   Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
-  Trophy, Star, Flame, Music, Pizza, Settings2, X
+  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Image as ImageIcon
 } from 'lucide-react';
-import { ThunderdomeIcon } from '@/components/ThunderdomeIcon';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -18,7 +17,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import Link from 'next/link';
 
 const ICON_OPTIONS = [
-  { id: 'Thunderdome', icon: ThunderdomeIcon },
   { id: 'Beer', icon: Beer },
   { id: 'Wine', icon: Wine },
   { id: 'CupSoda', icon: CupSoda },
@@ -33,7 +31,7 @@ const ICON_OPTIONS = [
 export function ControlPanel() {
   const { 
     data, loading, isInitializing, 
-    updateTitle, updateBrand, updatePhrases,
+    updateTitle, updateBrand, updatePhrases, updateBrandImage,
     addParticipant, incrementCount, resetCounts, 
     removeParticipant, triggerRaffle 
   } = useCounter();
@@ -43,6 +41,7 @@ export function ControlPanel() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState("");
   const [newPhrase, setNewPhrase] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (data.title && !editingTitle) setTempTitle(data.title);
@@ -68,6 +67,25 @@ export function ControlPanel() {
     updatePhrases(updated);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        alert("A imagem é muito grande. Escolha uma imagem de até 1MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateBrandImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeBrandImage = () => {
+    updateBrandImage("");
+  };
+
   if (isInitializing) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
@@ -91,7 +109,7 @@ export function ControlPanel() {
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6 space-y-6">
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase text-white/40">Nome da Marca</label>
                     <Input 
@@ -100,8 +118,43 @@ export function ControlPanel() {
                       className="bg-black/20 border-white/10"
                     />
                   </div>
+                  
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase text-white/40">Ícone Principal</label>
+                    <label className="text-[10px] font-bold uppercase text-white/40">Logo Personalizada (Upload)</label>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={fileInputRef} 
+                        onChange={handleImageUpload}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="bg-white/5 border-white/10 hover:bg-white/10 text-xs h-10"
+                      >
+                        <Upload className="w-4 h-4 mr-2" /> Upload
+                      </Button>
+                      {data.brandImageUrl && (
+                        <div className="relative group">
+                          <img src={data.brandImageUrl} className="w-10 h-10 rounded-lg object-cover border border-white/20" alt="Brand Logo" />
+                          <button 
+                            onClick={removeBrandImage}
+                            className="absolute -top-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {!data.brandImageUrl && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase text-white/40">Ou escolha um Ícone Padrão</label>
                     <div className="flex flex-wrap gap-2">
                       {ICON_OPTIONS.map((opt) => (
                         <button
@@ -114,7 +167,7 @@ export function ControlPanel() {
                       ))}
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-white/40">Frases do Overlay</label>

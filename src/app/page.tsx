@@ -6,18 +6,17 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { RankingBoard } from "@/components/RankingBoard";
 import { useCounter } from "@/hooks/useCounter";
 import { LayoutDashboard, Trophy, Beer, Wine, CupSoda, GlassWater, Flame, Music, Pizza, Star } from "lucide-react";
-import { ThunderdomeIcon } from "@/components/ThunderdomeIcon";
 
 const ICON_MAP: Record<string, any> = {
-  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza, Thunderdome: ThunderdomeIcon
+  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
 };
 
 export default function Home() {
   const { data } = useCounter();
   
-  // Garantir valores padrão caso os dados ainda estejam carregando ou incompletos
   const brandName = data?.brandName || "RankUp Counter";
   const brandIcon = data?.brandIcon || "Beer";
+  const brandImageUrl = data?.brandImageUrl || "";
   const customPhrases = data?.customPhrases || [];
   
   const BrandIcon = ICON_MAP[brandIcon] || Beer;
@@ -30,8 +29,12 @@ export default function Home() {
       <header className="py-10 px-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="bg-primary p-3 rounded-2xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.5)] rotate-3">
-              <BrandIcon className="w-8 h-8" />
+            <div className="bg-primary p-3 rounded-2xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.5)] rotate-3 overflow-hidden flex items-center justify-center min-w-[56px] min-h-[56px]">
+              {brandImageUrl ? (
+                <img src={brandImageUrl} className="w-8 h-8 object-contain" alt="Logo" />
+              ) : (
+                <BrandIcon className="w-8 h-8" />
+              )}
             </div>
             <div>
               <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">
