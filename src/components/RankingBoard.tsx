@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -181,6 +180,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     : null;
 
   const isChallengeType = data.raffle?.type === 'challenge';
+  const lastChallengedWinner = data.participants.find(p => p.id === data.raffle?.winnerId);
+  const showPersistentChallenge = overlay && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling && lastChallengedWinner;
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -188,6 +189,20 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && brandImageUrl && (
         <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
           <img src={brandImageUrl} alt="Watermark" className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]" />
+        </div>
+      )}
+
+      {/* Miniatura do Desafiado (Lado Direito) */}
+      {showPersistentChallenge && (
+        <div className="fixed right-8 top-1/2 -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500">
+          <div className="bg-blue-600/90 backdrop-blur-xl border-4 border-blue-400 p-6 rounded-[2rem] shadow-[0_0_50px_rgba(59,130,246,0.5)] flex flex-col items-center text-center max-w-[200px] rotate-2">
+            <div className="bg-white/20 p-2 rounded-full mb-3">
+              <Zap className="w-8 h-8 text-blue-100" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Último Desafiado:</span>
+            <h3 className="text-2xl font-black italic text-white uppercase drop-shadow-lg leading-tight">{lastChallengedWinner.name}</h3>
+            <div className="h-1 w-full bg-white/30 rounded-full mt-3"></div>
+          </div>
         </div>
       )}
 

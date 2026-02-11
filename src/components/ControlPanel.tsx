@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -6,7 +5,7 @@ import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, 
   Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
-  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap
+  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap, EyeOff
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,7 +32,7 @@ export function ControlPanel() {
     data, loading, isInitializing, 
     updateTitle, updateBrand, updatePhrases, updateBrandImage,
     addParticipant, incrementCount, resetCounts, 
-    removeParticipant, triggerRaffle, triggerSurpriseChallenge
+    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -112,6 +111,8 @@ export function ControlPanel() {
   const removeBrandImage = () => {
     updateBrandImage("");
   };
+
+  const hasPersistentChallenge = data.raffle?.winnerId && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling;
 
   if (isInitializing) {
     return (
@@ -243,6 +244,16 @@ export function ControlPanel() {
           {data.raffle?.isRaffling ? "..." : "Desafio Surpresa"}
         </Button>
       </div>
+
+      {hasPersistentChallenge && (
+        <Button 
+          onClick={clearChallenge}
+          variant="outline"
+          className="w-full h-12 rounded-xl border-blue-500/30 text-blue-400 hover:bg-blue-500/10 font-bold uppercase tracking-widest flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2"
+        >
+          <EyeOff className="w-4 h-4" /> Remover Aviso de Desafio do Overlay
+        </Button>
+      )}
 
       {/* Título do Evento */}
       <Card className="bg-card/50 backdrop-blur-sm border-primary/20">

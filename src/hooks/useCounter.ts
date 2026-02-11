@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -172,8 +171,16 @@ export function useCounter() {
         type: 'challenge'
       }
     });
-    // O desafio fica mais tempo na tela (15 segundos total, sendo 5 de sorteio e 10 de resultado)
     setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 15000);
+  };
+
+  const clearChallenge = () => {
+    if (!counterRef || !user) return;
+    updateDoc(counterRef, {
+      "raffle.winnerId": null,
+      "raffle.type": 'raffle',
+      updatedAt: Timestamp.now()
+    });
   };
 
   return {
@@ -189,6 +196,7 @@ export function useCounter() {
     resetCounts,
     removeParticipant,
     triggerRaffle,
-    triggerSurpriseChallenge
+    triggerSurpriseChallenge,
+    clearChallenge
   };
 }
