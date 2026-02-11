@@ -14,6 +14,11 @@ const ICON_MAP: Record<string, any> = {
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
 };
 
+const SOUND_URLS = {
+  point: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Ding sutil
+  leader: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3' // Trompete celebrativo
+};
+
 const CryingIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="10" />
@@ -32,12 +37,24 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [tickerIndex, setTickerIndex] = useState(0);
   
   // Estado para notificações de pontos e liderança
-  const [notification, setNotification] = useState<{ title: string; subtitle: string; type: 'point' | 'leader' } | null>(null);
+  const [notification, setNotification] = useState<{ 
+    userName: string; 
+    count: number; 
+    type: 'point' | 'leader';
+    title?: string;
+  } | null>(null);
+  
   const lastParticipantsRef = useRef<Participant[]>([]);
   const lastLeaderIdRef = useRef<string | null>(null);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
+
+  // Função para tocar som
+  const playSound = (type: 'point' | 'leader') => {
+    const audio = new Audio(SOUND_URLS[type]);
+    audio.play().catch(() => {}); // Silenciar erros de autoplay do navegador
+  };
 
   // Efeito para detectar mudanças de pontos e liderança (Apenas no Overlay)
   useEffect(() => {
@@ -45,8 +62,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
     if (lastParticipantsRef.current.length === 0) {
       lastParticipantsRef.current = data.participants;
-      const initialLeader = [...data.participants].sort((a, b) => b.count - a.count)[0];
-      lastLeaderIdRef.current = initialLeader?.id || null;
+      const initialSorted = [...data.participants].sort((a, b) => b.count - a.count);
+      lastLeaderIdRef.current = initialSorted[0]?.id || null;
       return;
     }
 
@@ -65,18 +82,21 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
     if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
       // Prioridade para mudança de liderança
+      playSound('leader');
       setNotification({
-        title: "NOVO LÍDER NA ÁREA!",
-        subtitle: `${currentLeader.name.toUpperCase()} ASSUMIU O TOPO COM ${currentLeader.count} PONTOS! 🏆`,
-        type: 'leader'
+        userName: currentLeader.name,
+        count: currentLeader.count,
+        type: 'leader',
+        title: "NOVO LÍDER!"
       });
       lastLeaderIdRef.current = currentLeader.id;
       setTimeout(() => setNotification(null), 5000);
     } else if (updatedUser) {
       // Notificação de ponto normal
+      playSound('point');
       setNotification({
-        title: "MAIS UMA FOI PARA...",
-        subtitle: `${updatedUser.name.toUpperCase()}! AGORA COM ${updatedUser.count} PONTOS! 🔥`,
+        userName: updatedUser.name,
+        count: updatedUser.count,
         type: 'point'
       });
       setTimeout(() => setNotification(null), 3500);
@@ -103,6 +123,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           if (winner) {
             setCurrentRaffleName(winner.name);
             setShowWinner(true);
+            playSound('leader'); // Som de vitória
           }
         }, 5000);
       }
@@ -158,20 +179,28 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
-            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1",
+            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
             notification.type === 'leader' 
               ? "bg-yellow-500/90 border-yellow-300 text-black animate-bounce" 
               : "bg-primary/90 border-primary-foreground/20 text-white"
           )}>
+            {notification.title && (
+              <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-4 opacity-70">
+                {notification.title}
+              </h2>
+            )}
             <div className="flex justify-center mb-6">
               {notification.type === 'leader' ? <Trophy className="w-24 h-24" /> : <Flame className="w-24 h-24 animate-pulse" />}
             </div>
-            <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4 drop-shadow-lg">
-              {notification.title}
+            <h2 className="text-9xl font-black italic uppercase tracking-tighter mb-4 drop-shadow-lg leading-tight">
+              {notification.userName}
             </h2>
-            <p className="text-7xl font-black italic uppercase tracking-tighter drop-shadow-md">
-              {notification.subtitle}
-            </p>
+            <div className="flex items-center gap-4">
+              <span className="text-5xl font-black italic uppercase tracking-widest opacity-80">Bebeu</span>
+              <span className="text-7xl font-black italic uppercase tracking-tighter drop-shadow-md bg-white/20 px-6 py-2 rounded-2xl">
+                {notification.count}
+              </span>
+            </div>
           </div>
         </div>
       )}
