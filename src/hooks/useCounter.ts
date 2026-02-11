@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -46,6 +46,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
 
 export function useCounter() {
   const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
   
   const counterRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -54,9 +55,9 @@ export function useCounter() {
 
   const { data, isLoading } = useDoc<CounterState>(counterRef);
 
-  // Inicialização segura do documento
+  // Inicialização segura do documento - apenas se o usuário estiver autenticado
   useEffect(() => {
-    if (!isLoading && !data && counterRef) {
+    if (!isLoading && !data && counterRef && user && !isUserLoading) {
       setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
         .catch((e) => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -66,10 +67,10 @@ export function useCounter() {
           }));
         });
     }
-  }, [isLoading, data, counterRef]);
+  }, [isLoading, data, counterRef, user, isUserLoading]);
 
   const updateTitle = (newTitle: string) => {
-    if (!counterRef) return;
+    if (!counterRef || !user) return;
     updateDoc(counterRef, { 
       title: newTitle,
       updatedAt: Timestamp.now() 
@@ -83,7 +84,7 @@ export function useCounter() {
   };
 
   const addParticipant = (name: string, category: string) => {
-    if (!counterRef) return;
+    if (!counterRef || !user) return;
     
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
@@ -92,7 +93,6 @@ export function useCounter() {
       category: category || "Cerveja"
     };
 
-    // Se o documento não existe ainda, usamos setDoc para criar
     if (!data) {
       setDoc(counterRef, {
         ...DEFAULT_STATE,
@@ -109,7 +109,7 @@ export function useCounter() {
   };
 
   const incrementCount = (id: string) => {
-    if (!counterRef || !data) return;
+    if (!counterRef || !data || !user) return;
     const updatedParticipants = data.participants.map(p => 
       p.id === id ? { ...p, count: p.count + 1 } : p
     );
@@ -120,7 +120,7 @@ export function useCounter() {
   };
 
   const resetCounts = () => {
-    if (!counterRef || !data) return;
+    if (!counterRef || !data || !user) return;
     const updatedParticipants = data.participants.map(p => ({ ...p, count: 0 }));
     updateDoc(counterRef, {
       participants: updatedParticipants,
@@ -130,7 +130,7 @@ export function useCounter() {
   };
 
   const removeParticipant = (id: string) => {
-    if (!counterRef || !data) return;
+    if (!counterRef || !data || !user) return;
     const updatedParticipants = data.participants.filter(p => p.id !== id);
     updateDoc(counterRef, {
       participants: updatedParticipants,
@@ -139,7 +139,7 @@ export function useCounter() {
   };
 
   const triggerRaffle = () => {
-    if (!counterRef || !data || data.participants.length < 2) return;
+    if (!counterRef || !data || !user || data.participants.length < 2) return;
     
     const top6 = [...data.participants]
       .sort((a, b) => b.count - a.count)
@@ -165,7 +165,7 @@ export function useCounter() {
   };
 
   const clearRaffle = () => {
-    if (!counterRef) return;
+    if (!counterRef || !user) return;
     updateDoc(counterRef, {
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null }
     });
@@ -173,7 +173,7 @@ export function useCounter() {
 
   return {
     data: data || { ...DEFAULT_STATE, id: DEFAULT_ID, participants: [] },
-    loading: isLoading,
+    loading: isLoading || isUserLoading,
     updateTitle,
     addParticipant,
     incrementCount,
