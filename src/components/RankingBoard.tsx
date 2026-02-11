@@ -166,16 +166,17 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
+      {/* Marca d'água no fundo do Overlay */}
       {overlay && brandImageUrl && (
         <div 
-          className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none scale-150 grayscale blur-[2px]"
-          style={{ 
-            backgroundImage: `url(${brandImageUrl})`,
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'contain',
-          }}
-        />
+          className="fixed inset-0 z-[-1] opacity-[0.05] pointer-events-none flex items-center justify-center overflow-hidden"
+        >
+          <img 
+            src={brandImageUrl} 
+            alt="Watermark" 
+            className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]"
+          />
+        </div>
       )}
 
       {/* Notificação de Eventos em Tempo Real */}
@@ -237,7 +238,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           </div>
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
-        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-7xl md:text-8xl" : "text-5xl md:text-6xl")}>
+        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>
           {data.title}
         </h1>
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
