@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -120,7 +119,7 @@ export function ControlPanel() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase text-white/40">Logo Personalizada (Upload)</label>
+                    <label className="text-[10px] font-bold uppercase text-white/40">Logo Personalizada (Máx. 1MB)</label>
                     <div className="flex items-center gap-3">
                       <input 
                         type="file" 
