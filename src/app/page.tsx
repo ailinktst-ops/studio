@@ -4,52 +4,58 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ControlPanel } from "@/components/ControlPanel";
 import { RankingBoard } from "@/components/RankingBoard";
-import { LayoutDashboard, Trophy } from "lucide-react";
+import { LayoutDashboard, Trophy, Beer } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
-      <header className="py-8 px-4 border-b bg-card">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-xl text-primary-foreground shadow-lg shadow-primary/20">
-              <Trophy className="w-6 h-6" />
+    <main className="min-h-screen bg-transparent">
+      <header className="py-10 px-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary p-3 rounded-2xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.5)] rotate-3">
+              <Beer className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-black font-headline tracking-tight text-primary uppercase">
-              RankUp <span className="text-secondary">Counter</span>
-            </h1>
+            <div>
+              <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">
+                RankUp <span className="text-secondary drop-shadow-[0_0_8px_rgba(0,128,128,0.5)]">Counter</span>
+              </h1>
+              <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">
+                A Elite da Resenha em Tempo Real
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground font-medium hidden sm:block">
-            Gestão de Consumo em Tempo Real
-          </p>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="max-w-6xl mx-auto py-4 px-4 pb-20">
         <Tabs defaultValue="control" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 p-1">
-            <TabsTrigger value="control" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <LayoutDashboard className="w-4 h-4" />
-              Painel de Controle
-            </TabsTrigger>
-            <TabsTrigger value="view" className="flex items-center gap-2 py-3 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
-              <Trophy className="w-4 h-4" />
-              Visualização Ranking
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center mb-10">
+            <TabsList className="bg-white/5 border border-white/10 p-1 rounded-2xl h-16 w-full max-w-md backdrop-blur-md">
+              <TabsTrigger value="control" className="flex-1 flex items-center gap-3 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-white/60 font-black italic uppercase transition-all">
+                <LayoutDashboard className="w-5 h-5" />
+                Painel
+              </TabsTrigger>
+              <TabsTrigger value="view" className="flex-1 flex items-center gap-3 rounded-xl data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground text-white/60 font-black italic uppercase transition-all">
+                <Trophy className="w-5 h-5" />
+                Ranking
+              </TabsTrigger>
+            </TabsList>
+          </div>
           
-          <TabsContent value="control">
+          <TabsContent value="control" className="mt-0 focus-visible:outline-none">
             <ControlPanel />
           </TabsContent>
           
-          <TabsContent value="view">
-            <RankingBoard />
+          <TabsContent value="view" className="mt-0 focus-visible:outline-none">
+            <div className="bg-black/20 rounded-[2rem] border border-white/5 backdrop-blur-sm">
+              <RankingBoard />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
       
-      <footer className="py-8 text-center text-muted-foreground text-sm border-t mt-12">
-        &copy; {new Date().getFullYear()} RankUp Counter. Desenvolvido para resenhas memoráveis.
+      <footer className="py-12 text-center text-white/20 text-xs font-bold uppercase tracking-[0.3em]">
+        &copy; {new Date().getFullYear()} RankUp • Desenvolvido para Momentos Épicos
       </footer>
     </main>
   );

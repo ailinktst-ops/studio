@@ -5,50 +5,31 @@
 
 @layer base {
   :root {
-    --background: 0 0% 93%;
-    --foreground: 261 51% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 261 51% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 261 51% 10%;
-    --primary: 261 51% 47%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 174 100% 29%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 261 10% 90%;
-    --muted-foreground: 261 10% 40%;
-    --accent: 174 100% 29%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 261 20% 85%;
-    --input: 261 20% 85%;
-    --ring: 261 51% 47%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
     --radius: 0.75rem;
     --chart-1: 261 51% 47%;
     --chart-2: 174 100% 29%;
     --chart-3: 35 90% 50%;
     --chart-4: 0 80% 60%;
     --chart-5: 200 80% 60%;
-  }
-  .dark {
-    --background: 261 51% 5%;
-    --foreground: 0 0% 98%;
-    --card: 261 51% 8%;
-    --card-foreground: 0 0% 98%;
-    --popover: 261 51% 8%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 261 70% 60%;
-    --primary-foreground: 261 51% 10%;
-    --secondary: 174 100% 40%;
-    --secondary-foreground: 261 51% 10%;
-    --muted: 261 30% 20%;
-    --muted-foreground: 261 10% 70%;
-    --accent: 174 100% 40%;
-    --accent-foreground: 261 51% 10%;
-    --border: 261 30% 20%;
-    --input: 261 30% 20%;
-    --ring: 261 70% 60%;
   }
 }
 
@@ -57,10 +38,30 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-body antialiased;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(263, 70%, 50%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(174, 100%, 29%, 0.1) 0px, transparent 50%);
+    background-attachment: fixed;
   }
 }
 
-.ranking-transition {
-  transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+.ranking-card-glow-0 {
+  box-shadow: 0 0 20px hsla(45, 100%, 50%, 0.2);
+}
+.ranking-card-glow-1 {
+  box-shadow: 0 0 20px hsla(0, 0%, 70%, 0.15);
+}
+.ranking-card-glow-2 {
+  box-shadow: 0 0 20px hsla(25, 100%, 40%, 0.15);
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }

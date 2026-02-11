@@ -2,24 +2,27 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot, setDoc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export interface Participant {
   id: string;
   name: string;
   count: number;
+  category: string;
 }
 
 export interface CounterState {
   title: string;
   participants: Participant[];
+  categories: string[];
   updatedAt: Timestamp | null;
 }
 
 const DEFAULT_STATE: CounterState = {
   title: "Quem Bebeu Mais",
   participants: [],
+  categories: ["Cerveja", "Água", "Drink", "Shot"],
   updatedAt: null,
 };
 
@@ -32,9 +35,13 @@ export function useCounter() {
     
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
-        setData(snapshot.data() as CounterState);
+        const remoteData = snapshot.data() as CounterState;
+        // Garantir que categorias existam para apps antigos
+        if (!remoteData.categories) {
+          remoteData.categories = DEFAULT_STATE.categories;
+        }
+        setData(remoteData);
       } else {
-        // Initialize if not exists
         setDoc(docRef, { ...DEFAULT_STATE, updatedAt: Timestamp.now() });
       }
       setLoading(false);
@@ -54,15 +61,17 @@ export function useCounter() {
     });
   };
 
-  const addParticipant = async (name: string) => {
+  const addParticipant = async (name: string, category: string) => {
     const docRef = doc(db, 'counter', 'current');
     const newParticipant: Participant = {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substring(2, 11), // Gerador de ID simples e seguro
       name,
-      count: 0
+      count: 0,
+      category: category || "Geral"
     };
+    
     await updateDoc(docRef, {
-      participants: [...data.participants, newParticipant],
+      participants: [...(data.participants || []), newParticipant],
       updatedAt: Timestamp.now()
     });
   };
