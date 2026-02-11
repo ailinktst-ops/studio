@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -13,7 +12,16 @@ const ICON_MAP: Record<string, any> = {
 
 export default function Home() {
   const { data } = useCounter();
-  const BrandIcon = ICON_MAP[data.brandIcon] || Beer;
+  
+  // Garantir valores padrão caso os dados ainda estejam carregando ou incompletos
+  const brandName = data?.brandName || "RankUp Counter";
+  const brandIcon = data?.brandIcon || "Beer";
+  const customPhrases = data?.customPhrases || [];
+  
+  const BrandIcon = ICON_MAP[brandIcon] || Beer;
+  const nameParts = brandName.split(' ');
+  const firstName = nameParts[0];
+  const restOfName = nameParts.slice(1).join(' ');
 
   return (
     <main className="min-h-screen bg-transparent">
@@ -25,10 +33,10 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">
-                {data.brandName.split(' ')[0]} <span className="text-secondary drop-shadow-[0_0_8px_rgba(0,128,128,0.5)]">{data.brandName.split(' ').slice(1).join(' ')}</span>
+                {firstName} <span className="text-secondary drop-shadow-[0_0_8px_rgba(0,128,128,0.5)]">{restOfName}</span>
               </h1>
               <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">
-                {data.customPhrases[0] || "A Elite da Resenha em Tempo Real"}
+                {customPhrases[0] || "A Elite da Resenha em Tempo Real"}
               </p>
             </div>
           </div>
@@ -63,7 +71,7 @@ export default function Home() {
       </div>
       
       <footer className="py-12 text-center text-white/20 text-xs font-bold uppercase tracking-[0.3em]">
-        &copy; {new Date().getFullYear()} {data.brandName} • Desenvolvido para Momentos Épicos
+        &copy; {new Date().getFullYear()} {brandName} • Desenvolvido para Momentos Épicos
       </footer>
     </main>
   );

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -59,11 +58,24 @@ export function useCounter() {
     return doc(firestore, 'counters', DEFAULT_ID);
   }, [firestore]);
 
-  const { data, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
+  const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
+  // Mesclar dados do Firestore com os padrões para evitar campos undefined
+  const data: CounterState = {
+    ...DEFAULT_STATE,
+    id: DEFAULT_ID,
+    ...(rawData || {}),
+    participants: rawData?.participants || [],
+    customPhrases: rawData?.customPhrases || DEFAULT_STATE.customPhrases,
+    raffle: {
+      ...DEFAULT_STATE.raffle!,
+      ...(rawData?.raffle || {})
+    }
+  };
+
   useEffect(() => {
-    if (!isDocLoading && !data && counterRef && user && !isUserLoading) {
+    if (!isDocLoading && !rawData && counterRef && user && !isUserLoading) {
       setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
         .catch((e) => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -73,7 +85,7 @@ export function useCounter() {
           }));
         });
     }
-  }, [isDocLoading, data, counterRef, user, isUserLoading]);
+  }, [isDocLoading, rawData, counterRef, user, isUserLoading]);
 
   const updateDocField = (fields: Partial<CounterState>) => {
     if (!counterRef || !user || !data) return;
@@ -143,9 +155,9 @@ export function useCounter() {
   };
 
   return {
-    data: data || { ...DEFAULT_STATE, id: DEFAULT_ID, participants: [] },
+    data,
     loading: isLoading,
-    isInitializing: isDocLoading && !data,
+    isInitializing: isDocLoading && !rawData,
     updateTitle: (title: string) => updateDocField({ title }),
     updateBrand: (brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }),
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
