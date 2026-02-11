@@ -97,7 +97,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       setNotification({
         userName: updatedUser.name,
         count: updatedUser.count,
-        type: 'point'
+        type: 'point',
+        title: "MAIS UMA PARA!"
       });
       setTimeout(() => setNotification(null), 3500);
     }
@@ -179,25 +180,30 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
-            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
+            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center transition-colors duration-500",
             notification.type === 'leader' 
-              ? "bg-yellow-500/90 border-yellow-300 text-black animate-bounce" 
-              : "bg-primary/90 border-primary-foreground/20 text-white"
+              ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" 
+              : "bg-primary/95 border-primary-foreground/20 text-white"
           )}>
             {notification.title && (
-              <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-4 opacity-70">
+              <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">
                 {notification.title}
               </h2>
             )}
-            <div className="flex justify-center mb-6">
-              {notification.type === 'leader' ? <Trophy className="w-24 h-24" /> : <Flame className="w-24 h-24 animate-pulse" />}
-            </div>
-            <h2 className="text-9xl font-black italic uppercase tracking-tighter mb-4 drop-shadow-lg leading-tight">
+            
+            <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">
               {notification.userName}
             </h2>
-            <div className="flex items-center gap-4">
-              <span className="text-5xl font-black italic uppercase tracking-widest opacity-80">Bebeu</span>
-              <span className="text-7xl font-black italic uppercase tracking-tighter drop-shadow-md bg-white/20 px-6 py-2 rounded-2xl">
+
+            <div className="flex items-center gap-6 mt-4">
+              <div className="flex flex-col items-end">
+                <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">Bebeu</span>
+                {notification.type === 'leader' && <Trophy className="w-8 h-8 mt-2" />}
+              </div>
+              <span className={cn(
+                "text-8xl font-black italic uppercase tracking-tighter drop-shadow-md px-8 py-4 rounded-[2rem]",
+                notification.type === 'leader' ? "bg-black text-yellow-400" : "bg-white/20 text-white"
+              )}>
                 {notification.count}
               </span>
             </div>
