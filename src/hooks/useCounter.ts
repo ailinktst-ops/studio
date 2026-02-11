@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -53,11 +53,12 @@ export function useCounter() {
     return doc(firestore, 'counters', DEFAULT_ID);
   }, [firestore]);
 
-  const { data, isLoading } = useDoc<CounterState>(counterRef);
+  const { data, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
+  const isLoading = isDocLoading || isUserLoading;
 
-  // Inicialização segura do documento - apenas se o usuário estiver autenticado
+  // Inicialização segura do documento
   useEffect(() => {
-    if (!isLoading && !data && counterRef && user && !isUserLoading) {
+    if (!isDocLoading && !data && counterRef && user && !isUserLoading) {
       setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
         .catch((e) => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -67,19 +68,13 @@ export function useCounter() {
           }));
         });
     }
-  }, [isLoading, data, counterRef, user, isUserLoading]);
+  }, [isDocLoading, data, counterRef, user, isUserLoading]);
 
   const updateTitle = (newTitle: string) => {
-    if (!counterRef || !user) return;
+    if (!counterRef || !user || !data) return;
     updateDoc(counterRef, { 
       title: newTitle,
       updatedAt: Timestamp.now() 
-    }).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: counterRef.path,
-        operation: 'update',
-        requestResourceData: { title: newTitle }
-      }));
     });
   };
 
@@ -157,6 +152,7 @@ export function useCounter() {
       }
     });
 
+    // O fim da animação é controlado no cliente, mas o estado de "sorteando" expira em 8s
     setTimeout(() => {
       updateDoc(counterRef, {
         "raffle.isRaffling": false
@@ -167,13 +163,15 @@ export function useCounter() {
   const clearRaffle = () => {
     if (!counterRef || !user) return;
     updateDoc(counterRef, {
-      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null }
+      "raffle.isRaffling": false,
+      "raffle.winnerId": null
     });
   };
 
   return {
     data: data || { ...DEFAULT_STATE, id: DEFAULT_ID, participants: [] },
-    loading: isLoading || isUserLoading,
+    loading: isLoading,
+    isInitializing: isDocLoading && !data,
     updateTitle,
     addParticipant,
     incrementCount,

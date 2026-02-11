@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, Beer, Sparkles } from 'lucide-react';
+import { Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, Beer, Sparkles, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -12,11 +12,18 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 export function ControlPanel() {
-  const { data, updateTitle, addParticipant, incrementCount, resetCounts, removeParticipant, triggerRaffle } = useCounter();
+  const { data, loading, isInitializing, updateTitle, addParticipant, incrementCount, resetCounts, removeParticipant, triggerRaffle } = useCounter();
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Cerveja");
   const [editingTitle, setEditingTitle] = useState(false);
-  const [tempTitle, setTempTitle] = useState(data.title);
+  const [tempTitle, setTempTitle] = useState("");
+
+  // Atualiza o título temporário quando os dados chegam
+  useEffect(() => {
+    if (data.title && !editingTitle) {
+      setTempTitle(data.title);
+    }
+  }, [data.title, editingTitle]);
 
   const handleAddParticipant = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,17 +38,30 @@ export function ControlPanel() {
     setEditingTitle(false);
   };
 
+  if (isInitializing) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-white/40 font-bold uppercase tracking-widest text-sm">Conectando ao Firestore...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Raffle Button - New Feature */}
+      {/* Raffle Button */}
       <div className="flex justify-center mb-4">
         <Button 
           onClick={triggerRaffle} 
-          disabled={data.participants.length < 2 || data.raffle?.isRaffling}
-          className="w-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:to-red-600 h-16 rounded-2xl text-xl font-black uppercase italic tracking-tighter shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse"
+          disabled={data.participants.length < 2 || data.raffle?.isRaffling || loading}
+          className="w-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:to-red-600 h-16 rounded-2xl text-xl font-black uppercase italic tracking-tighter shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none"
         >
-          <Sparkles className="mr-2 h-6 w-6" />
-          Sorteio entre o Top 6!
+          {data.raffle?.isRaffling ? (
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+          ) : (
+            <Sparkles className="mr-2 h-6 w-6" />
+          )}
+          {data.raffle?.isRaffling ? "Sorteio em Andamento..." : "Sorteio entre o Top 6!"}
         </Button>
       </div>
 
@@ -53,7 +73,7 @@ export function ControlPanel() {
           </CardTitle>
           <Button variant="ghost" size="icon" onClick={() => {
             setEditingTitle(!editingTitle);
-            setTempTitle(data.title);
+            if (!editingTitle) setTempTitle(data.title);
           }}>
             <Edit3 className="w-4 h-4 text-primary" />
           </Button>
@@ -65,6 +85,7 @@ export function ControlPanel() {
                 value={tempTitle} 
                 onChange={(e) => setTempTitle(e.target.value)}
                 className="bg-background/50"
+                autoFocus
               />
               <Button onClick={handleUpdateTitle} variant="default" className="bg-primary hover:bg-primary/80">Salvar</Button>
             </div>
@@ -92,10 +113,11 @@ export function ControlPanel() {
                 value={newParticipantName}
                 onChange={(e) => setNewParticipantName(e.target.value)}
                 className="bg-background/50 border-secondary/20"
+                disabled={loading}
               />
             </div>
             <div className="sm:col-span-4">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={loading}>
                 <SelectTrigger className="bg-background/50 border-secondary/20">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
@@ -106,7 +128,7 @@ export function ControlPanel() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" className="sm:col-span-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold">
+            <Button type="submit" disabled={loading || !newParticipantName.trim()} className="sm:col-span-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold">
               +
             </Button>
           </form>
@@ -118,7 +140,7 @@ export function ControlPanel() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-bold text-white">Ranking em Tempo Real</CardTitle>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={resetCounts} className="text-destructive border-destructive/20 hover:bg-destructive/10 bg-transparent">
+            <Button variant="outline" size="sm" onClick={resetCounts} disabled={loading} className="text-destructive border-destructive/20 hover:bg-destructive/10 bg-transparent">
               <RotateCcw className="w-4 h-4 mr-1" />
               Zerar
             </Button>
@@ -155,6 +177,7 @@ export function ControlPanel() {
                     <Button 
                       size="lg" 
                       onClick={() => incrementCount(p.id)}
+                      disabled={loading}
                       className="bg-primary text-primary-foreground hover:bg-primary/90 w-16 h-14 text-2xl font-black rounded-2xl shadow-lg shadow-primary/20 transition-transform active:scale-90"
                     >
                       <Plus className="w-8 h-8" />
@@ -163,6 +186,7 @@ export function ControlPanel() {
                       variant="ghost" 
                       size="icon" 
                       onClick={() => removeParticipant(p.id)}
+                      disabled={loading}
                       className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 className="w-4 h-4" />

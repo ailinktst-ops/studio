@@ -3,20 +3,22 @@
 
 import { useState, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Trophy, Medal, Star, Flame, Sparkles } from 'lucide-react';
+import { Trophy, Medal, Star, Flame, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
-  const { data, loading } = useCounter();
+  const { data, loading, isInitializing } = useCounter();
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [showWinner, setShowWinner] = useState(false);
 
-  // Lógica da animação do sorteio
+  // Lógica da animação do sorteio sincronizada
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+    let winnerTimeout: NodeJS.Timeout;
+
     if (data.raffle?.isRaffling) {
       setShowWinner(false);
-      let interval: NodeJS.Timeout;
       const candidates = data.raffle.candidates || [];
       
       if (candidates.length > 0) {
@@ -27,7 +29,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         }, 100);
 
         // Após 5 segundos de "giro", mostra o vencedor
-        setTimeout(() => {
+        winnerTimeout = setTimeout(() => {
           clearInterval(interval);
           const winner = data.participants.find(p => p.id === data.raffle?.winnerId);
           if (winner) {
@@ -36,22 +38,29 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           }
         }, 5000);
       }
-
-      return () => clearInterval(interval);
     } else {
       setShowWinner(false);
+      setCurrentRaffleName("");
     }
+
+    return () => {
+      if (interval) clearInterval(interval);
+      if (winnerTimeout) clearTimeout(winnerTimeout);
+    };
   }, [data.raffle?.isRaffling, data.raffle?.winnerId, data.participants, data.raffle?.candidates]);
 
-  if (loading) {
+  if (isInitializing) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
         <div className="relative">
-          <div className="h-20 w-20 rounded-full border-t-4 border-primary animate-spin"></div>
+          <Loader2 className="h-20 w-20 text-primary animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
             <Flame className="w-8 h-8 text-primary animate-pulse" />
           </div>
         </div>
+        <p className="text-white/40 font-bold uppercase tracking-widest animate-pulse">
+          Sincronizando Ranking...
+        </p>
       </div>
     );
   }
@@ -85,7 +94,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       
       {/* Raffle Overlay Animation */}
       {data.raffle?.isRaffling && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500">
           <div className="relative mb-12">
             <Sparkles className="w-32 h-32 text-yellow-500 animate-pulse" />
             <div className="absolute inset-0 bg-yellow-500/20 blur-3xl rounded-full"></div>
@@ -96,15 +105,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           </h2>
 
           <div className={cn(
-            "text-[12rem] font-black italic uppercase tracking-tighter leading-none transition-all duration-300",
+            "text-[10rem] md:text-[12rem] font-black italic uppercase tracking-tighter leading-none transition-all duration-300 px-4 break-words",
             showWinner ? "text-yellow-400 scale-110 drop-shadow-[0_0_50px_rgba(250,204,21,0.8)]" : "text-white/90"
           )}>
-            {currentRaffleName}
+            {currentRaffleName || "..."}
           </div>
 
           {showWinner && (
             <div className="mt-12 animate-bounce">
-              <span className="bg-yellow-500 text-black px-8 py-3 rounded-full font-black text-2xl uppercase italic">
+              <span className="bg-yellow-500 text-black px-10 py-4 rounded-full font-black text-3xl uppercase italic shadow-[0_0_30px_rgba(234,179,8,0.6)]">
                 Parabéns, lenda!
               </span>
             </div>
@@ -115,21 +124,19 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       <div className="text-center space-y-4 mb-8">
         <h1 className={cn(
           "font-black italic text-white uppercase tracking-tighter transition-all duration-700 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]",
-          overlay ? "text-9xl" : "text-6xl"
+          overlay ? "text-7xl md:text-9xl" : "text-5xl md:text-6xl"
         )}>
           {data.title}
         </h1>
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl">
         {top3.length > 0 ? (
-          // Ordem visual: 2º, 1º, 3º
-          [top3[1], top3[0], top3[2]].map((participant, visualIndex) => {
-            if (!participant) return <div key={visualIndex} className="hidden md:block" />;
-            
-            // Mapear índice visual de volta para o rank real (0 = 1º, 1 = 2º, 2 = 3º)
-            const actualIndex = visualIndex === 1 ? 0 : visualIndex === 0 ? 1 : 2;
+          // Ordem visual: 2º (esquerda), 1º (centro), 3º (direita)
+          [1, 0, 2].map((actualIndex) => {
+            const participant = top3[actualIndex];
+            if (!participant) return <div key={actualIndex} className="hidden md:block" />;
             
             return (
               <Card 
@@ -137,7 +144,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 className={cn(
                   "relative overflow-hidden transition-all duration-700 transform border-2 glass",
                   getRankStyles(actualIndex),
-                  actualIndex === 0 ? "md:order-2" : actualIndex === 1 ? "md:order-1" : "md:order-3"
+                  actualIndex === 0 ? "order-1 md:order-2" : actualIndex === 1 ? "order-2 md:order-1" : "order-3 md:order-3"
                 )}
               >
                 <CardContent className="pt-12 pb-14 flex flex-col items-center space-y-8">
@@ -153,7 +160,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                   </div>
 
                   <div className="text-center space-y-2">
-                    <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter">
+                    <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter truncate w-full px-4">
                       {participant.name}
                     </h2>
                     <div className="flex justify-center">
