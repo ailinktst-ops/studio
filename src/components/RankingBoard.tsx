@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Trophy, Medal, Star, Flame, Sparkles, Loader2, Frown } from 'lucide-react';
+import { Trophy, Medal, Star, Flame, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const { data, loading, isInitializing } = useCounter();
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [showWinner, setShowWinner] = useState(false);
+  const [tickerIndex, setTickerIndex] = useState(0);
 
   // Lógica da animação do sorteio sincronizada
   useEffect(() => {
@@ -48,7 +49,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           i++;
         }, 100);
 
-        // Após 5 segundos de "giro", mostra o vencedor
         winnerTimeout = setTimeout(() => {
           clearInterval(interval);
           const winner = data.participants.find(p => p.id === data.raffle?.winnerId);
@@ -69,6 +69,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     };
   }, [data.raffle?.isRaffling, data.raffle?.winnerId, data.participants, data.raffle?.candidates]);
 
+  // Lógica do Ticker (Feed dinâmico no rodapé)
+  useEffect(() => {
+    if (!overlay) return;
+    const interval = setInterval(() => {
+      setTickerIndex((prev) => (prev + 1) % 2);
+    }, 6000); // Troca a cada 6 segundos (incluindo tempo de pausa)
+    return () => clearInterval(interval);
+  }, [overlay]);
+
   if (isInitializing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
@@ -87,6 +96,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const sortedParticipants = [...(data?.participants || [])].sort((a, b) => b.count - a.count);
   const top3 = sortedParticipants.slice(0, 3);
+  const leader = top3[0];
   const lanterninha = sortedParticipants.length > 3 ? sortedParticipants[sortedParticipants.length - 1] : null;
 
   const getRankIcon = (index: number) => {
@@ -117,7 +127,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {data.raffle?.isRaffling && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500">
           <div className="relative mb-12">
-            <Sparkles className="w-32 h-32 text-yellow-500 animate-pulse" />
+            <Star className="w-32 h-32 text-yellow-500 animate-pulse" />
             <div className="absolute inset-0 bg-yellow-500/20 blur-3xl rounded-full"></div>
           </div>
           
@@ -154,7 +164,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
         {top3.length > 0 ? (
-          // Ordem visual: 2º (esquerda), 1º (centro), 3º (direita)
           [1, 0, 2].map((actualIndex) => {
             const participant = top3[actualIndex];
             if (!participant) return <div key={actualIndex} className="hidden md:block" />;
@@ -212,7 +221,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         )}
       </div>
 
-      {/* Lanterninha Section */}
       {lanterninha && (
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 backdrop-blur-md flex items-center justify-between group hover:bg-destructive/20 transition-all">
@@ -241,13 +249,32 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && top3.length > 0 && (
-        <div className="fixed bottom-12 left-0 right-0 flex justify-center">
-          <div className="bg-black/80 backdrop-blur-xl px-10 py-4 rounded-full border border-white/10 flex items-center gap-4 shadow-2xl">
-            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.8)]"></div>
-            <span className="text-white/80 text-lg font-black italic uppercase tracking-[0.2em]">
-              Feed Ao Vivo • RankUp Counter
-            </span>
+      {overlay && (
+        <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4">
+          <div className="bg-black/60 backdrop-blur-2xl px-8 py-3 rounded-full border border-white/10 flex items-center gap-4 shadow-2xl min-w-[400px] justify-center overflow-hidden">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,1)]"></div>
+            </div>
+            
+            <div className="relative h-6 w-full flex items-center justify-center">
+              <div className={cn(
+                "absolute transition-all duration-1000 transform flex items-center gap-2",
+                tickerIndex === 0 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              )}>
+                <span className="text-white/80 text-sm font-black italic uppercase tracking-[0.2em] whitespace-nowrap">
+                  Feed Ao Vivo • RankUp Counter
+                </span>
+              </div>
+              
+              <div className={cn(
+                "absolute transition-all duration-1000 transform flex items-center gap-2",
+                tickerIndex === 1 ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+              )}>
+                <span className="text-secondary text-sm font-black italic uppercase tracking-[0.15em] whitespace-nowrap">
+                  Liderança de <span className="text-white">{leader?.name || "---"}</span> com <span className="text-white">{leader?.count || 0}</span> {leader?.count === 1 ? "unidade" : "unidades"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
