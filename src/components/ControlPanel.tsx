@@ -69,8 +69,9 @@ export function ControlPanel() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) {
-        alert("A imagem é muito grande. Escolha uma imagem de até 1MB.");
+      // Aumentado limite para 2MB (2048 * 1024 bytes)
+      if (file.size > 2 * 1024 * 1024) {
+        alert("A imagem é muito grande. Escolha uma imagem de até 2MB.");
         return;
       }
       const reader = new FileReader();
@@ -119,7 +120,7 @@ export function ControlPanel() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase text-white/40">Logo Personalizada (Máx. 1MB)</label>
+                    <label className="text-[10px] font-bold uppercase text-white/40">Logo Personalizada (Máx. 2MB)</label>
                     <div className="flex items-center gap-3">
                       <input 
                         type="file" 
