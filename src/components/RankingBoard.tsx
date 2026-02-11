@@ -102,7 +102,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           <CustomIcon className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
-        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-8xl md:text-9xl" : "text-5xl md:text-6xl")}>
+        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-7xl md:text-8xl" : "text-5xl md:text-6xl")}>
           {data.title}
         </h1>
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
