@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -5,7 +6,7 @@ import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, 
   Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
-  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Image as ImageIcon
+  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ export function ControlPanel() {
     data, loading, isInitializing, 
     updateTitle, updateBrand, updatePhrases, updateBrandImage,
     addParticipant, incrementCount, resetCounts, 
-    removeParticipant, triggerRaffle 
+    removeParticipant, triggerRaffle, triggerSurpriseChallenge
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -69,7 +70,6 @@ export function ControlPanel() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Limite de 2MB para o arquivo original
       if (file.size > 2 * 1024 * 1024) {
         alert("A imagem é muito grande. Escolha uma imagem de até 2MB.");
         return;
@@ -79,13 +79,9 @@ export function ControlPanel() {
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          // Criar um canvas para redimensionar e comprimir a imagem
-          // Isso é necessário porque o Firestore tem um limite de 1MB por documento
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-
-          // Definir um tamanho máximo razoável para a logo (ex: 800px)
           const MAX_SIZE = 800;
           if (width > height) {
             if (width > MAX_SIZE) {
@@ -98,13 +94,11 @@ export function ControlPanel() {
               height = MAX_SIZE;
             }
           }
-
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            // Comprimir para JPEG com 70% de qualidade para garantir que o Base64 fique < 1MB
             const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
             updateBrandImage(optimizedDataUrl);
           }
@@ -230,14 +224,25 @@ export function ControlPanel() {
         </Accordion>
       </Card>
 
-      <Button 
-        onClick={triggerRaffle} 
-        disabled={data.participants.length < 2 || data.raffle?.isRaffling || loading}
-        className="w-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:to-red-600 h-16 rounded-2xl text-xl font-black uppercase italic tracking-tighter shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none"
-      >
-        {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
-        {data.raffle?.isRaffling ? "Sorteio em Andamento..." : "Sorteio entre o Top 6!"}
-      </Button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Button 
+          onClick={triggerRaffle} 
+          disabled={data.participants.length < 2 || data.raffle?.isRaffling || loading}
+          className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:to-red-600 h-16 rounded-2xl text-lg font-black uppercase italic tracking-tighter shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none"
+        >
+          {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
+          {data.raffle?.isRaffling ? "..." : "Sorteio Top 6"}
+        </Button>
+
+        <Button 
+          onClick={triggerSurpriseChallenge} 
+          disabled={data.participants.length < 1 || data.raffle?.isRaffling || loading}
+          className="bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 h-16 rounded-2xl text-lg font-black uppercase italic tracking-tighter shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none"
+        >
+          {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Zap className="mr-2 h-6 w-6" />}
+          {data.raffle?.isRaffling ? "..." : "Desafio Surpresa"}
+        </Button>
+      </div>
 
       {/* Título do Evento */}
       <Card className="bg-card/50 backdrop-blur-sm border-primary/20">

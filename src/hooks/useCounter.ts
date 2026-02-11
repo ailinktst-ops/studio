@@ -156,6 +156,21 @@ export function useCounter() {
     setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 8000);
   };
 
+  const triggerSurpriseChallenge = () => {
+    if (!counterRef || !data || !user || data.participants.length < 1) return;
+    const candidates = data.participants.map(p => p.name);
+    const winner = data.participants[Math.floor(Math.random() * data.participants.length)];
+    updateDoc(counterRef, {
+      raffle: {
+        isRaffling: true,
+        winnerId: winner.id,
+        candidates: candidates,
+        startTime: Date.now()
+      }
+    });
+    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 8000);
+  };
+
   return {
     data,
     loading: isLoading,
@@ -168,6 +183,7 @@ export function useCounter() {
     incrementCount,
     resetCounts,
     removeParticipant,
-    triggerRaffle
+    triggerRaffle,
+    triggerSurpriseChallenge
   };
 }
