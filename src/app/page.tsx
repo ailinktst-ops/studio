@@ -6,6 +6,7 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { RankingBoard } from "@/components/RankingBoard";
 import { useCounter } from "@/hooks/useCounter";
 import { LayoutDashboard, Trophy, Beer, Wine, CupSoda, GlassWater, Flame, Music, Pizza, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, any> = {
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
@@ -29,9 +30,12 @@ export default function Home() {
       <header className="py-10 px-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="bg-primary p-3 rounded-2xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.5)] rotate-3 overflow-hidden flex items-center justify-center min-w-[56px] min-h-[56px]">
+            <div className={cn(
+              "bg-primary rounded-2xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.5)] rotate-3 overflow-hidden flex items-center justify-center min-w-[56px] min-h-[56px]",
+              brandImageUrl ? "p-0" : "p-3"
+            )}>
               {brandImageUrl ? (
-                <img src={brandImageUrl} className="w-8 h-8 object-contain" alt="Logo" />
+                <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" />
               ) : (
                 <BrandIcon className="w-8 h-8" />
               )}
