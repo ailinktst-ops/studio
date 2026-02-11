@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useEffect } from 'react';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -16,7 +17,7 @@ export interface Participant {
 export interface RaffleState {
   isRaffling: boolean;
   winnerId: string | null;
-  candidates: string[]; // Nomes dos participantes no sorteio
+  candidates: string[];
   startTime: number | null;
 }
 
@@ -44,7 +45,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
 };
 
 export function useCounter() {
-  const { firestore } = useFirestore();
+  const firestore = useFirestore();
   
   const counterRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -53,39 +54,58 @@ export function useCounter() {
 
   const { data, isLoading } = useDoc<CounterState>(counterRef);
 
-  // Inicializa o documento se não existir
-  if (!isLoading && !data && counterRef) {
-    setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
-      .catch(async (e) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: counterRef.path,
-          operation: 'create',
-          requestResourceData: DEFAULT_STATE
-        }));
-      });
-  }
+  // Inicialização segura do documento
+  useEffect(() => {
+    if (!isLoading && !data && counterRef) {
+      setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
+        .catch((e) => {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: counterRef.path,
+            operation: 'create',
+            requestResourceData: DEFAULT_STATE
+          }));
+        });
+    }
+  }, [isLoading, data, counterRef]);
 
   const updateTitle = (newTitle: string) => {
     if (!counterRef) return;
     updateDoc(counterRef, { 
       title: newTitle,
       updatedAt: Timestamp.now() 
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { title: newTitle }
+      }));
     });
   };
 
   const addParticipant = (name: string, category: string) => {
-    if (!counterRef || !data) return;
+    if (!counterRef) return;
+    
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
       name,
       count: 0,
       category: category || "Cerveja"
     };
-    
-    updateDoc(counterRef, {
-      participants: [...(data.participants || []), newParticipant],
-      updatedAt: Timestamp.now()
-    });
+
+    // Se o documento não existe ainda, usamos setDoc para criar
+    if (!data) {
+      setDoc(counterRef, {
+        ...DEFAULT_STATE,
+        id: DEFAULT_ID,
+        participants: [newParticipant],
+        updatedAt: Timestamp.now()
+      });
+    } else {
+      updateDoc(counterRef, {
+        participants: [...(data.participants || []), newParticipant],
+        updatedAt: Timestamp.now()
+      });
+    }
   };
 
   const incrementCount = (id: string) => {
@@ -121,7 +141,6 @@ export function useCounter() {
   const triggerRaffle = () => {
     if (!counterRef || !data || data.participants.length < 2) return;
     
-    // Pega os 6 maiores
     const top6 = [...data.participants]
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
@@ -138,7 +157,6 @@ export function useCounter() {
       }
     });
 
-    // Limpa o estado do sorteio após 8 segundos (animação termina)
     setTimeout(() => {
       updateDoc(counterRef, {
         "raffle.isRaffling": false

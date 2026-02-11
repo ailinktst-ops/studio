@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AuthInitializer } from '@/components/AuthInitializer';
 
 export const metadata: Metadata = {
   title: 'RankUp Counter | Ranking em Tempo Real',
@@ -22,6 +23,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased selection:bg-primary/20 selection:text-primary bg-background">
         <FirebaseClientProvider>
+          <AuthInitializer />
           {children}
         </FirebaseClientProvider>
       </body>
