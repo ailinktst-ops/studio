@@ -3,9 +3,29 @@
 
 import { useState, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Trophy, Medal, Star, Flame, Sparkles, Loader2 } from 'lucide-react';
+import { Trophy, Medal, Star, Flame, Sparkles, Loader2, Frown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+
+// Ícone de choro customizado (SVG)
+const CryingIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
+    <line x1="9" y1="9" x2="9.01" y2="9" />
+    <line x1="15" y1="9" x2="15.01" y2="9" />
+    <path d="M9 11v2" className="animate-pulse" />
+    <path d="M15 11v2" className="animate-pulse" />
+  </svg>
+);
 
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const { data, loading, isInitializing } = useCounter();
@@ -67,6 +87,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const sortedParticipants = [...(data?.participants || [])].sort((a, b) => b.count - a.count);
   const top3 = sortedParticipants.slice(0, 3);
+  const lanterninha = sortedParticipants.length > 3 ? sortedParticipants[sortedParticipants.length - 1] : null;
 
   const getRankIcon = (index: number) => {
     switch (index) {
@@ -131,7 +152,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
         {top3.length > 0 ? (
           // Ordem visual: 2º (esquerda), 1º (centro), 3º (direita)
           [1, 0, 2].map((actualIndex) => {
@@ -190,6 +211,35 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           </div>
         )}
       </div>
+
+      {/* Lanterninha Section */}
+      {lanterninha && (
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 backdrop-blur-md flex items-center justify-between group hover:bg-destructive/20 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="bg-destructive/20 p-4 rounded-2xl">
+                <CryingIcon className="w-10 h-10 text-destructive animate-pulse" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-destructive mb-1 block">
+                  Lanterninha 🤡
+                </span>
+                <h3 className="text-2xl font-black italic text-white uppercase tracking-tight">
+                  {lanterninha.name}
+                </h3>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-black text-destructive block leading-none">
+                {lanterninha.count}
+              </span>
+              <span className="text-[10px] font-bold text-white/30 uppercase">
+                Consumidos
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {overlay && top3.length > 0 && (
         <div className="fixed bottom-12 left-0 right-0 flex justify-center">
