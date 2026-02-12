@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from '@/lib/utils';
 
 const ICON_OPTIONS = [
   { id: 'Beer', icon: Beer },
@@ -126,7 +127,8 @@ export function SettingsPanel() {
     try {
       const cleanUrl = url.replace(/\/$/, "");
       const parts = cleanUrl.split('/');
-      return parts[parts.length - 1] || parts[parts.length - 2] || 'Social';
+      let handle = parts[parts.length - 1] || parts[parts.length - 2];
+      return handle.startsWith('@') ? handle : `@${handle}`;
     } catch {
       return 'Social';
     }
