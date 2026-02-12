@@ -105,31 +105,36 @@ export function useCounter() {
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
-  const sanitizeCategories = (cats: string[]) => cats.map(c => c === "Gelo" ? "Passa ou repassa" : c);
-
-  const data: CounterState = {
-    ...DEFAULT_STATE,
-    id: DEFAULT_ID,
-    ...(rawData || {}),
-    participants: (rawData?.participants || []).map(p => ({
-      ...p,
-      category: p.category === "Gelo" ? "Passa ou repassa" : p.category
-    })),
-    messages: rawData?.messages || [],
-    musicRequests: rawData?.musicRequests || [],
-    categories: sanitizeCategories(rawData?.categories || DEFAULT_STATE.categories),
-    customPhrases: (rawData?.customPhrases && rawData.customPhrases.length > 0) 
-      ? rawData.customPhrases 
-      : DEFAULT_STATE.customPhrases,
-    raffle: {
-      ...DEFAULT_STATE.raffle!,
-      ...(rawData?.raffle || {})
-    },
-    announcement: {
-      ...DEFAULT_STATE.announcement!,
-      ...(rawData?.announcement || {})
-    }
+  // Função interna para limpar qualquer resquício da palavra "Gelo"
+  const cleanData = (state: Partial<CounterState>): CounterState => {
+    const sanitize = (cat: string) => cat === "Gelo" ? "Passa ou repassa" : cat;
+    
+    return {
+      ...DEFAULT_STATE,
+      id: DEFAULT_ID,
+      ...state,
+      categories: (state.categories || DEFAULT_STATE.categories).map(sanitize),
+      participants: (state.participants || []).map(p => ({
+        ...p,
+        category: sanitize(p.category)
+      })),
+      messages: state.messages || [],
+      musicRequests: state.musicRequests || [],
+      customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
+        ? state.customPhrases 
+        : DEFAULT_STATE.customPhrases,
+      raffle: {
+        ...DEFAULT_STATE.raffle!,
+        ...(state.raffle || {})
+      },
+      announcement: {
+        ...DEFAULT_STATE.announcement!,
+        ...(state.announcement || {})
+      }
+    } as CounterState;
   };
+
+  const data = cleanData(rawData || {});
 
   useEffect(() => {
     async function initDoc() {
@@ -170,11 +175,13 @@ export function useCounter() {
     const nameExists = data.participants.some(p => p.name.toLowerCase() === normalizedName);
     if (nameExists) return false;
 
+    const finalCategory = category === "Gelo" ? "Passa ou repassa" : (category || "Cerveja");
+
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
       name: name.trim(),
       count: 0,
-      category: category === "Gelo" ? "Passa ou repassa" : (category || "Cerveja"),
+      category: finalCategory,
       imageUrl,
       status: autoApprove ? 'approved' : 'pending'
     };
@@ -199,7 +206,11 @@ export function useCounter() {
       updatedParticipants = data.participants.filter(p => p.id !== id);
     } else {
       updatedParticipants = data.participants.map(p => 
-        p.id === id ? { ...p, status: 'approved' as const, category: (category === "Gelo" ? "Passa ou repassa" : category) || p.category } : p
+        p.id === id ? { 
+          ...p, 
+          status: 'approved' as const, 
+          category: (category === "Gelo" ? "Passa ou repassa" : category) || p.category 
+        } : p
       );
     }
     updateDoc(counterRef, {
@@ -216,8 +227,9 @@ export function useCounter() {
 
   const updateParticipantCategory = (id: string, category: string) => {
     if (!counterRef || !data) return;
+    const finalCategory = category === "Gelo" ? "Passa ou repassa" : category;
     const updatedParticipants = data.participants.map(p => 
-      p.id === id ? { ...p, category: category === "Gelo" ? "Passa ou repassa" : category } : p
+      p.id === id ? { ...p, category: finalCategory } : p
     );
     updateDoc(counterRef, {
       participants: updatedParticipants,
