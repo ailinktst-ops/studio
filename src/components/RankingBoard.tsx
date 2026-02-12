@@ -89,18 +89,28 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const approvedParticipants = (data.participants || []).filter(p => p.status === 'approved');
 
+  // Ordenação: 1º Pontos (desc), 2º Ordem de adição (original array order)
+  const sortedParticipants = [...approvedParticipants].sort((a, b) => {
+    if (b.count !== a.count) {
+      return b.count - a.count;
+    }
+    // Se empatado em pontos, quem foi adicionado primeiro (index menor) fica na frente
+    const indexA = approvedParticipants.findIndex(p => p.id === a.id);
+    const indexB = approvedParticipants.findIndex(p => p.id === b.id);
+    return indexA - indexB;
+  });
+
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0) return;
 
-    const sortedCurrent = [...approvedParticipants].sort((a, b) => b.count - a.count);
-    const top10Current = sortedCurrent.slice(0, 10);
+    const top10Current = sortedParticipants.slice(0, 10);
     const currentLantern = (top10Current.length > 3 && top10Current[top10Current.length - 1].count > 0) 
       ? top10Current[top10Current.length - 1] 
       : null;
 
     if (lastParticipantsRef.current.length === 0) {
       lastParticipantsRef.current = approvedParticipants;
-      lastLeaderIdRef.current = sortedCurrent[0]?.id || null;
+      lastLeaderIdRef.current = sortedParticipants[0]?.id || null;
       lastLanternIdRef.current = currentLantern?.id || null;
       return;
     }
@@ -113,7 +123,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       return prevP && p.count > prevP.count;
     });
 
-    const currentLeader = sortedCurrent[0];
+    const currentLeader = sortedParticipants[0];
 
     // Detect Leader Change
     if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
@@ -152,7 +162,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
 
     lastParticipantsRef.current = current;
-  }, [data.participants, overlay, approvedParticipants]);
+  }, [data.participants, overlay, approvedParticipants, sortedParticipants]);
 
   useEffect(() => {
     if (!overlay || !data.messages || data.messages.length === 0) return;
@@ -243,23 +253,21 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     );
   }
 
-  const sortedParticipants = [...approvedParticipants].sort((a, b) => b.count - a.count);
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   const top10 = sortedParticipants.slice(0, 10);
   const lanterninha = (top10.length > 3 && top10[top10.length - 1].count > 0) ? top10[top10.length - 1] : null;
 
-  const ranks4to10 = sortedParticipants.slice(3, 10).filter(p => p.count > 0);
+  // Lista lateral esquerda: Mostra de 4 a 10, mesmo se tiverem 0 pontos
+  const ranks4to10 = sortedParticipants.slice(3, 10);
+  
   const approvedMessages = data.messages.filter(m => m.status === 'approved');
   const latestMessage = approvedMessages.length > 0 ? approvedMessages[approvedMessages.length - 1] : null;
-  const lastChallengedWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
-  const showPersistentChallenge = overlay && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling && lastChallengedWinner;
 
-  // Lista de músicas aprovadas em ordem cronológica (mais recentes no final, limitado a 10)
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => a.timestamp - b.timestamp) // Ordem cronológica: as novas têm timestamp maior e ficam no final
-    .slice(-10); // Mantém apenas as 10 mais recentes da lista cronológica
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .slice(-10);
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -270,9 +278,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Ranks 4-10 */}
+      {/* Ranks 4-10 (Lado Esquerdo) */}
       {overlay && ranks4to10.length > 0 && (
         <div className="fixed top-8 left-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-left-10 duration-700">
+          <div className="bg-primary/20 px-4 py-1 rounded-full border border-primary/30 flex items-center gap-2 mb-1 justify-center">
+            <Flame className="w-3 h-3 text-primary" />
+            <span className="text-[10px] font-black text-white uppercase italic tracking-widest">Em Disputa</span>
+          </div>
           {ranks4to10.map((p, i) => (
             <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md min-w-[150px]">
               <span className="text-[10px] font-black text-white/30 italic">{i + 4}º</span>
@@ -289,7 +301,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Pedidos de Música (Novas entram embaixo) */}
+      {/* Pedidos de Música (Canto Superior Direito) */}
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed top-8 right-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-right-10 duration-700">
           <div className="bg-blue-600/20 px-4 py-1 rounded-full border border-blue-500/30 flex items-center gap-2 mb-1 justify-center">
@@ -424,7 +436,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full"></div>
       </div>
 
-      {/* Ranking Top 3 */}
+      {/* Ranking Top 3 (Pódio) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
