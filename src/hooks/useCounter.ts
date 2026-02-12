@@ -95,12 +95,16 @@ export function useCounter() {
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
+  // Garantir que "Gelo" nunca apareça, mesmo que venha do banco
+  const sanitizeCategories = (cats: string[]) => cats.map(c => c === "Gelo" ? "Passa ou repassa" : c);
+
   const data: CounterState = {
     ...DEFAULT_STATE,
     id: DEFAULT_ID,
     ...(rawData || {}),
     participants: rawData?.participants || [],
     messages: rawData?.messages || [],
+    categories: sanitizeCategories(rawData?.categories || DEFAULT_STATE.categories),
     customPhrases: (rawData?.customPhrases && rawData.customPhrases.length > 0) 
       ? rawData.customPhrases 
       : DEFAULT_STATE.customPhrases,
@@ -153,7 +157,7 @@ export function useCounter() {
       id: Math.random().toString(36).substring(2, 11),
       name: name.trim(),
       count: 0,
-      category: category || "Cerveja",
+      category: category === "Gelo" ? "Passa ou repassa" : (category || "Cerveja"),
       imageUrl,
       status: autoApprove ? 'approved' : 'pending'
     };
@@ -171,7 +175,7 @@ export function useCounter() {
       updatedParticipants = data.participants.filter(p => p.id !== id);
     } else {
       updatedParticipants = data.participants.map(p => 
-        p.id === id ? { ...p, status: 'approved' as const, category: category || p.category } : p
+        p.id === id ? { ...p, status: 'approved' as const, category: (category === "Gelo" ? "Passa ou repassa" : category) || p.category } : p
       );
     }
     updateDoc(counterRef, {
@@ -183,8 +187,22 @@ export function useCounter() {
   const updateParticipantCategory = (id: string, category: string) => {
     if (!counterRef || !data) return;
     const updatedParticipants = data.participants.map(p => 
-      p.id === id ? { ...p, category } : p
+      p.id === id ? { ...p, category: category === "Gelo" ? "Passa ou repassa" : category } : p
     );
+    updateDoc(counterRef, {
+      participants: updatedParticipants,
+      updatedAt: Timestamp.now()
+    });
+  };
+
+  const updateAllParticipantsCategory = (category: string, resetPoints: boolean) => {
+    if (!counterRef || !data) return;
+    const finalCategory = category === "Gelo" ? "Passa ou repassa" : category;
+    const updatedParticipants = data.participants.map(p => ({
+      ...p,
+      category: finalCategory,
+      count: resetPoints ? 0 : p.count
+    }));
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
@@ -349,6 +367,7 @@ export function useCounter() {
     addParticipant,
     moderateParticipant,
     updateParticipantCategory,
+    updateAllParticipantsCategory,
     updateParticipantImage,
     incrementCount,
     resetAll,

@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, Monitor, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Copy, Share2, ExternalLink
+  Copy, Share2, ExternalLink, Settings
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -27,6 +29,15 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
@@ -35,11 +46,15 @@ export function ControlPanel() {
     data, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
-    moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory
+    moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
+    updateAllParticipantsCategory
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Cerveja");
+  const [bulkCategory, setBulkCategory] = useState("Passa ou repassa");
+  const [bulkResetPoints, setBulkResetPoints] = useState(false);
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -68,6 +83,15 @@ export function ControlPanel() {
         });
       }
     }
+  };
+
+  const handleBulkUpdate = () => {
+    updateAllParticipantsCategory(bulkCategory, bulkResetPoints);
+    setIsBulkDialogOpen(false);
+    toast({
+      title: "Ranking Atualizado!",
+      description: `Todos os participantes agora são da categoria ${bulkCategory}.`,
+    });
   };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
@@ -206,9 +230,64 @@ export function ControlPanel() {
           </Card>
 
           <Card className="bg-card/50 border-white/5">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
               <CardTitle className="text-lg font-bold">Ranking Geral</CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-secondary border-secondary/20 hover:bg-secondary/10 bg-transparent text-[10px] font-bold uppercase">
+                      <Settings className="w-4 h-4 mr-1" /> Alterar Todos
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-white uppercase font-black italic">Alterar Todos os Usuários</DialogTitle>
+                      <DialogDescription className="text-white/60 font-bold">
+                        Defina uma nova categoria para todos os participantes aprovados de uma vez.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-6 py-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-white/40">Nova Categoria:</Label>
+                        <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                          <SelectTrigger className="bg-black/40 border-white/10 h-12"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-card border-white/10">
+                            {data.categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+                        <div className="space-y-0.5">
+                          <Label className="text-white font-bold uppercase text-xs">Zerar pontos de todos?</Label>
+                          <p className="text-[10px] text-white/40 font-bold uppercase">Todos voltarão para 0 gole</p>
+                        </div>
+                        <Switch checked={bulkResetPoints} onCheckedChange={setBulkResetPoints} />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button className="w-full bg-secondary text-secondary-foreground font-black uppercase italic h-12">
+                            Aplicar Mudanças
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-white uppercase font-black italic">Tem certeza absoluta?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-white/60 font-bold">
+                              Esta ação alterará a categoria de TODOS os participantes {bulkResetPoints ? "e ZERARÁ todos os pontos!" : "mantendo as pontuações atuais."}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleBulkUpdate} className="bg-secondary text-secondary-foreground font-black uppercase italic">Sim, Confirmar!</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <Button variant="outline" size="sm" onClick={resetOnlyPoints} className="text-primary border-primary/20 hover:bg-primary/10 bg-transparent text-[10px] font-bold uppercase">
                   <History className="w-4 h-4 mr-1" /> Zerar Pontos
                 </Button>
@@ -221,7 +300,7 @@ export function ControlPanel() {
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-card border-white/10 backdrop-blur-xl">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-white uppercase font-black italic italic">Tem certeza que deseja resetar todo o rank?</AlertDialogTitle>
+                      <AlertDialogTitle className="text-white uppercase font-black italic">Tem certeza que deseja resetar todo o rank?</AlertDialogTitle>
                       <AlertDialogDescription className="text-white/60 font-bold">
                         Todos os participantes serão retirados permanentemente! Esta ação não pode ser desfeita.
                       </AlertDialogDescription>
