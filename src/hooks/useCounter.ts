@@ -48,12 +48,20 @@ export interface AnnouncementState {
   timestamp: number | null;
 }
 
+export interface SocialAnnouncementState {
+  type: 'instagram' | 'youtube' | null;
+  isActive: boolean;
+  timestamp: number | null;
+}
+
 export interface CounterState {
   id: string;
   title: string;
   brandName: string;
   brandIcon: string;
   brandImageUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
   participants: Participant[];
   messages: ElegantMessage[];
   musicRequests: MusicRequest[];
@@ -62,6 +70,7 @@ export interface CounterState {
   updatedAt: any;
   raffle?: RaffleState;
   announcement?: AnnouncementState;
+  socialAnnouncement?: SocialAnnouncementState;
 }
 
 const DEFAULT_ID = "current";
@@ -72,6 +81,8 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   brandName: "RankUp Counter",
   brandIcon: "Beer",
   brandImageUrl: "",
+  instagramUrl: "",
+  youtubeUrl: "",
   participants: [],
   messages: [],
   musicRequests: [],
@@ -92,6 +103,11 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   },
   announcement: {
     message: "",
+    isActive: false,
+    timestamp: null
+  },
+  socialAnnouncement: {
+    type: null,
     isActive: false,
     timestamp: null
   }
@@ -136,6 +152,10 @@ export function useCounter() {
       announcement: {
         ...DEFAULT_STATE.announcement!,
         ...(state.announcement || {})
+      },
+      socialAnnouncement: {
+        ...DEFAULT_STATE.socialAnnouncement!,
+        ...(state.socialAnnouncement || {})
       }
     } as CounterState;
   };
@@ -312,7 +332,8 @@ export function useCounter() {
       musicRequests: [],
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle', winnersHistory: [] },
-      announcement: { message: "", isActive: false, timestamp: null }
+      announcement: { message: "", isActive: false, timestamp: null },
+      socialAnnouncement: { type: null, isActive: false, timestamp: null }
     };
     updateDoc(counterRef, resetData).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -474,12 +495,10 @@ export function useCounter() {
 
   const generateCandidates = (participants: Participant[]) => {
     const names = participants.map(p => p.name);
-    // Gerar um pool GRANDE (20 repetições) para garantir que o "giro" cubra todos e dure o tempo certo
     let pool: string[] = [];
     for(let j = 0; j < 20; j++) {
       pool = [...pool, ...names];
     }
-    // Embaralhar o pool
     return pool.sort(() => Math.random() - 0.5);
   };
 
@@ -491,7 +510,6 @@ export function useCounter() {
     let winnersHistory = data.raffle?.winnersHistory || [];
     let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
 
-    // Resetar histórico se todos já ganharam
     if (pool.length === 0) {
       winnersHistory = [];
       pool = approvedParticipants;
@@ -518,7 +536,6 @@ export function useCounter() {
       }));
     });
     
-    // Finalizar o sorteio após 5 segundos
     setTimeout(() => {
       updateDoc(counterRef, { "raffle.isRaffling": false });
     }, 5500);
@@ -610,6 +627,28 @@ export function useCounter() {
     setTimeout(() => updateDoc(counterRef, { "announcement.isActive": false }), 8000);
   };
 
+  const triggerSocialAnnouncement = (type: 'instagram' | 'youtube') => {
+    if (!counterRef || !data) return;
+    updateDoc(counterRef, {
+      socialAnnouncement: {
+        type,
+        isActive: true,
+        timestamp: Date.now()
+      }
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { socialAnnouncement: { type, isActive: true, timestamp: Date.now() } }
+      }));
+    });
+    setTimeout(() => updateDoc(counterRef, { "socialAnnouncement.isActive": false }), 15000);
+  };
+
+  const updateSocialLinks = (instagramUrl: string, youtubeUrl: string) => {
+    updateDocField({ instagramUrl, youtubeUrl });
+  };
+
   return {
     data,
     loading: isLoading,
@@ -618,6 +657,7 @@ export function useCounter() {
     updateBrand: (brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }),
     updateBrandImage: (brandImageUrl: string) => updateDocField({ brandImageUrl }),
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
+    updateSocialLinks,
     addParticipant,
     moderateParticipant,
     updateParticipantCategory,
@@ -637,6 +677,7 @@ export function useCounter() {
     triggerSurpriseChallenge,
     clearChallenge,
     resetRaffleHistory,
-    triggerAnnouncement
+    triggerAnnouncement,
+    triggerSocialAnnouncement
   };
 }

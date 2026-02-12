@@ -6,7 +6,7 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart, Disc, Sparkles
+  Heart, Disc, Sparkles, Instagram, Youtube
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,7 +21,8 @@ const SOUND_URLS = {
   leader: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3',
   challenge: 'https://assets.mixkit.co/active_storage/sfx/950/950-preview.mp3',
   announcement: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3',
-  heart: 'https://assets.mixkit.co/active_storage/sfx/1360/1360-preview.mp3'
+  heart: 'https://assets.mixkit.co/active_storage/sfx/1360/1360-preview.mp3',
+  social: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'
 };
 
 const CryingIcon = ({ className }: { className?: string }) => (
@@ -53,12 +54,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastParticipantsRef = useRef<Participant[]>([]);
   const lastLeaderIdRef = useRef<string | null>(null);
   const lastLanternIdRef = useRef<string | null>(null);
-  const lastAnnouncementTimeRef = useRef<number | null>(null);
-  const lastMessageIdRef = useRef<string | null>(null);
-  const lastApprovedMusicIdRef = useRef<string | null>(null);
+  const lastSocialAnnouncementRef = useRef<number | null>(null);
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Refs para o sistema de sorteio não resetar com o sync do banco
   const raffleAnimationIndexRef = useRef(0);
   const isRafflingPersistedRef = useRef(false);
 
@@ -101,7 +99,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const sortedParticipants = useMemo(() => 
     [...approvedParticipants].sort((a, b) => {
       if (b.count !== a.count) return b.count - a.count;
-      // Ordem de chegada (cadastro) para desempate
       const indexA = data.participants.findIndex(p => p.id === a.id);
       const indexB = data.participants.findIndex(p => p.id === b.id);
       return indexA - indexB;
@@ -169,7 +166,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     lastParticipantsRef.current = current;
   }, [approvedParticipants, overlay, sortedParticipants]);
 
-  // Efeito do Caça-Níqueis do Sorteio (CORRIGIDO PARA NÃO RESETAR)
+  useEffect(() => {
+    if (overlay && data.socialAnnouncement?.isActive && data.socialAnnouncement.timestamp !== lastSocialAnnouncementRef.current) {
+      playSound('social');
+      lastSocialAnnouncementRef.current = data.socialAnnouncement.timestamp;
+    }
+  }, [data.socialAnnouncement, overlay]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
@@ -177,8 +180,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       if (!isRafflingPersistedRef.current) {
         isRafflingPersistedRef.current = true;
         raffleAnimationIndexRef.current = 0;
-        
-        // Som apenas no início real do sorteio
         if (data.raffle.type === 'challenge') {
           playSound('challenge');
         }
@@ -194,8 +195,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     } else {
       isRafflingPersistedRef.current = false;
       stopChallengeSound();
-      
-      // Mostrar o vencedor final se houver
       const winner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
       if (winner && !data.raffle?.isRaffling) {
         setCurrentRaffleName(winner.name);
@@ -243,6 +242,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     .slice(-10);
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
+
+  const socialQrUrl = data.socialAnnouncement?.isActive 
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.socialAnnouncement.type === 'instagram' ? data.instagramUrl || '' : data.youtubeUrl || '')}`
+    : '';
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -333,6 +336,24 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             <p className="text-xl font-black italic text-white uppercase drop-shadow-md leading-tight">
               &ldquo;{latestMessage.content}&rdquo;
             </p>
+          </div>
+        </div>
+      )}
+
+      {overlay && data.socialAnnouncement?.isActive && (
+        <div className="fixed right-8 top-[40%] -translate-y-1/2 z-[100] animate-in slide-in-from-right-20 duration-500">
+          <div className={cn(
+            "p-8 rounded-[3rem] shadow-[0_0_60px_rgba(0,0,0,0.5)] border-4 backdrop-blur-2xl flex flex-col items-center text-center max-w-[300px] rotate-1 animate-float",
+            data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 border-pink-400" : "bg-red-600 border-red-400"
+          )}>
+            <div className="bg-white/20 p-4 rounded-full mb-4 shadow-inner">
+              {data.socialAnnouncement.type === 'instagram' ? <Instagram className="w-12 h-12 text-white" /> : <Youtube className="w-12 h-12 text-white" />}
+            </div>
+            <h3 className="text-xl font-black italic text-white uppercase tracking-tighter mb-4 drop-shadow-md">Siga nas Redes Sociais!</h3>
+            <div className="p-3 bg-white rounded-3xl shadow-2xl border-4 border-white/20">
+              <img src={socialQrUrl} alt="QR Social" className="w-48 h-48" />
+            </div>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/70">Aponte a câmera</p>
           </div>
         </div>
       )}

@@ -5,13 +5,15 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Counter",
       "type": "object",
-      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio, mensagens de correio elegante e pedidos de música.",
+      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio, mensagens de correio elegante, pedidos de música e redes sociais.",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string", "description": "Título do evento." },
         "brandName": { "type": "string", "description": "Nome da marca/festa." },
         "brandIcon": { "type": "string", "description": "ID do ícone Lucide selecionado." },
         "brandImageUrl": { "type": "string", "description": "URL em Base64 da logo personalizada." },
+        "instagramUrl": { "type": "string", "description": "Link do Instagram." },
+        "youtubeUrl": { "type": "string", "description": "Link do YouTube." },
         "participants": {
           "type": "array",
           "items": {
@@ -61,13 +63,22 @@
             "isRaffling": { "type": "boolean" },
             "winnerId": { "type": "string", "nullable": true },
             "candidates": { "type": "array", "items": { "type": "string" } },
-            "type": { "type": "string", "enum": ["raffle", "challenge"] }
+            "type": { "type": "string", "enum": ["raffle", "challenge"] },
+            "winnersHistory": { "type": "array", "items": { "type": "string" } }
           }
         },
         "announcement": {
           "type": "object",
           "properties": {
             "message": { "type": "string" },
+            "isActive": { "type": "boolean" },
+            "timestamp": { "type": "number" }
+          }
+        },
+        "socialAnnouncement": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["instagram", "youtube"] },
             "isActive": { "type": "boolean" },
             "timestamp": { "type": "number" }
           }

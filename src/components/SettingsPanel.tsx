@@ -5,7 +5,8 @@ import { useState, useRef } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, Settings2, X, Upload, Megaphone,
-  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
+  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza,
+  Instagram, Youtube, Share2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -25,11 +26,15 @@ const ICON_OPTIONS = [
 
 export function SettingsPanel() {
   const { 
-    data, updateTitle, updateBrand, updatePhrases, updateBrandImage, triggerAnnouncement
+    data, updateTitle, updateBrand, updatePhrases, updateBrandImage, 
+    triggerAnnouncement, updateSocialLinks, triggerSocialAnnouncement
   } = useCounter();
 
   const [newPhrase, setNewPhrase] = useState("");
   const [customAnnouncement, setCustomAnnouncement] = useState("");
+  const [instagramInput, setInstagramInput] = useState(data.instagramUrl || "");
+  const [youtubeInput, setYoutubeInput] = useState(data.youtubeUrl || "");
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddPhrase = () => {
@@ -49,6 +54,10 @@ export function SettingsPanel() {
       triggerAnnouncement(customAnnouncement);
       setCustomAnnouncement("");
     }
+  };
+
+  const handleSaveSocial = () => {
+    updateSocialLinks(instagramInput.trim(), youtubeInput.trim());
   };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
@@ -148,22 +157,64 @@ export function SettingsPanel() {
               </div>
             </div>
 
-            {!data.brandImageUrl && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-white/40">Ou ícone padrão</label>
-                <div className="flex flex-wrap gap-2">
-                  {ICON_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => updateBrand(data.brandName, opt.id)}
-                      className={`p-2 rounded-lg border transition-all ${data.brandIcon === opt.id ? 'bg-primary border-primary text-white shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-black/20 border-white/10 text-white/40 hover:border-white/20'}`}
-                    >
-                      <opt.icon className="w-4 h-4" />
-                    </button>
-                  ))}
+            <div className="space-y-4 pt-4 border-t border-white/5">
+              <label className="text-[10px] font-bold uppercase text-white/40 flex items-center gap-2">
+                <Share2 className="w-3 h-3" /> Redes Sociais
+              </label>
+              
+              <div className="space-y-4">
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-[8px] font-black uppercase text-white/20 tracking-widest ml-1">Instagram Link</label>
+                    <div className="relative">
+                      <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500" />
+                      <Input 
+                        placeholder="https://instagram.com/..." 
+                        value={instagramInput} 
+                        onChange={(e) => setInstagramInput(e.target.value)}
+                        className="bg-black/20 border-white/10 pl-10"
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => triggerSocialAnnouncement('instagram')}
+                    disabled={!data.instagramUrl}
+                    className="h-10 mt-5 bg-pink-600 hover:bg-pink-700 text-white font-bold text-[10px] uppercase"
+                  >
+                    Divulgar
+                  </Button>
                 </div>
+
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-[8px] font-black uppercase text-white/20 tracking-widest ml-1">YouTube Link</label>
+                    <div className="relative">
+                      <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-600" />
+                      <Input 
+                        placeholder="https://youtube.com/..." 
+                        value={youtubeInput} 
+                        onChange={(e) => setYoutubeInput(e.target.value)}
+                        className="bg-black/20 border-white/10 pl-10"
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => triggerSocialAnnouncement('youtube')}
+                    disabled={!data.youtubeUrl}
+                    className="h-10 mt-5 bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] uppercase"
+                  >
+                    Divulgar
+                  </Button>
+                </div>
+
+                <Button 
+                  onClick={handleSaveSocial}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic tracking-tighter"
+                >
+                  Salvar Links Sociais
+                </Button>
               </div>
-            )}
+            </div>
 
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase text-white/40">Frases do Overlay</label>
