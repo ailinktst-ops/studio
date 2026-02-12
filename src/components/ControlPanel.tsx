@@ -4,10 +4,10 @@
 import { useState, useRef } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { 
-  Plus, RotateCcw, UserPlus, Trash2, Monitor, 
+  Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Copy, Share2, ExternalLink, Settings, Music
+  Share2, ExternalLink, Settings, Music
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -51,8 +51,8 @@ export function ControlPanel() {
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Cerveja");
-  const [bulkCategory, setBulkCategory] = useState("Passa ou repassa");
+  const [selectedCategory, setSelectedCategory] = useState("Gole");
+  const [bulkCategory, setBulkCategory] = useState("Gole");
   const [bulkResetPoints, setBulkResetPoints] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [isConfirmBulkOpen, setIsConfirmBulkOpen] = useState(false);
@@ -325,7 +325,12 @@ export function ControlPanel() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[...approvedParticipants].sort((a,b) => b.count - a.count).map((p) => (
+              {[...approvedParticipants].sort((a,b) => {
+                if (b.count !== a.count) return b.count - a.count;
+                const idxA = approvedParticipants.findIndex(p => p.id === a.id);
+                const idxB = approvedParticipants.findIndex(p => p.id === b.id);
+                return idxA - idxB;
+              }).map((p) => (
                 <div key={p.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 group">
                   <div className="flex items-center gap-4">
                     <div className="relative group/img">

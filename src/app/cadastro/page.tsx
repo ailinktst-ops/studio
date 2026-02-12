@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { UserPlus, Camera, Check, AlertCircle, Loader2, ArrowRight, Clock, Music } from 'lucide-react';
+import { UserPlus, Camera, AlertCircle, Loader2, ArrowRight, Clock, Music } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,7 +66,8 @@ export default function CadastroPage() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const success = addParticipant(name.trim(), "Cerveja", imageUrl, false);
+    // Default category is "Gole"
+    const success = addParticipant(name.trim(), "Gole", imageUrl, false);
     
     if (success) {
       setStatus('success');

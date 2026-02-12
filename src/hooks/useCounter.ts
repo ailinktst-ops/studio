@@ -72,7 +72,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   participants: [],
   messages: [],
   musicRequests: [],
-  categories: ["Cerveja", "Água", "Drink", "Shot", "Passa ou repassa"],
+  categories: ["Gole", "Passa ou Repassa"],
   customPhrases: [
     "A ELITE DA RESENHA EM TEMPO REAL", 
     "SIGA O LÍDER!", 
@@ -106,13 +106,14 @@ export function useCounter() {
   const isLoading = isDocLoading || isUserLoading;
 
   const cleanData = (state: Partial<CounterState>): CounterState => {
-    const sanitize = (cat: string) => cat === "Gelo" ? "Passa ou repassa" : cat;
+    const validCategories = ["Gole", "Passa ou Repassa"];
+    const sanitize = (cat: string) => validCategories.includes(cat) ? cat : "Gole";
     
     return {
       ...DEFAULT_STATE,
       id: DEFAULT_ID,
       ...state,
-      categories: (state.categories || DEFAULT_STATE.categories).map(sanitize),
+      categories: validCategories,
       participants: (state.participants || []).map(p => ({
         ...p,
         category: sanitize(p.category)
@@ -174,7 +175,7 @@ export function useCounter() {
     const nameExists = data.participants.some(p => p.name.toLowerCase() === normalizedName);
     if (nameExists) return false;
 
-    const finalCategory = category === "Gelo" ? "Passa ou repassa" : (category || "Cerveja");
+    const finalCategory = (category === "Passa ou Repassa" || category === "Gole") ? category : "Gole";
 
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
@@ -208,7 +209,7 @@ export function useCounter() {
         p.id === id ? { 
           ...p, 
           status: 'approved' as const, 
-          category: (category === "Gelo" ? "Passa ou repassa" : category) || p.category 
+          category: category || p.category 
         } : p
       );
     }
@@ -226,9 +227,8 @@ export function useCounter() {
 
   const updateParticipantCategory = (id: string, category: string) => {
     if (!counterRef || !data) return;
-    const finalCategory = category === "Gelo" ? "Passa ou repassa" : category;
     const updatedParticipants = data.participants.map(p => 
-      p.id === id ? { ...p, category: finalCategory } : p
+      p.id === id ? { ...p, category: category } : p
     );
     updateDoc(counterRef, {
       participants: updatedParticipants,
@@ -244,10 +244,9 @@ export function useCounter() {
 
   const updateAllParticipantsCategory = (category: string, resetPoints: boolean) => {
     if (!counterRef || !data) return;
-    const finalCategory = category === "Gelo" ? "Passa ou repassa" : category;
     const updatedParticipants = data.participants.map(p => ({
       ...p,
-      category: finalCategory,
+      category: category,
       count: resetPoints ? 0 : p.count
     }));
     updateDoc(counterRef, {
