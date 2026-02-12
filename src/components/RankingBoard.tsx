@@ -245,7 +245,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => b.timestamp - a.timestamp)
+    .sort((a, b) => a.timestamp - b.timestamp) // Mais antigas primeiro
     .slice(0, 5);
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
@@ -292,7 +292,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             </div>
           </div>
 
-          <div className="fixed left-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-left-10 duration-700">
+          <div className="fixed left-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-left-10 duration-700">
              <div className="flex flex-col items-center gap-2">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
               <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
