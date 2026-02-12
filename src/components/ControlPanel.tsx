@@ -7,7 +7,8 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Share2, ExternalLink, Settings, Music, X, Trophy, Mic, Image as ImageIconLucide
+  Share2, ExternalLink, Settings, Music, X, Trophy, Mic, Image as ImageIconLucide,
+  Play, Volume2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,7 @@ export function ControlPanel() {
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge, resetRaffleHistory,
     moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
     updateAllParticipantsCategory, moderateMusic, removeMusicRequest,
-    updatePiadinhaImage, triggerPiadinha, clearPiadinha
+    updatePiadinhaImage, triggerPiadinha, clearPiadinha, updatePiadinhaAudio
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -59,6 +60,7 @@ export function ControlPanel() {
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const piadinhaFileRef = useRef<HTMLInputElement | null>(null);
+  const adminAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
@@ -161,6 +163,25 @@ export function ControlPanel() {
     }
   };
 
+  const playAdminAudio = () => {
+    if (data.piadinha?.audioUrl) {
+      if (adminAudioRef.current) {
+        adminAudioRef.current.pause();
+      }
+      const audio = new Audio(data.piadinha.audioUrl);
+      adminAudioRef.current = audio;
+      audio.play().catch(e => console.error("Erro ao tocar áudio no painel:", e));
+    }
+  };
+
+  const deletePiadinhaAudio = () => {
+    updatePiadinhaAudio("");
+    toast({
+      title: "Áudio Removido",
+      description: "A piadinha foi deletada com sucesso.",
+    });
+  };
+
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
@@ -213,8 +234,30 @@ export function ControlPanel() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="bg-orange-500/10 border-orange-500/20 backdrop-blur-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black uppercase italic text-orange-500 flex items-center gap-2">
-              <Mic className="w-4 h-4" /> Piadinha do Dia
+            <CardTitle className="text-sm font-black uppercase italic text-orange-500 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mic className="w-4 h-4" /> Piadinha do Dia
+              </div>
+              {data.piadinha?.audioUrl && (
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={playAdminAudio}
+                    className="h-8 w-8 text-orange-500 hover:bg-orange-500/20"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={deletePiadinhaAudio}
+                    className="h-8 w-8 text-red-500 hover:bg-red-500/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
