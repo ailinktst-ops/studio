@@ -82,8 +82,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let origin = window.location.origin;
+      // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations / Monospace
       if (origin.includes("cloudworkstations.dev")) {
-        origin = origin.replace(/:\d+/, ':9000');
+        origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
       }
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
@@ -98,10 +99,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const sortedParticipants = useMemo(() => {
     return [...approvedParticipants].sort((a, b) => {
-      // Primary sort: count descending
       if (b.count !== a.count) return b.count - a.count;
-      
-      // Secondary sort: arrival order (index in original list)
       const indexA = data.participants.findIndex(p => p.id === a.id);
       const indexB = data.participants.findIndex(p => p.id === b.id);
       return indexA - indexB;
@@ -301,7 +299,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed top-8 right-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-right-10 duration-700">
-          <div className="bg-blue-600/20 px-4 py-1 rounded-full border border-blue-500/30 flex items-center gap-2 mb-1 justify-center">
+          <div className="bg-blue-500/20 px-4 py-1 rounded-full border border-blue-500/30 flex items-center gap-2 mb-1 justify-center">
             <Music className="w-3 h-3 text-blue-400" />
             <span className="text-[10px] font-black text-blue-300 uppercase italic tracking-widest">Playlist da Vez</span>
           </div>

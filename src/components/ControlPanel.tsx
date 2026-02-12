@@ -63,9 +63,9 @@ export function ControlPanel() {
     
     let origin = window.location.origin;
     
-    // Forçar a porta 9000 que é a funcional no ambiente do usuário
+    // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations / Monospace
     if (origin.includes("cloudworkstations.dev")) {
-      origin = origin.replace(/:\d+/, ':9000');
+      origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
     }
     
     const url = `${origin}${path}`;
@@ -153,7 +153,6 @@ export function ControlPanel() {
   const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => b.timestamp - a.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
   
-  // Histórico de sorteio
   const winnersHistoryIds = data.raffle?.winnersHistory || [];
   const winnersHistory = winnersHistoryIds.map(id => approvedParticipants.find(p => p.id === id)).filter(Boolean);
 
@@ -381,7 +380,6 @@ export function ControlPanel() {
         </TabsContent>
 
         <TabsContent value="moderation" className="space-y-6">
-          {/* Histórico de Sorteados */}
           <Card className="bg-card/30 backdrop-blur-md border-white/5">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-yellow-500">
