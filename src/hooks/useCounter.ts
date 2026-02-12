@@ -95,13 +95,16 @@ export function useCounter() {
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
+  // Merge de dados garantindo que os padrões existam se o documento for parcial
   const data: CounterState = {
     ...DEFAULT_STATE,
     id: DEFAULT_ID,
     ...(rawData || {}),
     participants: rawData?.participants || [],
     messages: rawData?.messages || [],
-    customPhrases: rawData?.customPhrases || DEFAULT_STATE.customPhrases,
+    customPhrases: (rawData?.customPhrases && rawData.customPhrases.length > 0) 
+      ? rawData.customPhrases 
+      : DEFAULT_STATE.customPhrases,
     raffle: {
       ...DEFAULT_STATE.raffle!,
       ...(rawData?.raffle || {})

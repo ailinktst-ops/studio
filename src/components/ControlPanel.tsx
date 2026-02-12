@@ -6,7 +6,8 @@ import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, Monitor, 
   Sparkles, Loader2, Zap, EyeOff,
-  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck
+  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
+  Copy, Share2, ExternalLink
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,16 @@ export function ControlPanel() {
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Cerveja");
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const copyToClipboard = (path: string, label: string) => {
+    const url = `${window.location.origin}${path}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast({
+        title: "Link Copiado!",
+        description: `O link para ${label} foi copiado para sua área de transferência.`,
+      });
+    });
+  };
 
   const handleAddParticipant = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +117,29 @@ export function ControlPanel() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6 max-w-2xl mx-auto pb-10">
+      {/* Links de Compartilhamento Rápido */}
+      <Card className="bg-white/5 border-white/10 backdrop-blur-md overflow-hidden">
+        <div className="px-6 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
+            <Share2 className="w-3 h-3" /> Compartilhar Evento
+          </span>
+        </div>
+        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/cadastro', 'Cadastro')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-secondary hover:text-white transition-all">
+            <UserPlus className="w-4 h-4 mr-2" /> Link Cadastro
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio Elegante')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+            <Heart className="w-4 h-4 mr-2" /> Link Correio
+          </Button>
+          <Link href="/overlay" target="_blank" className="w-full">
+            <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
+              <ExternalLink className="w-4 h-4 mr-2" /> Abrir Telão
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="main" className="w-full">
         <TabsList className="bg-white/5 border border-white/10 p-1 mb-6 h-12 w-full">
           <TabsTrigger value="main" className="flex-1 font-bold uppercase text-[10px] tracking-widest">Painel Principal</TabsTrigger>
@@ -164,15 +197,10 @@ export function ControlPanel() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-bold">Ranking Geral</CardTitle>
               <div className="flex items-center gap-2">
-                <Link href="/overlay" target="_blank">
-                  <Button variant="outline" size="sm" className="text-secondary border-secondary/20 hover:bg-secondary/10 bg-transparent">
-                    <Monitor className="w-4 h-4 mr-1" /> Abrir Overlay
-                  </Button>
-                </Link>
-                <Button variant="outline" size="sm" onClick={resetOnlyPoints} className="text-primary border-primary/20 hover:bg-primary/10 bg-transparent">
+                <Button variant="outline" size="sm" onClick={resetOnlyPoints} className="text-primary border-primary/20 hover:bg-primary/10 bg-transparent text-[10px] font-bold uppercase">
                   <History className="w-4 h-4 mr-1" /> Zerar Pontos
                 </Button>
-                <Button variant="outline" size="sm" onClick={resetAll} className="text-destructive border-destructive/20 hover:bg-destructive/10 bg-transparent">
+                <Button variant="outline" size="sm" onClick={resetAll} className="text-destructive border-destructive/20 hover:bg-destructive/10 bg-transparent text-[10px] font-bold uppercase">
                   <RotateCcw className="w-4 h-4 mr-1" /> Zerar Tudo
                 </Button>
               </div>
