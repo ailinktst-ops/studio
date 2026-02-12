@@ -289,7 +289,7 @@ export function ControlPanel() {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+                            <AlertDialogCancel onClick={() => setIsConfirmBulkOpen(false)} className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
                             <AlertDialogAction onClick={handleBulkUpdate} className="bg-secondary text-secondary-foreground font-black uppercase italic">Sim, Confirmar!</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
