@@ -435,7 +435,6 @@ export function useCounter() {
       m.id === id ? { ...m, status } : m
     );
 
-    // Regra FIFO: Apenas 10 músicas aprovadas. Se aprovar a 11ª, remove a mais antiga aprovada.
     if (status === 'approved') {
       const approvedOnes = updatedRequests.filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
       if (approvedOnes.length > 10) {

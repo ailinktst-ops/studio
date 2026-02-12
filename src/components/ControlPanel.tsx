@@ -65,14 +65,14 @@ export function ControlPanel() {
     
     // Forçar a porta 9000 que é a funcional no ambiente do usuário
     if (origin.includes("cloudworkstations.dev")) {
-      origin = origin.replace(/https:\/\/\d+-/, 'https://9000-');
+      origin = origin.replace(/:\d+/, ':9000');
     }
     
     const url = `${origin}${path}`;
     navigator.clipboard.writeText(url).then(() => {
       toast({
         title: "Link Copiado!",
-        description: `O link para ${label} foi copiado com a porta 9000 funcional.`,
+        description: `O link para ${label} foi copiado para a porta 9000.`,
       });
     });
   };
@@ -147,12 +147,10 @@ export function ControlPanel() {
     }
   };
 
-  const hasPersistentChallenge = data.raffle?.winnerId && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling;
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
   const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => b.timestamp - a.timestamp);
-  const hasActiveMessage = data.messages.some(m => m.status === 'approved');
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
 
   const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
@@ -217,20 +215,6 @@ export function ControlPanel() {
             </Button>
           </div>
 
-          <div className="space-y-4">
-            {hasPersistentChallenge && (
-              <Button onClick={clearChallenge} variant="outline" className="w-full h-12 rounded-xl border-blue-500/30 text-blue-400 hover:bg-blue-500/10 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                <EyeOff className="w-4 h-4" /> Remover Aviso de Desafio
-              </Button>
-            )}
-
-            {hasActiveMessage && (
-              <Button onClick={clearElegantMessages} variant="outline" className="w-full h-12 rounded-xl border-pink-500/30 text-pink-400 hover:bg-pink-500/10 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                <HeartOff className="w-4 h-4" /> Remover Mensagem do Telão
-              </Button>
-            )}
-          </div>
-
           <Card className="bg-card/50 border-secondary/20">
             <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-secondary"><UserPlus className="w-5 h-5" /> Adicionar Participante</CardTitle></CardHeader>
             <CardContent>
@@ -275,7 +259,7 @@ export function ControlPanel() {
                       <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
                         <div className="space-y-0.5">
                           <Label className="text-white font-bold uppercase text-xs">Zerar pontos de todos?</Label>
-                          <p className="text-[10px] text-white/40 font-bold uppercase">Todos voltarão para 0 gole</p>
+                          <p className="text-[10px] text-white/40 font-bold uppercase">Todos voltarão para 0</p>
                         </div>
                         <Switch checked={bulkResetPoints} onCheckedChange={setBulkResetPoints} />
                       </div>
@@ -330,8 +314,8 @@ export function ControlPanel() {
             <CardContent className="space-y-3">
               {[...approvedParticipants].sort((a,b) => {
                 if (b.count !== a.count) return b.count - a.count;
-                const idxA = approvedParticipants.findIndex(p => p.id === a.id);
-                const idxB = approvedParticipants.findIndex(p => p.id === b.id);
+                const idxA = data.participants.findIndex(p => p.id === a.id);
+                const idxB = data.participants.findIndex(p => p.id === b.id);
                 return idxA - idxB;
               }).map((p) => (
                 <div key={p.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 group">
@@ -376,11 +360,6 @@ export function ControlPanel() {
                   </div>
                 </div>
               ))}
-              {approvedParticipants.length === 0 && (
-                <div className="text-center py-10">
-                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum participante aprovado</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -393,48 +372,42 @@ export function ControlPanel() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pendingParticipants.length === 0 ? (
-                <div className="text-center py-10">
-                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum perfil aguardando</p>
-                </div>
-              ) : (
-                pendingParticipants.map(p => (
-                  <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="w-12 h-12 border border-white/10">
-                        {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
-                        <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-white uppercase italic">{p.name}</span>
-                        <div className="mt-1">
-                          <Select 
-                            value={moderationCategories[p.id] || p.category} 
-                            onValueChange={(val) => setModerationCategories(prev => ({ ...prev, [p.id]: val }))}
-                          >
-                            <SelectTrigger className="h-7 bg-black/40 border-secondary/20 text-[10px] font-bold uppercase px-2 w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border-white/10">
-                              {data.categories.map(cat => (
-                                <SelectItem key={cat} value={cat} className="text-[10px] font-bold uppercase">{cat}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+              {pendingParticipants.map(p => (
+                <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-12 h-12 border border-white/10">
+                      {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
+                      <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white uppercase italic">{p.name}</span>
+                      <div className="mt-1">
+                        <Select 
+                          value={moderationCategories[p.id] || p.category} 
+                          onValueChange={(val) => setModerationCategories(prev => ({ ...prev, [p.id]: val }))}
+                        >
+                          <SelectTrigger className="h-7 bg-black/40 border-secondary/20 text-[10px] font-bold uppercase px-2 w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-white/10">
+                            {data.categories.map(cat => (
+                              <SelectItem key={cat} value={cat} className="text-[10px] font-bold uppercase">{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button onClick={() => moderateParticipant(p.id, 'approved', moderationCategories[p.id])} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]">
-                        <Check className="w-4 h-4 mr-1" /> Aprovar
-                      </Button>
-                      <Button onClick={() => moderateParticipant(p.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]">
-                        <Ban className="w-4 h-4 mr-1" /> Rejeitar
-                      </Button>
-                    </div>
                   </div>
-                ))
-              )}
+                  <div className="flex gap-2">
+                    <Button onClick={() => moderateParticipant(p.id, 'approved', moderationCategories[p.id])} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]">
+                      <Check className="w-4 h-4 mr-1" /> Aprovar
+                    </Button>
+                    <Button onClick={() => moderateParticipant(p.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]">
+                      <Ban className="w-4 h-4 mr-1" /> Rejeitar
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -445,34 +418,27 @@ export function ControlPanel() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pendingMessages.length === 0 ? (
-                <div className="text-center py-10">
-                  <Heart className="w-12 h-12 text-white/5 mx-auto mb-4" />
-                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhuma mensagem pendente</p>
-                </div>
-              ) : (
-                pendingMessages.map(msg => (
-                  <div key={msg.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-primary/20 text-primary border-none font-bold italic uppercase text-[10px]">De: {msg.from}</Badge>
-                        <span className="text-white/20 text-xs">➔</span>
-                        <Badge className="bg-secondary/20 text-secondary border-none font-bold italic uppercase text-[10px]">Para: {msg.to}</Badge>
-                      </div>
-                      <span className="text-white/20 text-[10px]">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+              {pendingMessages.map(msg => (
+                <div key={msg.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-primary/20 text-primary border-none font-bold italic uppercase text-[10px]">De: {msg.from}</Badge>
+                      <span className="text-white/20 text-xs">➔</span>
+                      <Badge className="bg-secondary/20 text-secondary border-none font-bold italic uppercase text-[10px]">Para: {msg.to}</Badge>
                     </div>
-                    <p className="text-white font-medium italic text-lg leading-tight">&ldquo;{msg.content}&rdquo;</p>
-                    <div className="flex gap-2 pt-2">
-                      <Button onClick={() => moderateMessage(msg.id, 'approved')} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px] tracking-widest">
-                        <Check className="w-4 h-4 mr-2" /> Aprovar
-                      </Button>
-                      <Button onClick={() => moderateMessage(msg.id, 'rejected')} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
-                        <Ban className="w-4 h-4 mr-2" /> Rejeitar
-                      </Button>
-                    </div>
+                    <span className="text-white/20 text-[10px]">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                   </div>
-                ))
-              )}
+                  <p className="text-white font-medium italic text-lg leading-tight">&ldquo;{msg.content}&rdquo;</p>
+                  <div className="flex gap-2 pt-2">
+                    <Button onClick={() => moderateMessage(msg.id, 'approved')} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px] tracking-widest">
+                      <Check className="w-4 h-4 mr-2" /> Aprovar
+                    </Button>
+                    <Button onClick={() => moderateMessage(msg.id, 'rejected')} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
+                      <Ban className="w-4 h-4 mr-2" /> Rejeitar
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -483,55 +449,46 @@ export function ControlPanel() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pendingMusic.length === 0 && approvedMusic.length === 0 ? (
-                <div className="text-center py-10">
-                  <Music className="w-12 h-12 text-white/5 mx-auto mb-4" />
-                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum pedido de música</p>
+              {pendingMusic.map(m => (
+                <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Badge className="bg-blue-500/20 text-blue-500 border-none font-bold italic uppercase text-[10px]">Pedido Pendente</Badge>
+                    <span className="text-white/20 text-[10px]">{new Date(m.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Banda:</p>
+                    <p className="text-white font-black italic text-xl uppercase">{m.artist}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Música:</p>
+                    <p className="text-white font-black italic text-xl uppercase">{m.song}</p>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button onClick={() => moderateMusic(m.id, 'approved')} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest">
+                      <Check className="w-4 h-4 mr-2" /> Aprovar
+                    </Button>
+                    <Button onClick={() => removeMusicRequest(m.id)} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
+                      <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  {pendingMusic.map(m => (
-                    <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Badge className="bg-blue-500/20 text-blue-500 border-none font-bold italic uppercase text-[10px]">Pedido Pendente</Badge>
-                        <span className="text-white/20 text-[10px]">{new Date(m.timestamp).toLocaleTimeString()}</span>
+              ))}
+
+              {approvedMusic.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Playlist Ativa ({approvedMusic.length})</Label>
+                  {approvedMusic.map(m => (
+                    <div key={m.id} className="bg-blue-600/5 border border-blue-500/10 p-4 rounded-xl flex items-center justify-between group">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Playlist</span>
+                        <span className="text-sm font-black italic text-white uppercase">{m.artist} - {m.song}</span>
                       </div>
-                      <div>
-                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Banda:</p>
-                        <p className="text-white font-black italic text-xl uppercase">{m.artist}</p>
-                      </div>
-                      <div>
-                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Música:</p>
-                        <p className="text-white font-black italic text-xl uppercase">{m.song}</p>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Button onClick={() => moderateMusic(m.id, 'approved')} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest">
-                          <Check className="w-4 h-4 mr-2" /> Aprovar
-                        </Button>
-                        <Button onClick={() => removeMusicRequest(m.id)} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
-                          <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                        </Button>
-                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => removeMusicRequest(m.id)} className="text-white/20 hover:text-destructive transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
-
-                  {approvedMusic.length > 0 && (
-                    <div className="mt-6 space-y-4">
-                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Playlist Ativa ({approvedMusic.length})</Label>
-                      {approvedMusic.map(m => (
-                        <div key={m.id} className="bg-blue-600/5 border border-blue-500/10 p-4 rounded-xl flex items-center justify-between group">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Playlist</span>
-                            <span className="text-sm font-black italic text-white uppercase">{m.artist} - {m.song}</span>
-                          </div>
-                          <Button variant="ghost" size="icon" onClick={() => removeMusicRequest(m.id)} className="text-white/20 hover:text-destructive transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
+                </div>
               )}
             </CardContent>
           </Card>

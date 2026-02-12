@@ -82,9 +82,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     if (typeof window !== 'undefined') {
       let origin = window.location.origin;
       
-      // Forçar a porta 9000 que é a funcional no ambiente do usuário para os QR Codes
       if (origin.includes("cloudworkstations.dev")) {
-        origin = origin.replace(/https:\/\/\d+-/, 'https://9000-');
+        origin = origin.replace(/:\d+/, ':9000');
       }
       
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
@@ -95,7 +94,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const approvedParticipants = (data.participants || []).filter(p => p.status === 'approved');
 
-  // Ordenação: 1º Pontos (desc), 2º Ordem de adição (índice no array original)
   const sortedParticipants = [...approvedParticipants].sort((a, b) => {
     if (b.count !== a.count) {
       return b.count - a.count;
@@ -108,6 +106,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0) return;
 
+    const currentLeader = sortedParticipants[0];
     const top10Current = sortedParticipants.slice(0, 10);
     const currentLantern = (top10Current.length > 3 && top10Current[top10Current.length - 1].count > 0) 
       ? top10Current[top10Current.length - 1] 
@@ -115,7 +114,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
     if (lastParticipantsRef.current.length === 0) {
       lastParticipantsRef.current = approvedParticipants;
-      lastLeaderIdRef.current = sortedParticipants[0]?.id || null;
+      lastLeaderIdRef.current = currentLeader?.id || null;
       lastLanternIdRef.current = currentLantern?.id || null;
       return;
     }
@@ -128,9 +127,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       return prevP && p.count > prevP.count;
     });
 
-    const currentLeader = sortedParticipants[0];
-
-    // Detect Leader Change
     if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
       playSound('leader');
       setNotification({
@@ -142,7 +138,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       lastLeaderIdRef.current = currentLeader.id;
       setTimeout(() => setNotification(null), 5000);
     } 
-    // Detect Lantern Change
     else if (currentLantern && lastLanternIdRef.current && currentLantern.id !== lastLanternIdRef.current) {
       playSound('announcement');
       setNotification({
@@ -154,7 +149,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       lastLanternIdRef.current = currentLantern.id;
       setTimeout(() => setNotification(null), 5000);
     }
-    // Detect Point Increment
     else if (updatedUser) {
       playSound('point');
       setNotification({
@@ -263,7 +257,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top10 = sortedParticipants.slice(0, 10);
   const lanterninha = (top10.length > 3 && top10[top10.length - 1].count > 0) ? top10[top10.length - 1] : null;
 
-  // Lista lateral esquerda: Mostra de 4 a 10
   const ranks4to10 = sortedParticipants.slice(3, 10);
   
   const approvedMessages = data.messages.filter(m => m.status === 'approved');
@@ -271,7 +264,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => a.timestamp - b.timestamp) // Ordem cronológica: Mais antigas em cima
+    .sort((a, b) => a.timestamp - b.timestamp)
     .slice(-10);
 
   return (
@@ -283,7 +276,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Ranks 4-10 (Lado Esquerdo) */}
       {overlay && ranks4to10.length > 0 && (
         <div className="fixed top-8 left-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-left-10 duration-700">
           <div className="bg-primary/20 px-4 py-1 rounded-full border border-primary/30 flex items-center gap-2 mb-1 justify-center">
@@ -306,7 +298,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Pedidos de Música (Canto Superior Direito) */}
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed top-8 right-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-right-10 duration-700">
           <div className="bg-blue-600/20 px-4 py-1 rounded-full border border-blue-500/30 flex items-center gap-2 mb-1 justify-center">
@@ -324,7 +315,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR Codes Overlay */}
       {overlay && (
         <>
           <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
@@ -353,7 +343,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </>
       )}
 
-      {/* Mensagem Correio Elegante */}
       {overlay && latestMessage && (
         <div className="fixed left-8 top-[50%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
           <div className="bg-pink-600/90 backdrop-blur-xl border-4 border-pink-400 p-6 rounded-[2.5rem] shadow-[0_0_50px_rgba(219,39,119,0.5)] flex flex-col items-center text-center max-w-[240px] rotate-[-2deg]">
@@ -371,7 +360,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Avisos Gigantes */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
@@ -414,16 +402,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Sorteio */}
-      {data.raffle?.isRaffling && (
-        <div className={cn("fixed inset-0 z-[100] flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500 backdrop-blur-3xl", data.raffle.type === 'challenge' ? "bg-indigo-950/95" : "bg-black/95")}>
-          {data.raffle.type === 'challenge' ? <Zap className="w-32 h-32 text-blue-400 animate-bounce mb-8" /> : <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />}
-          <h2 className="text-4xl font-black italic text-white/60 uppercase mb-8">{showWinner ? "VENCEDOR:" : "SORTEANDO..."}</h2>
-          <div className={cn("text-[10rem] font-black italic uppercase tracking-tighter transition-all duration-500", showWinner ? "text-yellow-400 drop-shadow-[0_0_50px_rgba(250,204,21,0.8)] scale-110" : "text-white")}>{currentRaffleName || "..."}</div>
-        </div>
-      )}
-
-      {/* Cabeçalho */}
       <div className="text-center space-y-4 mb-8">
         <div className="flex items-center justify-center gap-4 mb-2">
           <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-primary/20")}>
@@ -435,7 +413,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full"></div>
       </div>
 
-      {/* Ranking Top 3 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
