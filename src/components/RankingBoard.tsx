@@ -115,7 +115,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const currentLantern = useMemo(() => {
     const activeParticipants = sortedParticipants.filter(p => p.count > 0);
-    if (activeParticipants.length > 3) {
+    if (activeParticipants.length >= 4) {
       return activeParticipants[activeParticipants.length - 1];
     }
     return null;
@@ -276,7 +276,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
   const challengeWinner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
 
-  // Ordem de chegada: as mais antigas (primeiras aceitas) no topo
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
     .sort((a, b) => a.timestamp - b.timestamp) 
@@ -374,7 +373,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed right-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-right-20 duration-1000 text-right">
-          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">Playlist <Disc className="w-3 h-3 animate-spin" /></h3>
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">Pedidos de Músicas! <Disc className="w-3 h-3 animate-spin" /></h3>
           <div className="space-y-3">
             {approvedMusic.map((m, i) => (
               <div key={m.id} className="animate-in fade-in slide-in-from-right-4" style={{ animationDelay: `${i * 100}ms` }}>
