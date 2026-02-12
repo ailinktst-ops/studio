@@ -231,15 +231,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && ranks4to10.length > 0 && (
         <div className="fixed top-8 left-8 flex gap-3 z-[70] animate-in slide-in-from-top-10 duration-700">
           {ranks4to10.map((p, i) => (
-            <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-2 border-white/5 shadow-lg backdrop-blur-md">
+            <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md">
               <span className="text-[10px] font-black text-white/30 italic">{i + 4}º</span>
-              <Avatar className="w-8 h-8 border border-white/10">
+              <Avatar className="w-10 h-10 border border-white/10">
                 {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
                 <AvatarFallback className="bg-white/5 text-[10px] font-bold">{p.name[0]}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-[10px] font-black text-white uppercase max-w-[60px] truncate leading-none">{p.name}</span>
-                <span className="text-[10px] font-black text-primary leading-none mt-0.5">{p.count} pts</span>
+                <span className="text-[10px] font-black text-white uppercase max-w-[70px] truncate leading-tight">{p.name}</span>
+                <span className="text-[10px] font-black text-primary leading-none mt-1">{p.count} gole</span>
               </div>
             </div>
           ))}
@@ -260,7 +260,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {/* Mensagem Correio Elegante (Lado Esquerdo Meio) */}
       {overlay && latestMessage && (
-        <div className="fixed left-8 top-[45%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
+        <div className="fixed left-8 top-[50%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
           <div className="bg-pink-600/90 backdrop-blur-xl border-4 border-pink-400 p-6 rounded-[2.5rem] shadow-[0_0_50px_rgba(219,39,119,0.5)] flex flex-col items-center text-center max-w-[240px] rotate-[-2deg]">
             <div className="bg-white/20 p-2 rounded-full mb-3">
               <Heart className="w-8 h-8 text-pink-100 fill-pink-100" />
@@ -379,9 +379,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {lanterninha && (
         <div className="w-full max-w-md bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <CryingIcon className="w-10 h-10 text-destructive animate-pulse" />
+            <div className="relative">
+              <Avatar className="w-16 h-16 border-2 border-destructive/40 shadow-xl">
+                {lanterninha.imageUrl ? <AvatarImage src={lanterninha.imageUrl} className="object-cover" /> : null}
+                <AvatarFallback className="bg-destructive/10"><CryingIcon className="w-8 h-8 text-destructive" /></AvatarFallback>
+              </Avatar>
+              <CryingIcon className="absolute -top-2 -right-2 w-6 h-6 text-destructive animate-pulse" />
+            </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-destructive">Lanterninha 🤡</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-destructive">Lanterninha 🤡 (Top 6)</span>
               <h3 className="text-2xl font-black italic text-white uppercase">{lanterninha.name}</h3>
             </div>
           </div>
