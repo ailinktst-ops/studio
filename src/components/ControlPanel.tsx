@@ -8,7 +8,7 @@ import {
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Music, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User
+  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User, ListOrdered
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -46,8 +46,7 @@ export function ControlPanel() {
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
-    moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
-    clearPiadinha
+    moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -58,7 +57,6 @@ export function ControlPanel() {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    // Personagens aleatórios baseados no ID do participante
     return `https://picsum.photos/seed/${p.id}-movie-anime-character/200/200`;
   };
 
@@ -159,9 +157,22 @@ export function ControlPanel() {
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
+  const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
   
   const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
+
+  const handleApproveMusic = (id: string) => {
+    if (approvedMusic.length >= 10) {
+      toast({
+        variant: "destructive",
+        title: "Limite Atingido!",
+        description: "A playlist já tem 10 músicas. Delete uma da lista ativa para adicionar novas.",
+      });
+      return;
+    }
+    moderateMusic(id, 'approved');
+  };
 
   if (isInitializing) {
     return (
@@ -263,6 +274,31 @@ export function ControlPanel() {
                 </div>
               ) : (
                 <p className="text-[10px] font-bold uppercase text-white/20 text-center italic py-4">Nenhuma mensagem no telão.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/30 border-blue-500/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-black uppercase italic text-blue-500 flex items-center gap-2">
+                <Music className="w-4 h-4" /> Playlist Ativa ({approvedMusic.length}/10)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {approvedMusic.length === 0 ? (
+                <p className="text-[10px] font-bold uppercase text-white/20 text-center italic py-4">Nenhuma música tocando.</p>
+              ) : (
+                approvedMusic.map((m, i) => (
+                  <div key={m.id} className="bg-white/5 border border-white/5 p-3 rounded-xl flex items-center justify-between group">
+                    <div>
+                      <span className="block text-white font-black italic uppercase text-xs">{m.artist}</span>
+                      <span className="block text-white/40 font-bold uppercase text-[8px] tracking-widest">{m.song}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => removeMusicRequest(m.id)} className="text-white/20 hover:text-destructive opacity-0 group-hover:opacity-100 h-8 w-8">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))
               )}
             </CardContent>
           </Card>
@@ -369,7 +405,7 @@ export function ControlPanel() {
                     <span className="block text-white/40 font-bold uppercase text-[10px] tracking-widest">{req.song}</span>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => moderateMusic(req.id, 'approved')} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
+                    <Button onClick={() => handleApproveMusic(req.id)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
                     <Button onClick={() => moderateMusic(req.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
                   </div>
                 </div>

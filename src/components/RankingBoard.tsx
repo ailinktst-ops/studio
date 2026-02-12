@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -275,6 +276,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
   const challengeWinner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
 
+  // Ordem de chegada: as mais antigas (primeiras aceitas) no topo
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
     .sort((a, b) => a.timestamp - b.timestamp) 

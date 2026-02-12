@@ -351,38 +351,6 @@ export function useCounter() {
     });
   };
 
-  const updateJokeImage = (id: string, imageUrl: string) => {
-    if (!counterRef || !data) return;
-    const updatedJokes = data.jokes.map(j => 
-      j.id === id ? { ...j, imageUrl } : j
-    );
-    updateDoc(counterRef, {
-      jokes: updatedJokes,
-      updatedAt: Timestamp.now()
-    }).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: counterRef.path,
-        operation: 'update',
-        requestResourceData: { jokes: updatedJokes }
-      }));
-    });
-  };
-
-  const removeJoke = (id: string) => {
-    if (!counterRef || !data) return;
-    const updatedJokes = data.jokes.filter(j => j.id !== id);
-    updateDoc(counterRef, {
-      jokes: updatedJokes,
-      updatedAt: Timestamp.now()
-    }).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: counterRef.path,
-        operation: 'update',
-        requestResourceData: { jokes: updatedJokes }
-      }));
-    });
-  };
-
   const triggerPiadinha = (joke: Joke) => {
     if (!counterRef || !joke.audioUrl) return;
     updateDoc(counterRef, {
@@ -435,26 +403,6 @@ export function useCounter() {
     const updatedParticipants = data.participants.map(p => 
       p.id === id ? { ...p, category: finalCategory } : p
     );
-    updateDoc(counterRef, {
-      participants: updatedParticipants,
-      updatedAt: Timestamp.now()
-    }).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: counterRef.path,
-        operation: 'update',
-        requestResourceData: { participants: updatedParticipants }
-      }));
-    });
-  };
-
-  const updateAllParticipantsCategory = (category: string, resetPoints: boolean) => {
-    if (!counterRef || !data) return;
-    const finalCategory = VALID_CATEGORIES.includes(category) ? category : "Gole";
-    const updatedParticipants = data.participants.map(p => ({
-      ...p,
-      category: finalCategory,
-      count: resetPoints ? 0 : p.count
-    }));
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
@@ -609,24 +557,6 @@ export function useCounter() {
     });
   };
 
-  const clearElegantMessages = () => {
-    if (!counterRef || !data) return;
-    const updatedMessages = data.messages.map(m => 
-      m.status === 'approved' ? { ...m, status: 'rejected' as const } : m
-    );
-    updateDoc(counterRef, {
-      messages: updatedMessages,
-      activeMessageId: null,
-      updatedAt: Timestamp.now()
-    }).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: counterRef.path,
-        operation: 'update',
-        requestResourceData: { messages: updatedMessages, activeMessageId: null }
-      }));
-    });
-  };
-
   const sendMusicRequest = (artist: string, song: string) => {
     if (!counterRef) return;
     const newRequest: MusicRequest = {
@@ -651,18 +581,9 @@ export function useCounter() {
   const moderateMusic = (id: string, status: 'approved' | 'rejected') => {
     if (!counterRef || !data) return;
     
-    let updatedRequests = data.musicRequests.map(m => 
+    const updatedRequests = data.musicRequests.map(m => 
       m.id === id ? { ...m, status } : m
     );
-
-    if (status === 'approved') {
-      // Garantir que apenas as 10 mais recentes fiquem aprovadas se houver excesso
-      const approvedOnes = updatedRequests.filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
-      if (approvedOnes.length > 10) {
-        const oldestId = approvedOnes[0].id;
-        updatedRequests = updatedRequests.filter(m => m.id !== oldestId);
-      }
-    }
 
     updateDoc(counterRef, {
       musicRequests: updatedRequests,
@@ -696,11 +617,9 @@ export function useCounter() {
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
     if (approvedParticipants.length < 1) return;
 
-    // Filtra para não repetir quem já ganhou
     let winnersHistory = data.raffle?.winnersHistory || [];
     let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
 
-    // Se todos já ganharam, reseta automaticamente ou avisa. Aqui vamos resetar se o pool esvaziar.
     if (pool.length === 0) {
       winnersHistory = [];
       pool = approvedParticipants;
@@ -709,7 +628,6 @@ export function useCounter() {
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
     
-    // Animação com candidatos
     let animPool: string[] = [];
     for(let j = 0; j < 10; j++) {
       animPool = [...animPool, ...approvedParticipants.map(p => p.name)];
@@ -890,7 +808,6 @@ export function useCounter() {
     addParticipant,
     moderateParticipant,
     updateParticipantCategory,
-    updateAllParticipantsCategory,
     updateParticipantImage,
     incrementCount,
     resetAll,
@@ -899,7 +816,6 @@ export function useCounter() {
     sendElegantMessage,
     moderateMessage,
     clearActiveMessage,
-    clearElegantMessages,
     sendMusicRequest,
     moderateMusic,
     removeMusicRequest,
@@ -912,8 +828,6 @@ export function useCounter() {
     triggerAnnouncement,
     triggerSocialAnnouncement,
     submitJoke,
-    updateJokeImage,
-    removeJoke,
     triggerPiadinha,
     clearPiadinha
   };
