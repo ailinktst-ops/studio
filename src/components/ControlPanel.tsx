@@ -80,7 +80,11 @@ export function ControlPanel() {
     }
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void) => {
+  /**
+   * Redimensiona e comprime a imagem mantendo a proporção original.
+   * Garante que a imagem caiba no limite de documento do Firestore (1MB) convertendo para Base64 otimizado.
+   */
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -88,24 +92,31 @@ export function ControlPanel() {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const MAX_SIZE = 400; // Menor para fotos de participantes
+
+        // Lógica de Redimensionamento Mantendo Proporção
         if (width > height) {
-          if (width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
           }
         } else {
-          if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
           }
         }
+
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (ctx) {
+          // Garante fundo branco para JPEGs com transparência se necessário
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          
+          // Qualidade 0.7 é o balanço ideal entre fidelidade visual e tamanho de arquivo
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
           callback(optimizedDataUrl);
         }
       };
@@ -121,14 +132,15 @@ export function ControlPanel() {
         alert("A imagem é muito grande. Escolha uma imagem de até 2MB.");
         return;
       }
-      handleImageCompression(file, (url) => updateBrandImage(url));
+      handleImageCompression(file, (url) => updateBrandImage(url), 800);
     }
   };
 
   const handleParticipantImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleImageCompression(file, (url) => updateParticipantImage(id, url));
+      // Para fotos de participantes, usamos um tamanho um pouco menor (400px) para economizar dados
+      handleImageCompression(file, (url) => updateParticipantImage(id, url), 400);
     }
   };
 
@@ -313,7 +325,7 @@ export function ControlPanel() {
                   <div className="flex items-center gap-4">
                     <div className="relative group/img">
                       <Avatar className="w-12 h-12 border-2 border-white/10">
-                        {p.imageUrl ? <AvatarImage src={p.imageUrl} /> : null}
+                        {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
                         <AvatarFallback className="bg-white/5"><ImageIcon className="w-4 h-4 text-white/20" /></AvatarFallback>
                       </Avatar>
                       <button 

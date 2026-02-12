@@ -332,7 +332,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <CardContent className="pt-12 pb-14 flex flex-col items-center space-y-8">
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white/20 shadow-2xl">
-                    {p.imageUrl ? <AvatarImage src={p.imageUrl} /> : null}
+                    {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
                     <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                   </Avatar>
                   <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary z-30">{actualIndex + 1}</div>
