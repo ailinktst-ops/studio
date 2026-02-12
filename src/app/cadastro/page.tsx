@@ -1,15 +1,13 @@
-
 "use client";
 
 import { useState } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { UserPlus, Camera, AlertCircle, Loader2, ArrowRight, Clock, Music, Mic } from 'lucide-react';
+import { UserPlus, Camera, AlertCircle, Loader2, ArrowRight, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import Link from 'next/link';
 
 export default function CadastroPage() {
   const { data, addParticipant, isInitializing } = useCounter();
@@ -21,7 +19,8 @@ export default function CadastroPage() {
   const getPreviewAvatar = () => {
     if (imageUrl) return imageUrl;
     const seed = name.trim() || "guest";
-    return `https://picsum.photos/seed/${seed}-character/200/200`;
+    // Avatares de personagens de filmes/series/animes conforme regra definida
+    return `https://picsum.photos/seed/${seed}-character-movie-anime/200/200`;
   };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 400) => {
@@ -171,27 +170,6 @@ export default function CadastroPage() {
                   >
                     Participar do Ranking
                   </Button>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <Link href="/musica">
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        className="w-full h-14 border-blue-500/30 text-blue-400 font-black italic uppercase tracking-widest text-[10px] hover:bg-blue-500/10"
-                      >
-                        <Music className="w-4 h-4 mr-2" /> Pedir Música
-                      </Button>
-                    </Link>
-                    <Link href="/piadinha">
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        className="w-full h-14 border-orange-500/30 text-orange-400 font-black italic uppercase tracking-widest text-[10px] hover:bg-orange-500/10"
-                      >
-                        <Mic className="w-4 h-4 mr-2" /> Mandar Meme
-                      </Button>
-                    </Link>
-                  </div>
                 </div>
               </form>
             )}
