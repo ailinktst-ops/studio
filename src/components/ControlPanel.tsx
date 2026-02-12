@@ -61,7 +61,13 @@ export function ControlPanel() {
 
   const copyToClipboard = (path: string, label: string) => {
     if (typeof window === 'undefined') return;
-    const url = `${window.location.origin}${path}`;
+    // Forçar a porta 9002 se o origin reportar 6000 (comum em sessões expiradas do Studio)
+    let origin = window.location.origin;
+    if (origin.includes(":6000")) {
+      origin = origin.replace(":6000", ":9002");
+    }
+    
+    const url = `${origin}${path}`;
     navigator.clipboard.writeText(url).then(() => {
       toast({
         title: "Link Copiado!",

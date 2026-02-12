@@ -80,7 +80,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const origin = window.location.origin;
+      let origin = window.location.origin;
+      // Forçar a porta 9002 se o origin reportar 6000
+      if (origin.includes(":6000")) {
+        origin = origin.replace(":6000", ":9002");
+      }
+      
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
       setQrMusicaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/musica')}`);
@@ -94,8 +99,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     if (b.count !== a.count) {
       return b.count - a.count;
     }
-    const indexA = approvedParticipants.findIndex(p => p.id === a.id);
-    const indexB = approvedParticipants.findIndex(p => p.id === b.id);
+    const indexA = data.participants.findIndex(p => p.id === a.id);
+    const indexB = data.participants.findIndex(p => p.id === b.id);
     return indexA - indexB;
   });
 
