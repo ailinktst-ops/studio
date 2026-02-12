@@ -6,7 +6,7 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered
+  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, UserPlus
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,7 +56,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}-char/200/200`;
+    // Usando o ID do participante como seed para garantir avatares de personagens consistentes e variados
+    return `https://picsum.photos/seed/${p.id}-movie-character/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -243,6 +244,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top10 = sortedParticipants.slice(3, 10);
   const leader = sortedParticipants[0];
   
+  // Playlist: Mais antigas em cima, mais novas embaixo (ordem de aprovação), limite 10.
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
     .sort((a, b) => a.timestamp - b.timestamp) 
@@ -259,7 +261,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* MEMES AO VIVO OVERLAY */}
+      {/* MEMES AO VIVO! OVERLAY */}
       {overlay && data.piadinha?.isActive && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
@@ -274,7 +276,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 </div>
               </div>
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-8 py-2 rounded-full font-black uppercase italic shadow-lg animate-pulse whitespace-nowrap">
-                MEME AO VIVO!
+                MEMES AO VIVO!
               </div>
            </div>
         </div>
@@ -283,16 +285,22 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {/* QR CODES INFERIORES */}
       {overlay && (
         <div className="fixed left-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-left-10 duration-700">
-           <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Participar</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
+              <img src={qrCadastroUrl} alt="QR Cadastro" className="w-24 h-24" />
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
             <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
-              <img src={qrCorreioUrl} alt="QR" className="w-24 h-24" />
+              <img src={qrCorreioUrl} alt="QR Correio" className="w-24 h-24" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
             <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
-              <img src={qrMusicaUrl} alt="QR" className="w-24 h-24" />
+              <img src={qrMusicaUrl} alt="QR Música" className="w-24 h-24" />
             </div>
           </div>
         </div>
@@ -508,3 +516,4 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     </div>
   );
 }
+
