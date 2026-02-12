@@ -6,7 +6,7 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, UserPlus
+  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, UserPlus, AlertCircle
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,7 +57,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
     // Usando o ID do participante como seed para garantir avatares de personagens de filmes/animes consistentes
-    return `https://picsum.photos/seed/${p.id}-movie-character/400/400`;
+    return `https://picsum.photos/seed/${p.id}-movie-series-character/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -104,14 +104,20 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     });
   }, [approvedParticipants, data.participants]);
 
+  const currentLantern = useMemo(() => {
+    // Apenas participantes com pontos (count > 0)
+    const activeParticipants = sortedParticipants.filter(p => p.count > 0);
+    // Deve ser a partir do 4º lugar (Top 3 fica no pódio)
+    if (activeParticipants.length > 3) {
+      return activeParticipants[activeParticipants.length - 1];
+    }
+    return null;
+  }, [sortedParticipants]);
+
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0) return;
 
     const currentLeader = sortedParticipants[0];
-    const top20Current = sortedParticipants.slice(0, 20);
-    const currentLantern = (top20Current.length > 3 && top20Current[top20Current.length - 1].count > 0) 
-      ? top20Current[top20Current.length - 1] 
-      : null;
 
     if (lastParticipantsRef.current.length === 0) {
       lastParticipantsRef.current = approvedParticipants;
@@ -162,7 +168,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
 
     lastParticipantsRef.current = current;
-  }, [approvedParticipants, overlay, sortedParticipants]);
+  }, [approvedParticipants, overlay, sortedParticipants, currentLantern]);
 
   useEffect(() => {
     if (overlay && data.socialAnnouncement?.isActive && data.socialAnnouncement.timestamp !== lastSocialAnnouncementRef.current) {
@@ -244,7 +250,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top20 = sortedParticipants.slice(3, 20);
   const leader = sortedParticipants[0];
   
-  // Playlist: Mais antigas em cima, mais novas embaixo (ordem de aprovação), limite 10.
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
     .sort((a, b) => a.timestamp - b.timestamp) 
@@ -282,23 +287,23 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR CODES INFERIORES - AGORA À DIREITA */}
+      {/* QR CODES LADO A LADO - AGORA À DIREITA */}
       {overlay && (
         <div className="fixed right-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Participar</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
             <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
               <img src={qrCadastroUrl} alt="QR Cadastro" className="w-24 h-24" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio</span>
             <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
               <img src={qrCorreioUrl} alt="QR Correio" className="w-24 h-24" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Música</span>
             <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
               <img src={qrMusicaUrl} alt="QR Música" className="w-24 h-24" />
             </div>
@@ -377,6 +382,30 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* LANTERNINHA - ABAIXO DO RANKING PRINCIPAL E ACIMA DO LETREIRO */}
+      {overlay && currentLantern && (
+        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="bg-red-600/20 backdrop-blur-xl border-2 border-red-500/30 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl">
+            <div className="relative">
+              <Avatar className="w-12 h-12 border-2 border-red-500 shadow-lg">
+                <AvatarImage src={getParticipantAvatar(currentLantern)} className="object-cover" />
+                <AvatarFallback className="bg-white/5 font-bold uppercase">{currentLantern.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="absolute -top-2 -right-2 bg-red-600 p-1 rounded-full shadow-lg animate-bounce">
+                <AlertCircle className="w-3 h-3 text-white" />
+              </div>
+            </div>
+            <div>
+              <p className="text-[8px] font-black uppercase text-red-500 tracking-[0.2em] mb-0.5">Lanterninha do Ranking:</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-black italic uppercase text-white leading-none">{currentLantern.name}</p>
+                <span className="text-xs font-black text-red-400 bg-red-500/20 px-2 py-0.5 rounded-lg border border-red-500/20">{currentLantern.count}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SORTEIO ATIVO */}
       {overlay && data.raffle?.isRaffling && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-10 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
@@ -439,7 +468,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
-      {/* PÓDIO TOP 3 HORIZONTAL - COMEÇANDO DO TOPO */}
+      {/* PÓDIO TOP 3 HORIZONTAL - NO TOPO */}
       <div className="flex flex-row justify-center items-end gap-12 w-full max-w-6xl mt-4">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
