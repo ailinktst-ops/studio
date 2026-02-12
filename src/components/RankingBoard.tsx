@@ -258,8 +258,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   // Lista de músicas aprovadas em ordem cronológica (mais recentes no final, limitado a 10)
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => a.timestamp - b.timestamp) // Ordem cronológica (mais antigas primeiro)
-    .slice(-10); // Pega as 10 mais recentes da lista cronológica (as que entrarão embaixo)
+    .sort((a, b) => a.timestamp - b.timestamp) // Ordem cronológica: as novas têm timestamp maior e ficam no final
+    .slice(-10); // Mantém apenas as 10 mais recentes da lista cronológica
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -270,7 +270,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Ranks 4-10 (Lista Vertical no Topo Esquerdo) */}
+      {/* Ranks 4-10 */}
       {overlay && ranks4to10.length > 0 && (
         <div className="fixed top-8 left-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-left-10 duration-700">
           {ranks4to10.map((p, i) => (
@@ -289,7 +289,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Pedidos de Música (Lista Vertical no Topo Direito) */}
+      {/* Pedidos de Música (Novas entram embaixo) */}
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed top-8 right-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-right-10 duration-700">
           <div className="bg-blue-600/20 px-4 py-1 rounded-full border border-blue-500/30 flex items-center gap-2 mb-1 justify-center">
@@ -310,7 +310,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {/* QR Codes Overlay */}
       {overlay && (
         <>
-          {/* QR Code Correio Elegante */}
           {qrCorreioUrl && (
             <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
               <div className="flex flex-col items-center gap-2">
@@ -322,7 +321,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             </div>
           )}
 
-          {/* QR Codes Direita (Cadastro e Música) */}
           <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
             {qrMusicaUrl && (
               <div className="flex flex-col items-center gap-2">
@@ -344,7 +342,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </>
       )}
 
-      {/* Mensagem Correio Elegante (Lado Esquerdo Meio) */}
+      {/* Mensagem Correio Elegante */}
       {overlay && latestMessage && (
         <div className="fixed left-8 top-[50%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
           <div className="bg-pink-600/90 backdrop-blur-xl border-4 border-pink-400 p-6 rounded-[2.5rem] shadow-[0_0_50px_rgba(219,39,119,0.5)] flex flex-col items-center text-center max-w-[240px] rotate-[-2deg]">
@@ -362,20 +360,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Miniatura do Desafiado (Centro Direita) */}
-      {showPersistentChallenge && (
-        <div className="fixed right-8 top-[50%] -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500 delay-100">
-          <div className="bg-blue-600/90 backdrop-blur-xl border-4 border-blue-400 p-6 rounded-[2rem] shadow-[0_0_50px_rgba(59,130,246,0.5)] flex flex-col items-center text-center max-w-[200px] rotate-2">
-            <div className="bg-white/20 p-2 rounded-full mb-3">
-              <Zap className="w-8 h-8 text-blue-100" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Último Desafiado:</span>
-            <h3 className="text-2xl font-black italic text-white uppercase drop-shadow-lg leading-tight">{lastChallengedWinner.name}</h3>
-          </div>
-        </div>
-      )}
-
-      {/* Avisos Gigantes (Notificação e Anúncio) */}
+      {/* Avisos Gigantes */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(

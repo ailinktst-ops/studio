@@ -516,7 +516,7 @@ export function ControlPanel() {
                             <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Playlist</span>
                             <span className="text-sm font-black italic text-white uppercase">{m.artist} - {m.song}</span>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => removeMusicRequest(m.id)} className="text-white/20 hover:text-destructive group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" onClick={() => removeMusicRequest(m.id)} className="text-white/20 hover:text-destructive transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
