@@ -297,6 +297,20 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     .sort((a, b) => a.timestamp - b.timestamp) 
     .slice(0, 10);
 
+  // Helper to scale handle text size
+  const socialHandleText = data.socialAnnouncement?.isActive ? (
+    data.socialAnnouncement.url.includes('instagram.com') 
+      ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Social'}`
+      : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]
+  ) : '';
+
+  const getHandleFontSize = (handle: string) => {
+    if (handle.length > 20) return "text-[8px]";
+    if (handle.length > 15) return "text-[10px]";
+    if (handle.length > 12) return "text-xs";
+    return "text-lg";
+  };
+
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
@@ -332,12 +346,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 <Youtube className="w-8 h-8 text-white" />
               )}
             </div>
-            <div className="text-center w-full">
+            <div className="text-center w-full px-2">
               <p className="text-[10px] font-black uppercase opacity-80 tracking-[0.2em] mb-1">SIGA NO {data.socialAnnouncement.type?.toUpperCase()}</p>
-              <p className="text-lg font-black italic uppercase tracking-tighter mb-4 truncate drop-shadow-sm">
-                {data.socialAnnouncement.url.includes('instagram.com') 
-                  ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Social'}`
-                  : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}
+              <p className={cn(
+                "font-black italic uppercase tracking-tighter mb-4 drop-shadow-sm break-all",
+                getHandleFontSize(socialHandleText)
+              )}>
+                {socialHandleText}
               </p>
               <div className="p-2.5 bg-white rounded-2xl border border-black/5 shadow-inner">
                 <img 
