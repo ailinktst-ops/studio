@@ -243,9 +243,29 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
 
-  const socialQrUrl = data.socialAnnouncement?.isActive 
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.socialAnnouncement.type === 'instagram' ? data.instagramUrl || '' : data.youtubeUrl || '')}`
+  // Extrair o handle (nome de usuário) do link
+  const getSocialHandle = (url: string, type: 'instagram' | 'youtube') => {
+    if (!url) return '';
+    try {
+      const cleanUrl = url.replace(/\/$/, ""); // Remove barra final se houver
+      const parts = cleanUrl.split('/');
+      let handle = parts[parts.length - 1] || parts[parts.length - 2];
+      
+      if (type === 'instagram') {
+        return handle.startsWith('@') ? handle : `@${handle}`;
+      }
+      return handle.startsWith('@') ? handle : `@${handle}`;
+    } catch (e) {
+      return 'Social';
+    }
+  };
+
+  const activeSocialUrl = data.socialAnnouncement?.type === 'instagram' ? data.instagramUrl : data.youtubeUrl;
+  const socialQrUrl = data.socialAnnouncement?.isActive && activeSocialUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeSocialUrl)}`
     : '';
+  
+  const socialHandle = data.socialAnnouncement?.type ? getSocialHandle(activeSocialUrl || '', data.socialAnnouncement.type) : '';
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -343,13 +363,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && data.socialAnnouncement?.isActive && (
         <div className="fixed right-8 top-[40%] -translate-y-1/2 z-[100] animate-in slide-in-from-right-20 duration-500">
           <div className={cn(
-            "p-8 rounded-[3rem] shadow-[0_0_60px_rgba(0,0,0,0.5)] border-4 backdrop-blur-2xl flex flex-col items-center text-center max-w-[300px] rotate-1 animate-float",
+            "p-8 rounded-[3rem] shadow-[0_0_60px_rgba(0,0,0,0.5)] border-4 backdrop-blur-2xl flex flex-col items-center text-center min-w-[280px] max-w-[320px] rotate-1 animate-float",
             data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 border-pink-400" : "bg-red-600 border-red-400"
           )}>
             <div className="bg-white/20 p-4 rounded-full mb-4 shadow-inner">
               {data.socialAnnouncement.type === 'instagram' ? <Instagram className="w-12 h-12 text-white" /> : <Youtube className="w-12 h-12 text-white" />}
             </div>
-            <h3 className="text-xl font-black italic text-white uppercase tracking-tighter mb-4 drop-shadow-md">Siga nas Redes Sociais!</h3>
+            <h3 className="text-xl font-black italic text-white uppercase tracking-tighter mb-1 drop-shadow-md">Siga nas Redes Sociais!</h3>
+            <span className="text-2xl font-black italic text-white/90 uppercase tracking-tighter mb-4 block drop-shadow-lg">{socialHandle}</span>
             <div className="p-3 bg-white rounded-3xl shadow-2xl border-4 border-white/20">
               <img src={socialQrUrl} alt="QR Social" className="w-48 h-48" />
             </div>
@@ -536,3 +557,4 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     </div>
   );
 }
+
