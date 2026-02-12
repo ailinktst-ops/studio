@@ -35,8 +35,7 @@ import {
   DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  DialogTitle 
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import Link from 'next/link';
@@ -63,17 +62,17 @@ export function ControlPanel() {
     if (typeof window === 'undefined') return;
     
     let origin = window.location.origin;
-    // Forçar a porta 9002 em qualquer cenário onde o origin reporte porta 6000
-    // Isso resolve tanto subdomínios quanto localhost
-    if (origin.includes("6000")) {
-      origin = origin.replace(/6000/g, '9002');
+    
+    // Forçar a porta 9000 que é a funcional no ambiente do usuário
+    if (origin.includes("cloudworkstations.dev")) {
+      origin = origin.replace(/https:\/\/\d+-/, 'https://9000-');
     }
     
     const url = `${origin}${path}`;
     navigator.clipboard.writeText(url).then(() => {
       toast({
         title: "Link Copiado!",
-        description: `O link para ${label} foi copiado para sua área de transferência.`,
+        description: `O link para ${label} foi copiado com a porta 9000 funcional.`,
       });
     });
   };
@@ -253,11 +252,9 @@ export function ControlPanel() {
               <CardTitle className="text-lg font-bold">Ranking Geral</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
                 <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-secondary border-secondary/20 hover:bg-secondary/10 bg-transparent text-[10px] font-bold uppercase">
-                      <Settings className="w-4 h-4 mr-1" /> Alterar Todos
-                    </Button>
-                  </DialogTrigger>
+                  <Button variant="outline" size="sm" onClick={() => setIsBulkDialogOpen(true)} className="text-secondary border-secondary/20 hover:bg-secondary/10 bg-transparent text-[10px] font-bold uppercase">
+                    <Settings className="w-4 h-4 mr-1" /> Alterar Todos
+                  </Button>
                   <DialogContent className="bg-card border-white/10 backdrop-blur-xl">
                     <DialogHeader>
                       <DialogTitle className="text-white uppercase font-black italic">Alterar Todos os Usuários</DialogTitle>
@@ -285,11 +282,9 @@ export function ControlPanel() {
                     </div>
                     <DialogFooter>
                       <AlertDialog open={isConfirmBulkOpen} onOpenChange={setIsConfirmBulkOpen}>
-                        <AlertDialogTrigger asChild>
-                          <Button className="w-full bg-secondary text-secondary-foreground font-black uppercase italic h-12">
-                            Aplicar Mudanças
-                          </Button>
-                        </AlertDialogTrigger>
+                        <Button onClick={() => setIsConfirmBulkOpen(true)} className="w-full bg-secondary text-secondary-foreground font-black uppercase italic h-12">
+                          Aplicar Mudanças
+                        </Button>
                         <AlertDialogContent className="bg-card border-white/10 backdrop-blur-xl">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-white uppercase font-black italic">Tem certeza absoluta?</AlertDialogTitle>

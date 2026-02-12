@@ -81,9 +81,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let origin = window.location.origin;
-      // Forçar porta 9002 se identificar 6000 no origin
-      if (origin.includes("6000")) {
-        origin = origin.replace(/6000/g, '9002');
+      
+      // Forçar a porta 9000 que é a funcional no ambiente do usuário para os QR Codes
+      if (origin.includes("cloudworkstations.dev")) {
+        origin = origin.replace(/https:\/\/\d+-/, 'https://9000-');
       }
       
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
@@ -270,7 +271,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => a.timestamp - b.timestamp)
+    .sort((a, b) => a.timestamp - b.timestamp) // Ordem cronológica: Mais antigas em cima
     .slice(-10);
 
   return (
