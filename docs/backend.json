@@ -5,7 +5,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Counter",
       "type": "object",
-      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio e mensagens de correio elegante.",
+      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio, mensagens de correio elegante e pedidos de música.",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string", "description": "Título do evento." },
@@ -35,6 +35,19 @@
               "from": { "type": "string" },
               "to": { "type": "string" },
               "content": { "type": "string" },
+              "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+              "timestamp": { "type": "number" }
+            }
+          }
+        },
+        "musicRequests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "artist": { "type": "string" },
+              "song": { "type": "string" },
               "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
               "timestamp": { "type": "number" }
             }
@@ -76,6 +89,6 @@
         }
       }
     ],
-    "reasoning": "Utilizamos um modelo de documento único para o contador para garantir que todas as atualizações (pontos, correio elegante, sorteios) sejam propagadas instantaneamente para todos os clientes."
+    "reasoning": "Utilizamos um modelo de documento único para o contador para garantir que todas as atualizações sejam propagadas instantaneamente."
   }
 }

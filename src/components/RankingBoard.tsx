@@ -6,7 +6,7 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart
+  Heart, Disc
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +42,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [tickerIndex, setTickerIndex] = useState(0);
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
+  const [qrMusicaUrl, setQrMusicaUrl] = useState("");
   
   const [notification, setNotification] = useState<{ 
     userName: string; 
@@ -55,6 +56,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastLanternIdRef = useRef<string | null>(null);
   const lastAnnouncementTimeRef = useRef<number | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
+  const lastApprovedMusicIdRef = useRef<string | null>(null);
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
@@ -81,6 +83,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       const origin = window.location.origin;
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
+      setQrMusicaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/musica')}`);
     }
   }, []);
 
@@ -163,6 +166,17 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [data.messages, overlay]);
 
   useEffect(() => {
+    if (!overlay || !data.musicRequests || data.musicRequests.length === 0) return;
+    const approvedMusic = data.musicRequests.filter(m => m.status === 'approved');
+    if (approvedMusic.length === 0) return;
+    const latest = approvedMusic[approvedMusic.length - 1];
+    if (latest.id !== lastApprovedMusicIdRef.current) {
+      playSound('announcement');
+      lastApprovedMusicIdRef.current = latest.id;
+    }
+  }, [data.musicRequests, overlay]);
+
+  useEffect(() => {
     if (!overlay || !data.announcement?.isActive || !data.announcement.timestamp) return;
     if (data.announcement.timestamp !== lastAnnouncementTimeRef.current) {
       playSound('announcement');
@@ -236,12 +250,16 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lanterninha = (top10.length > 3 && top10[top10.length - 1].count > 0) ? top10[top10.length - 1] : null;
 
   const ranks4to10 = sortedParticipants.slice(3, 10).filter(p => p.count > 0);
-
   const approvedMessages = data.messages.filter(m => m.status === 'approved');
   const latestMessage = approvedMessages.length > 0 ? approvedMessages[approvedMessages.length - 1] : null;
-
   const lastChallengedWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
   const showPersistentChallenge = overlay && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling && lastChallengedWinner;
+
+  // Lista de músicas aprovadas (máximo 10, FIFO)
+  const approvedMusic = (data.musicRequests || [])
+    .filter(m => m.status === 'approved')
+    .sort((a, b) => b.timestamp - a.timestamp) // Mais recentes primeiro
+    .slice(0, 10);
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -256,15 +274,33 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && ranks4to10.length > 0 && (
         <div className="fixed top-8 left-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-left-10 duration-700">
           {ranks4to10.map((p, i) => (
-            <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md">
+            <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md min-w-[150px]">
               <span className="text-[10px] font-black text-white/30 italic">{i + 4}º</span>
               <Avatar className="w-10 h-10 border border-white/10">
                 {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
                 <AvatarFallback className="bg-white/5 text-[10px] font-bold">{p.name[0]}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-[10px] font-black text-white uppercase max-w-[70px] truncate leading-tight">{p.name}</span>
+                <span className="text-[10px] font-black text-white uppercase max-w-[80px] truncate leading-tight">{p.name}</span>
                 <span className="text-[10px] font-black text-primary leading-none mt-1">{p.count} gole</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pedidos de Música (Lista Vertical no Topo Direito) */}
+      {overlay && approvedMusic.length > 0 && (
+        <div className="fixed top-8 right-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-right-10 duration-700">
+          <div className="bg-blue-600/20 px-4 py-1 rounded-full border border-blue-500/30 flex items-center gap-2 mb-1 justify-center">
+            <Music className="w-3 h-3 text-blue-400" />
+            <span className="text-[10px] font-black text-blue-300 uppercase italic tracking-widest">Playlist da Vez</span>
+          </div>
+          {approvedMusic.map((m) => (
+            <div key={m.id} className="glass px-4 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md animate-in slide-in-from-right-5">
+              <Disc className="w-5 h-5 text-blue-500 animate-spin" style={{ animationDuration: '3s' }} />
+              <div className="flex flex-col">
+                <span className="text-[11px] font-black text-white uppercase truncate max-w-[180px] italic leading-tight">{m.artist} - {m.song}</span>
               </div>
             </div>
           ))}
@@ -286,17 +322,25 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             </div>
           )}
 
-          {/* QR Code Cadastro de Participante */}
-          {qrCadastroUrl && (
-            <div className="fixed right-8 bottom-32 z-[80] animate-in slide-in-from-right-10 duration-700">
+          {/* QR Codes Direita (Cadastro e Música) */}
+          <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
+            {qrMusicaUrl && (
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
+                <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
+                  <img src={qrMusicaUrl} alt="QR Code Música" className="w-24 h-24" />
+                </div>
+              </div>
+            )}
+            {qrCadastroUrl && (
               <div className="flex flex-col items-center gap-2">
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro Participante</span>
                 <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
                   <img src={qrCadastroUrl} alt="QR Code Cadastro" className="w-24 h-24" />
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </>
       )}
 

@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, Monitor, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Copy, Share2, ExternalLink, Settings
+  Copy, Share2, ExternalLink, Settings, Music
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,7 @@ export function ControlPanel() {
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
     moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
-    updateAllParticipantsCategory
+    updateAllParticipantsCategory, moderateMusic
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -143,8 +143,11 @@ export function ControlPanel() {
   const hasPersistentChallenge = data.raffle?.winnerId && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling;
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
+  const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
   const hasActiveMessage = data.messages.some(m => m.status === 'approved');
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
+
+  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
 
   if (isInitializing) {
     return (
@@ -163,16 +166,19 @@ export function ControlPanel() {
             <Share2 className="w-3 h-3" /> Compartilhar Evento
           </span>
         </div>
-        <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/cadastro', 'Cadastro')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-secondary hover:text-white transition-all">
-            <UserPlus className="w-4 h-4 mr-2" /> Link Cadastro
+            <UserPlus className="w-4 h-4 mr-2" /> Cadastro
           </Button>
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio Elegante')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
-            <Heart className="w-4 h-4 mr-2" /> Link Correio
+            <Heart className="w-4 h-4 mr-2" /> Correio
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/musica', 'Pedir Música')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+            <Music className="w-4 h-4 mr-2" /> Música
           </Button>
           <Link href="/overlay" target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
-              <ExternalLink className="w-4 h-4 mr-2" /> Abrir Telão
+              <ExternalLink className="w-4 h-4 mr-2" /> Telão
             </Button>
           </Link>
         </CardContent>
@@ -183,9 +189,9 @@ export function ControlPanel() {
           <TabsTrigger value="main" className="flex-1 font-bold uppercase text-[10px] tracking-widest">Painel Principal</TabsTrigger>
           <TabsTrigger value="moderation" className="flex-1 font-bold uppercase text-[10px] tracking-widest relative">
             Moderação
-            {(pendingMessages.length > 0 || pendingParticipants.length > 0) && (
+            {totalPending > 0 && (
               <span className="absolute -top-1 -right-1 bg-primary text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full animate-bounce">
-                {pendingMessages.length + pendingParticipants.length}
+                {totalPending}
               </span>
             )}
           </TabsTrigger>
@@ -452,6 +458,47 @@ export function ControlPanel() {
                         <Check className="w-4 h-4 mr-2" /> Aprovar
                       </Button>
                       <Button onClick={() => moderateMessage(msg.id, 'rejected')} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
+                        <Ban className="w-4 h-4 mr-2" /> Rejeitar
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-500">
+                <Music className="w-5 h-5" /> Pedidos de Música ({pendingMusic.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {pendingMusic.length === 0 ? (
+                <div className="text-center py-10">
+                  <Music className="w-12 h-12 text-white/5 mx-auto mb-4" />
+                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum pedido de música pendente</p>
+                </div>
+              ) : (
+                pendingMusic.map(m => (
+                  <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-blue-500/20 text-blue-500 border-none font-bold italic uppercase text-[10px]">Pedido Recebido</Badge>
+                      <span className="text-white/20 text-[10px]">{new Date(m.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div>
+                      <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Banda:</p>
+                      <p className="text-white font-black italic text-xl uppercase">{m.artist}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Música:</p>
+                      <p className="text-white font-black italic text-xl uppercase">{m.song}</p>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button onClick={() => moderateMusic(m.id, 'approved')} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest">
+                        <Check className="w-4 h-4 mr-2" /> Aprovar
+                      </Button>
+                      <Button onClick={() => moderateMusic(m.id, 'rejected')} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
                         <Ban className="w-4 h-4 mr-2" /> Rejeitar
                       </Button>
                     </div>

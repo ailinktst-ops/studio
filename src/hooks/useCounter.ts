@@ -25,6 +25,14 @@ export interface ElegantMessage {
   timestamp: number;
 }
 
+export interface MusicRequest {
+  id: string;
+  artist: string;
+  song: string;
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: number;
+}
+
 export interface RaffleState {
   isRaffling: boolean;
   winnerId: string | null;
@@ -47,6 +55,7 @@ export interface CounterState {
   brandImageUrl?: string;
   participants: Participant[];
   messages: ElegantMessage[];
+  musicRequests: MusicRequest[];
   categories: string[];
   customPhrases: string[];
   updatedAt: any;
@@ -62,6 +71,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   brandImageUrl: "",
   participants: [],
   messages: [],
+  musicRequests: [],
   categories: ["Cerveja", "Água", "Drink", "Shot", "Passa ou repassa"],
   customPhrases: [
     "A ELITE DA RESENHA EM TEMPO REAL", 
@@ -95,7 +105,6 @@ export function useCounter() {
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
-  // Garantir que "Gelo" nunca apareça, mesmo que venha do banco
   const sanitizeCategories = (cats: string[]) => cats.map(c => c === "Gelo" ? "Passa ou repassa" : c);
 
   const data: CounterState = {
@@ -107,6 +116,7 @@ export function useCounter() {
       category: p.category === "Gelo" ? "Passa ou repassa" : p.category
     })),
     messages: rawData?.messages || [],
+    musicRequests: rawData?.musicRequests || [],
     categories: sanitizeCategories(rawData?.categories || DEFAULT_STATE.categories),
     customPhrases: (rawData?.customPhrases && rawData.customPhrases.length > 0) 
       ? rawData.customPhrases 
@@ -150,10 +160,8 @@ export function useCounter() {
 
   const addParticipant = (name: string, category: string, imageUrl?: string, autoApprove = false): boolean => {
     if (!counterRef || !data) return false;
-    
     const normalizedName = name.trim().toLowerCase();
     const nameExists = data.participants.some(p => p.name.toLowerCase() === normalizedName);
-    
     if (nameExists) return false;
 
     const newParticipant: Participant = {
@@ -239,6 +247,7 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: [],
       messages: [],
+      musicRequests: [],
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle' },
       announcement: { message: "", isActive: false, timestamp: null }
@@ -297,6 +306,32 @@ export function useCounter() {
     );
     updateDoc(counterRef, {
       messages: updatedMessages,
+      updatedAt: Timestamp.now()
+    });
+  };
+
+  const sendMusicRequest = (artist: string, song: string) => {
+    if (!counterRef) return;
+    const newRequest: MusicRequest = {
+      id: Math.random().toString(36).substring(2, 11),
+      artist,
+      song,
+      status: 'pending',
+      timestamp: Date.now()
+    };
+    updateDoc(counterRef, {
+      musicRequests: [...(data?.musicRequests || []), newRequest],
+      updatedAt: Timestamp.now()
+    });
+  };
+
+  const moderateMusic = (id: string, status: 'approved' | 'rejected') => {
+    if (!counterRef || !data) return;
+    const updatedRequests = data.musicRequests.map(m => 
+      m.id === id ? { ...m, status } : m
+    );
+    updateDoc(counterRef, {
+      musicRequests: updatedRequests,
       updatedAt: Timestamp.now()
     });
   };
@@ -379,6 +414,8 @@ export function useCounter() {
     sendElegantMessage,
     moderateMessage,
     clearElegantMessages,
+    sendMusicRequest,
+    moderateMusic,
     triggerRaffle,
     triggerSurpriseChallenge,
     clearChallenge,
