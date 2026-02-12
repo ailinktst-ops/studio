@@ -58,21 +58,27 @@ export function ControlPanel() {
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const copyToClipboard = (path: string, label: string) => {
-    if (typeof window === 'undefined') return;
+  const formatUrlWithCorrectPort = (path: string) => {
+    if (typeof window === 'undefined') return path;
     
     let origin = window.location.origin;
     
-    // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations / Monospace
+    // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations
     if (origin.includes("cloudworkstations.dev")) {
       origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
+    } else if (origin.includes("localhost")) {
+      origin = "http://localhost:9000";
     }
     
-    const url = `${origin}${path}`;
+    return `${origin}${path}`;
+  };
+
+  const copyToClipboard = (path: string, label: string) => {
+    const url = formatUrlWithCorrectPort(path);
     navigator.clipboard.writeText(url).then(() => {
       toast({
         title: "Link Copiado!",
-        description: `O link para ${label} foi copiado para a porta 9000.`,
+        description: `O link para ${label} foi copiado (Porta 9000).`,
       });
     });
   };

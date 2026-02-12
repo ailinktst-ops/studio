@@ -82,9 +82,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let origin = window.location.origin;
-      // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations / Monospace
+      // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations
       if (origin.includes("cloudworkstations.dev")) {
         origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
+      } else if (origin.includes("localhost")) {
+        origin = "http://localhost:9000";
       }
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
