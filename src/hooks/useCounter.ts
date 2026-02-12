@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -111,7 +111,6 @@ export function useCounter() {
 
   const cleanData = (state: Partial<CounterState>): CounterState => {
     const sanitize = (cat: string) => {
-      if (cat === "Gelo") return "Passa ou Repassa";
       return VALID_CATEGORIES.includes(cat) ? cat : "Gole";
     };
     
@@ -473,6 +472,16 @@ export function useCounter() {
     });
   };
 
+  const generateCandidates = (participants: Participant[]) => {
+    const names = participants.map(p => p.name);
+    // Gerar uma lista bem grande e embaralhada para garantir que o "caça-níqueis" seja variado
+    let pool: string[] = [];
+    for(let j = 0; j < 5; j++) {
+      pool = [...pool, ...names];
+    }
+    return pool.sort(() => Math.random() - 0.5);
+  };
+
   const triggerRaffle = () => {
     if (!counterRef || !data) return;
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
@@ -486,13 +495,9 @@ export function useCounter() {
       pool = approvedParticipants;
     }
 
-    // Criar uma lista bem grande de candidatos para o efeito de caça-níqueis ser rico
-    const names = approvedParticipants.map(p => p.name);
-    const candidates = [...names, ...names, ...names]
-      .sort(() => Math.random() - 0.5);
-
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
+    const candidates = generateCandidates(approvedParticipants);
 
     updateDoc(counterRef, {
       raffle: {
@@ -526,13 +531,9 @@ export function useCounter() {
       pool = approvedParticipants;
     }
 
-    // Criar uma lista bem grande de candidatos para o efeito de caça-níqueis ser rico
-    const names = approvedParticipants.map(p => p.name);
-    const candidates = [...names, ...names, ...names]
-      .sort(() => Math.random() - 0.5);
-
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
+    const candidates = generateCandidates(approvedParticipants);
 
     updateDoc(counterRef, {
       raffle: {

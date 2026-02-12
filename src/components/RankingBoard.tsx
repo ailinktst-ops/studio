@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
@@ -38,7 +38,6 @@ const CryingIcon = ({ className }: { className?: string }) => (
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const { data, loading, isInitializing } = useCounter();
   const [currentRaffleName, setCurrentRaffleName] = useState("");
-  const [showWinner, setShowWinner] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
@@ -92,17 +91,22 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, []);
 
-  const approvedParticipants = (data.participants || []).filter(p => p.status === 'approved');
+  const approvedParticipants = useMemo(() => 
+    (data.participants || []).filter(p => p.status === 'approved'), 
+    [data.participants]
+  );
 
-  const sortedParticipants = [...approvedParticipants].sort((a, b) => {
-    if (b.count !== a.count) {
-      return b.count - a.count;
-    }
-    // Ordem de adição para empates em pontos
-    const indexA = data.participants.findIndex(p => p.id === a.id);
-    const indexB = data.participants.findIndex(p => p.id === b.id);
-    return indexA - indexB;
-  });
+  const sortedParticipants = useMemo(() => 
+    [...approvedParticipants].sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      const indexA = data.participants.findIndex(p => p.id === a.id);
+      const indexB = data.participants.findIndex(p => p.id === b.id);
+      return indexA - indexB;
+    }), 
+    [approvedParticipants, data.participants]
+  );
 
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0) return;
@@ -162,7 +166,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
 
     lastParticipantsRef.current = current;
-  }, [data.participants, overlay, approvedParticipants, sortedParticipants]);
+  }, [approvedParticipants, overlay, sortedParticipants]);
 
   useEffect(() => {
     if (!overlay || !data.messages || data.messages.length === 0) return;
@@ -194,6 +198,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.announcement, overlay]);
 
+  // Efeito do Caça-Níqueis do Sorteio
   useEffect(() => {
     let interval: NodeJS.Timeout;
     let winnerTimeout: NodeJS.Timeout;
@@ -204,18 +209,17 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       if (candidates.length > 0) {
         let i = 0;
+        // Intervalo fixo para garantir que todos os nomes passem pela tela de forma visível mas rápida
         interval = setInterval(() => {
-          // Garante que passa por todos os nomes da lista de candidatos enviada
           setCurrentRaffleName(candidates[i % candidates.length]);
           i++;
-        }, 100);
+        }, 120);
 
         winnerTimeout = setTimeout(() => {
           clearInterval(interval);
           const winner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
           if (winner) {
             setCurrentRaffleName(winner.name);
-            setShowWinner(true);
             if (isChallenge) {
               playSound('challenge');
             } else {
@@ -407,8 +411,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               </h2>
               {data.raffle.type === 'challenge' ? <Zap className="w-20 h-20" /> : <Sparkles className="w-20 h-20" />}
             </div>
-            <div className="bg-black/20 px-12 py-8 rounded-[3rem] w-full min-h-[200px] flex items-center justify-center border-4 border-white/10">
-              <span className="text-8xl font-black italic uppercase tracking-tighter animate-in slide-in-from-bottom-10">
+            <div className="bg-black/20 px-12 py-8 rounded-[3rem] w-full min-h-[200px] flex items-center justify-center border-4 border-white/10 overflow-hidden">
+              <span className="text-8xl font-black italic uppercase tracking-tighter transition-all duration-75">
                 {currentRaffleName || '...'}
               </span>
             </div>
