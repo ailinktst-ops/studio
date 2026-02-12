@@ -62,7 +62,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   brandImageUrl: "",
   participants: [],
   messages: [],
-  categories: ["Cerveja", "Água", "Drink", "Shot", "Gelo"],
+  categories: ["Cerveja", "Água", "Drink", "Shot", "Passa ou repassa"],
   customPhrases: [
     "A ELITE DA RESENHA EM TEMPO REAL", 
     "SIGA O LÍDER!", 
@@ -95,7 +95,6 @@ export function useCounter() {
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
-  // Merge de dados garantindo que os padrões existam se o documento for parcial
   const data: CounterState = {
     ...DEFAULT_STATE,
     id: DEFAULT_ID,
@@ -165,16 +164,27 @@ export function useCounter() {
     return true;
   };
 
-  const moderateParticipant = (id: string, status: 'approved' | 'rejected') => {
+  const moderateParticipant = (id: string, status: 'approved' | 'rejected', category?: string) => {
     if (!counterRef || !data) return;
     let updatedParticipants;
     if (status === 'rejected') {
       updatedParticipants = data.participants.filter(p => p.id !== id);
     } else {
       updatedParticipants = data.participants.map(p => 
-        p.id === id ? { ...p, status: 'approved' as const } : p
+        p.id === id ? { ...p, status: 'approved' as const, category: category || p.category } : p
       );
     }
+    updateDoc(counterRef, {
+      participants: updatedParticipants,
+      updatedAt: Timestamp.now()
+    });
+  };
+
+  const updateParticipantCategory = (id: string, category: string) => {
+    if (!counterRef || !data) return;
+    const updatedParticipants = data.participants.map(p => 
+      p.id === id ? { ...p, category } : p
+    );
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
@@ -338,6 +348,7 @@ export function useCounter() {
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
     addParticipant,
     moderateParticipant,
+    updateParticipantCategory,
     updateParticipantImage,
     incrementCount,
     resetAll,

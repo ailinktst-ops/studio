@@ -16,6 +16,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
@@ -24,11 +35,12 @@ export function ControlPanel() {
     data, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
-    moderateMessage, clearElegantMessages, moderateParticipant
+    moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Cerveja");
+  const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const copyToClipboard = (path: string, label: string) => {
@@ -119,7 +131,6 @@ export function ControlPanel() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-10">
-      {/* Links de Compartilhamento Rápido */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-md overflow-hidden">
         <div className="px-6 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
@@ -201,9 +212,26 @@ export function ControlPanel() {
                 <Button variant="outline" size="sm" onClick={resetOnlyPoints} className="text-primary border-primary/20 hover:bg-primary/10 bg-transparent text-[10px] font-bold uppercase">
                   <History className="w-4 h-4 mr-1" /> Zerar Pontos
                 </Button>
-                <Button variant="outline" size="sm" onClick={resetAll} className="text-destructive border-destructive/20 hover:bg-destructive/10 bg-transparent text-[10px] font-bold uppercase">
-                  <RotateCcw className="w-4 h-4 mr-1" /> Zerar Tudo
-                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10 bg-transparent text-[10px] font-bold uppercase">
+                      <RotateCcw className="w-4 h-4 mr-1" /> Zerar Tudo
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-white uppercase font-black italic italic">Tem certeza que deseja resetar todo o rank?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/60 font-bold">
+                        Todos os participantes serão retirados permanentemente! Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 font-bold uppercase">Não</AlertDialogCancel>
+                      <AlertDialogAction onClick={resetAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-black uppercase italic">Sim</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -229,8 +257,17 @@ export function ControlPanel() {
                     </div>
                     <div>
                       <span className="font-black text-xl text-white italic uppercase">{p.name}</span>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="border-secondary/30 text-secondary text-[10px] uppercase">{p.category}</Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Select value={p.category} onValueChange={(val) => updateParticipantCategory(p.id, val)}>
+                          <SelectTrigger className="h-6 bg-black/40 border-secondary/20 text-[10px] font-bold uppercase px-2 w-auto min-w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-white/10">
+                            {data.categories.map(cat => (
+                              <SelectItem key={cat} value={cat} className="text-[10px] font-bold uppercase">{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <span className="text-sm font-bold text-primary">{p.count} gole</span>
                       </div>
                     </div>
@@ -270,10 +307,27 @@ export function ControlPanel() {
                         {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
                         <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                       </Avatar>
-                      <span className="font-bold text-white uppercase italic">{p.name}</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-white uppercase italic">{p.name}</span>
+                        <div className="mt-1">
+                          <Select 
+                            value={moderationCategories[p.id] || p.category} 
+                            onValueChange={(val) => setModerationCategories(prev => ({ ...prev, [p.id]: val }))}
+                          >
+                            <SelectTrigger className="h-7 bg-black/40 border-secondary/20 text-[10px] font-bold uppercase px-2 w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-white/10">
+                              {data.categories.map(cat => (
+                                <SelectItem key={cat} value={cat} className="text-[10px] font-bold uppercase">{cat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={() => moderateParticipant(p.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]">
+                      <Button onClick={() => moderateParticipant(p.id, 'approved', moderationCategories[p.id])} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]">
                         <Check className="w-4 h-4 mr-1" /> Aprovar
                       </Button>
                       <Button onClick={() => moderateParticipant(p.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]">
