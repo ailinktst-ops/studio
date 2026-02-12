@@ -4,72 +4,42 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Counter",
       "type": "object",
-      "description": "Represents a counter with a title and a list of participants.",
+      "description": "Estado global do contador, incluindo participantes, configurações de marca e estado de sorteio.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Counter entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the counter (e.g., 'Consumo da Noite')."
-        },
+        "id": { "type": "string" },
+        "title": { "type": "string", "description": "Título do evento." },
+        "brandName": { "type": "string", "description": "Nome da marca/festa." },
+        "brandIcon": { "type": "string", "description": "ID do ícone Lucide selecionado." },
+        "brandImageUrl": { "type": "string", "description": "URL em Base64 da logo personalizada." },
         "participants": {
           "type": "array",
-          "description": "List of participants in the counter.",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "count": { "type": "number" },
+              "category": { "type": "string" }
+            }
           }
         },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp of the last update to the counter.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "participants",
-        "updatedAt"
-      ]
-    },
-    "Participant": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Participant",
-      "type": "object",
-      "description": "Represents a participant in the counter with their name and count.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Participant entity."
+        "categories": { "type": "array", "items": { "type": "string" } },
+        "customPhrases": { "type": "array", "items": { "type": "string" } },
+        "raffle": {
+          "type": "object",
+          "properties": {
+            "isRaffling": { "type": "boolean" },
+            "winnerId": { "type": "string", "nullable": true },
+            "candidates": { "type": "array", "items": { "type": "string" } },
+            "type": { "type": "string", "enum": ["raffle", "challenge"] }
+          }
         },
-        "counterId": {
-          "type": "string",
-          "description": "Reference to Counter. (Relationship: Counter 1:N Participant)"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the participant."
-        },
-        "count": {
-          "type": "number",
-          "description": "The current count for the participant."
-        }
-      },
-      "required": [
-        "id",
-        "counterId",
-        "name",
-        "count"
-      ]
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["anonymous"]
   },
   "firestore": {
     "structure": [
@@ -77,39 +47,10 @@
         "path": "/counters/{counterId}",
         "definition": {
           "entityName": "Counter",
-          "schema": {
-            "$ref": "#/backend/entities/Counter"
-          },
-          "description": "Stores the counter document containing the title, a list of participants with names and counts, and the last updated timestamp. Includes denormalized participant data for ease of ranking calculation and real-time updates to the overlay.",
-          "params": [
-            {
-              "name": "counterId",
-              "description": "Unique identifier for the counter document."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/counters/{counterId}/participants/{participantId}",
-        "definition": {
-          "entityName": "Participant",
-          "schema": {
-            "$ref": "#/backend/entities/Participant"
-          },
-          "description": "Stores participant data (name and count) within the counter document. The data stored at this level should mirror the data in the 'Counter' document as well.",
-          "params": [
-            {
-              "name": "counterId",
-              "description": "Unique identifier for the counter document."
-            },
-            {
-              "name": "participantId",
-              "description": "Unique identifier for the participant."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/Counter" }
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support a real-time ranking system for participants in a counter. It leverages a single `counter` document to store the title, participants (with their names and counts), and last updated timestamp. This approach avoids subcollections, simplifying reads and writes for ranking updates. Since the app primarily focuses on displaying the top 3 participants, keeping all data in a single document optimizes read operations for the ranking overlay. Authorization independence isn't a primary concern here as the app's functionality doesn't clearly describe the need for different users to have different access privileges, it is assumed all users have equal access and the data is public. To secure this data, we can rely on Firebase Authentication and implement simple rules to allow only authenticated users to modify it. This structure supports QAPs by enabling efficient `list` operations (though, in this case, we are reading a single document instead of listing), due to all related data being stored in a single document."
+    "reasoning": "Utilizamos um modelo de documento único para o contador ('current') para garantir que todas as atualizações (pontos, sorteios, identidade visual) sejam propagadas instantaneamente para todos os clientes (Painel e Overlay) via snapshots em tempo real do Firestore, minimizando a latência em eventos ao vivo."
   }
 }
