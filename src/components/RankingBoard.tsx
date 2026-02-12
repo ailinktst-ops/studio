@@ -98,6 +98,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     if (b.count !== a.count) {
       return b.count - a.count;
     }
+    // Ordem de adição para empates em pontos
     const indexA = data.participants.findIndex(p => p.id === a.id);
     const indexB = data.participants.findIndex(p => p.id === b.id);
     return indexA - indexB;
@@ -204,6 +205,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       if (candidates.length > 0) {
         let i = 0;
         interval = setInterval(() => {
+          // Garante que passa por todos os nomes da lista de candidatos enviada
           setCurrentRaffleName(candidates[i % candidates.length]);
           i++;
         }, 100);
@@ -309,7 +311,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             <div key={m.id} className="glass px-4 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md animate-in slide-in-from-right-5">
               <Disc className="w-5 h-5 text-blue-500 animate-spin" style={{ animationDuration: '3s' }} />
               <div className="flex flex-col">
-                <span className="text-[11px] font-black text-white uppercase truncate max-w-[180px] italic leading-tight">{m.artist} - {m.song}</span>
+                <span className="text-[11px] font-black text-white uppercase italic truncate max-w-[180px] leading-tight">{m.artist} - {m.song}</span>
               </div>
             </div>
           ))}

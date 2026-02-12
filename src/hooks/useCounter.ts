@@ -39,7 +39,7 @@ export interface RaffleState {
   candidates: string[];
   startTime: number | null;
   type?: 'raffle' | 'challenge';
-  winnersHistory?: string[]; // IDs de quem já ganhou
+  winnersHistory?: string[];
 }
 
 export interface AnnouncementState {
@@ -478,17 +478,14 @@ export function useCounter() {
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
     if (approvedParticipants.length < 1) return;
 
-    // Lógica para não repetir ganhadores
     let winnersHistory = data.raffle?.winnersHistory || [];
     let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
 
-    // Se todos já ganharam, reseta o histórico
     if (pool.length === 0) {
       winnersHistory = [];
       pool = approvedParticipants;
     }
 
-    // Embaralha nomes para a animação
     const candidates = [...approvedParticipants]
       .map(p => p.name)
       .sort(() => Math.random() - 0.5);
