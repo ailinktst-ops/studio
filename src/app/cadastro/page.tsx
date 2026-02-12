@@ -10,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function CadastroPage() {
   const { data, addParticipant, isInitializing } = useCounter();
@@ -19,7 +18,12 @@ export default function CadastroPage() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState("");
 
-  const defaultAvatar = PlaceHolderImages.find(img => img.id === 'default-avatar')?.imageUrl || '';
+  // Avatar aleatório para o preview baseado no nome (deterministic)
+  const getPreviewAvatar = () => {
+    if (imageUrl) return imageUrl;
+    const seed = name.trim() || "guest";
+    return `https://picsum.photos/seed/${seed}/200/200`;
+  };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 400) => {
     const reader = new FileReader();
@@ -129,9 +133,9 @@ export default function CadastroPage() {
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative group">
                     <Avatar className="w-32 h-32 border-4 border-white/10 shadow-xl">
-                      <AvatarImage src={imageUrl || defaultAvatar} className="object-cover" />
-                      <AvatarFallback className="bg-white/5">
-                        <Camera className="w-10 h-10 text-white/20" />
+                      <AvatarImage src={getPreviewAvatar()} className="object-cover" />
+                      <AvatarFallback className="bg-white/5 font-black uppercase text-4xl">
+                        {name[0] || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <label className="absolute bottom-0 right-0 bg-secondary text-secondary-foreground p-2 rounded-full cursor-pointer shadow-lg hover:scale-110 transition-transform">

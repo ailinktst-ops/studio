@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useCounter } from '@/hooks/useCounter';
+import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
@@ -42,7 +42,6 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function ControlPanel() {
   const { 
@@ -68,7 +67,10 @@ export function ControlPanel() {
   const jokeFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const adminAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  const defaultAvatar = PlaceHolderImages.find(img => img.id === 'default-avatar')?.imageUrl || '';
+  const getParticipantAvatar = (p: Participant) => {
+    if (p.imageUrl) return p.imageUrl;
+    return `https://picsum.photos/seed/${p.id}/200/200`;
+  };
 
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
@@ -477,8 +479,8 @@ export function ControlPanel() {
                   <div className="flex items-center gap-4">
                     <div className="relative group/img">
                       <Avatar className="w-12 h-12 border-2 border-white/10">
-                        <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
-                        <AvatarFallback className="bg-white/5"><ImageIcon className="w-4 h-4 text-white/20" /></AvatarFallback>
+                        <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                        <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                       </Avatar>
                       <button 
                         onClick={() => participantFilesRef.current[p.id]?.click()}
@@ -561,7 +563,7 @@ export function ControlPanel() {
                 <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12 border border-white/10">
-                      <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
+                      <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                       <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">

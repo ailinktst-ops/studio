@@ -11,7 +11,6 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const ICON_MAP: Record<string, any> = {
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
@@ -54,7 +53,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
-  const defaultAvatar = PlaceHolderImages.find(img => img.id === 'default-avatar')?.imageUrl || '';
+
+  const getParticipantAvatar = (p: Participant) => {
+    if (p.imageUrl) return p.imageUrl;
+    return `https://picsum.photos/seed/${p.id}/200/200`;
+  };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
     const audio = new Audio(SOUND_URLS[type]);
@@ -248,7 +251,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
 
   return (
-    <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
+    <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
       {overlay && brandImageUrl && (
         <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
@@ -277,7 +280,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR CODES LATERAIS */}
+      {/* QR CODES INFERIORES */}
       {overlay && (
         <>
           <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
@@ -306,46 +309,42 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </>
       )}
 
-      {/* PLAYLIST PANEL */}
-      {overlay && approvedMusic.length > 0 && (
-        <div className="fixed left-8 top-32 z-[70] w-64 space-y-4 animate-in slide-in-from-left-20 duration-1000">
-          <div className="bg-blue-600/90 backdrop-blur-xl p-4 rounded-3xl border border-white/20 shadow-2xl rotate-[-2deg]">
-            <h3 className="text-white font-black italic uppercase text-xs tracking-[0.2em] mb-4 flex items-center gap-2">
-              <Disc className="w-4 h-4 animate-spin" /> Próximas Músicas
-            </h3>
-            <div className="space-y-3">
-              {approvedMusic.map((m, i) => (
-                <div key={m.id} className="bg-black/40 p-3 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 100}ms` }}>
-                  <p className="text-[10px] font-black uppercase text-blue-400 tracking-wider truncate">{m.artist}</p>
-                  <p className="text-xs font-bold text-white uppercase italic truncate">{m.song}</p>
+      {/* TOP 4-10 PANEL - CANTO ESQUERDO SUPERIOR */}
+      {overlay && top10.length > 0 && (
+        <div className="fixed left-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-left-20 duration-1000">
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2">
+            <ListOrdered className="w-3 h-3" /> Classificação
+          </h3>
+          <div className="space-y-1">
+            {top10.map((p, i) => (
+              <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary transition-all">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <span className="text-[10px] font-black text-white/20 w-4">{i + 4}º</span>
+                  <Avatar className="w-6 h-6 border border-white/10">
+                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                  </Avatar>
+                  <span className="text-xs font-bold text-white/80 uppercase truncate">{p.name}</span>
                 </div>
-              ))}
-            </div>
+                <span className="text-xs font-black text-primary/60">{p.count}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* TOP 4-10 PANEL */}
-      {overlay && top10.length > 0 && (
-        <div className="fixed right-8 top-32 z-[70] w-64 space-y-4 animate-in slide-in-from-right-20 duration-1000">
-          <div className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl rotate-[2deg]">
-            <h3 className="text-white/60 font-black italic uppercase text-xs tracking-[0.2em] mb-4 flex items-center gap-2">
-              <ListOrdered className="w-4 h-4" /> Classificação
-            </h3>
-            <div className="space-y-2">
-              {top10.map((p, i) => (
-                <div key={p.id} className="flex items-center justify-between bg-white/5 p-2 rounded-xl border border-white/5">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <span className="text-[10px] font-black text-white/40">{i + 4}º</span>
-                    <Avatar className="w-6 h-6 border border-white/10">
-                      <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
-                    </Avatar>
-                    <span className="text-xs font-bold text-white uppercase truncate">{p.name}</span>
-                  </div>
-                  <span className="text-xs font-black text-primary">{p.count}</span>
-                </div>
-              ))}
-            </div>
+      {/* PLAYLIST PANEL - CANTO DIREITO SUPERIOR */}
+      {overlay && approvedMusic.length > 0 && (
+        <div className="fixed right-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-right-20 duration-1000 text-right">
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">
+             Playlist <Disc className="w-3 h-3 animate-spin" />
+          </h3>
+          <div className="space-y-3">
+            {approvedMusic.map((m, i) => (
+              <div key={m.id} className="animate-in fade-in slide-in-from-right-4" style={{ animationDelay: `${i * 100}ms` }}>
+                <p className="text-[9px] font-black uppercase text-blue-500/60 tracking-wider truncate">{m.artist}</p>
+                <p className="text-xs font-bold text-white/80 uppercase italic truncate">{m.song}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -405,7 +404,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {/* ÚLTIMO GANHADOR */}
       {overlay && !data.raffle?.isRaffling && raffleWinner && (
-        <div className="fixed top-8 left-[50%] -translate-x-1/2 z-[60] animate-in slide-in-from-top-10 duration-500">
+        <div className="fixed top-24 left-[50%] -translate-x-1/2 z-[60] animate-in slide-in-from-top-10 duration-500">
           <div className={cn(
             "px-8 py-4 rounded-[2rem] border-4 shadow-2xl flex items-center gap-6 rotate-1",
             data.raffle?.type === 'challenge' 
@@ -414,7 +413,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}>
             <div className="relative">
               <Avatar className="w-16 h-16 border-2 border-white/20">
-                <AvatarImage src={raffleWinner.imageUrl || defaultAvatar} className="object-cover" />
+                <AvatarImage src={getParticipantAvatar(raffleWinner)} className="object-cover" />
                 <AvatarFallback className="bg-white/10 font-bold uppercase">{raffleWinner.name[0]}</AvatarFallback>
               </Avatar>
             </div>
@@ -430,7 +429,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      <div className="text-center space-y-4 mb-8">
+      <div className="text-center space-y-4 mb-12">
         <div className="flex items-center justify-center gap-4 mb-2">
           <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-primary/20")}>
             {brandImageUrl ? <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" /> : <CustomIcon className="w-full h-full text-primary" />}
@@ -440,30 +439,45 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
-      {/* PÓDIO TOP 3 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
+      {/* PÓDIO TOP 3 HORIZONTAL - COMEÇANDO DO TOPO */}
+      <div className="flex flex-row justify-center items-end gap-12 w-full max-w-6xl mt-4">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
-          if (!p) return <div key={actualIndex} className="hidden md:block" />;
+          if (!p) return <div key={actualIndex} className="hidden md:block w-72" />;
           return (
-            <Card key={p.id} className={cn("relative overflow-hidden transition-all border-2 glass", actualIndex === 0 ? "border-yellow-400/50 scale-110 z-20 bg-yellow-400/10 order-1 md:order-2" : actualIndex === 1 ? "border-zinc-300/30 bg-zinc-300/5 order-2 md:order-1" : "border-amber-700/30 bg-amber-700/5 order-3")}>
-              <CardContent className="pt-12 pb-14 flex flex-col items-center space-y-8">
-                <div className="relative">
-                  <Avatar className="w-32 h-32 border-4 border-white/20 shadow-2xl">
-                    <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
-                    <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
-                  </Avatar>
-                  {p.count > 0 && (
-                    <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary z-30">{actualIndex + 1}º</div>
-                  )}
+            <div 
+              key={p.id} 
+              className={cn(
+                "relative flex flex-col items-center p-8 transition-all duration-500 animate-in fade-in zoom-in",
+                actualIndex === 0 ? "scale-125 z-20 order-2" : actualIndex === 1 ? "order-1 opacity-80" : "order-3 opacity-80"
+              )}
+            >
+              <div className="relative mb-6">
+                <div className={cn(
+                  "absolute inset-0 rounded-full blur-2xl opacity-20 animate-pulse",
+                  actualIndex === 0 ? "bg-yellow-400" : actualIndex === 1 ? "bg-zinc-400" : "bg-amber-800"
+                )}></div>
+                <Avatar className={cn(
+                  "w-40 h-40 border-8 shadow-2xl",
+                  actualIndex === 0 ? "border-yellow-400" : actualIndex === 1 ? "border-zinc-300" : "border-amber-700"
+                )}>
+                  <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                  <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className={cn(
+                  "absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full w-12 h-12 flex items-center justify-center font-black italic shadow-lg border-2 border-white/20",
+                  actualIndex === 0 ? "bg-yellow-400 text-black" : actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white"
+                )}>
+                  {actualIndex + 1}º
                 </div>
-                <h2 className="text-4xl font-black italic text-white uppercase truncate px-4">{p.name}</h2>
-                <div className="flex flex-col items-center">
-                  <span className="text-8xl font-black text-primary">{p.count}</span>
-                  <span className="text-white/40 font-bold uppercase text-[10px] tracking-widest">{p.category}</span>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+              
+              <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter mb-2">{p.name}</h2>
+              <div className="flex items-center gap-3">
+                <span className="text-6xl font-black text-primary drop-shadow-lg">{p.count}</span>
+                <span className="text-white/20 font-bold uppercase text-[10px] tracking-widest leading-tight">{p.category}</span>
+              </div>
+            </div>
           );
         })}
       </div>
