@@ -221,6 +221,17 @@ export function useCounter() {
     });
   };
 
+  const clearElegantMessages = () => {
+    if (!counterRef || !data) return;
+    const updatedMessages = data.messages.map(m => 
+      m.status === 'approved' ? { ...m, status: 'rejected' as const } : m
+    );
+    updateDoc(counterRef, {
+      messages: updatedMessages,
+      updatedAt: Timestamp.now()
+    });
+  };
+
   const triggerRaffle = () => {
     if (!counterRef || !data || data.participants.length < 2) return;
     const top6 = [...data.participants].sort((a, b) => b.count - a.count).slice(0, 6);
@@ -291,6 +302,7 @@ export function useCounter() {
     removeParticipant,
     sendElegantMessage,
     moderateMessage,
+    clearElegantMessages,
     triggerRaffle,
     triggerSurpriseChallenge,
     clearChallenge,

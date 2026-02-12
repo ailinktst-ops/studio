@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, 
   Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
   Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap, EyeOff, Megaphone,
-  Heart, Check, Ban, ImageIcon, History, ExternalLink
+  Heart, Check, Ban, ImageIcon, History, ExternalLink, HeartOff
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ export function ControlPanel() {
     updateTitle, updateBrand, updatePhrases, updateBrandImage,
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
-    triggerAnnouncement, moderateMessage
+    triggerAnnouncement, moderateMessage, clearElegantMessages
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -134,6 +134,7 @@ export function ControlPanel() {
 
   const hasPersistentChallenge = data.raffle?.winnerId && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling;
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
+  const hasActiveMessage = data.messages.some(m => m.status === 'approved');
 
   if (isInitializing) {
     return (
@@ -261,11 +262,19 @@ export function ControlPanel() {
             </Button>
           </div>
 
-          {hasPersistentChallenge && (
-            <Button onClick={clearChallenge} variant="outline" className="w-full h-12 rounded-xl border-blue-500/30 text-blue-400 hover:bg-blue-500/10 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-              <EyeOff className="w-4 h-4" /> Remover Aviso de Desafio
-            </Button>
-          )}
+          <div className="space-y-4">
+            {hasPersistentChallenge && (
+              <Button onClick={clearChallenge} variant="outline" className="w-full h-12 rounded-xl border-blue-500/30 text-blue-400 hover:bg-blue-500/10 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <EyeOff className="w-4 h-4" /> Remover Aviso de Desafio
+              </Button>
+            )}
+
+            {hasActiveMessage && (
+              <Button onClick={clearElegantMessages} variant="outline" className="w-full h-12 rounded-xl border-pink-500/30 text-pink-400 hover:bg-pink-500/10 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <HeartOff className="w-4 h-4" /> Remover Mensagem do Telão
+              </Button>
+            )}
+          </div>
 
           <Card className="bg-card/50 border-secondary/20">
             <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-secondary"><UserPlus className="w-5 h-5" /> Adicionar Participante</CardTitle></CardHeader>
