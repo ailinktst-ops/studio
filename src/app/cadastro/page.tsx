@@ -3,12 +3,13 @@
 
 import { useState } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { UserPlus, Camera, Check, AlertCircle, Loader2, ArrowRight, Clock } from 'lucide-react';
+import { UserPlus, Camera, Check, AlertCircle, Loader2, ArrowRight, Clock, Music } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from 'next/link';
 
 export default function CadastroPage() {
   const { data, addParticipant, isInitializing } = useCounter();
@@ -65,7 +66,6 @@ export default function CadastroPage() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    // autoApprove = false para cadastros via QR Code
     const success = addParticipant(name.trim(), "Cerveja", imageUrl, false);
     
     if (success) {
@@ -157,13 +157,25 @@ export default function CadastroPage() {
                   </Alert>
                 )}
 
-                <Button 
-                  type="submit" 
-                  disabled={!name.trim()}
-                  className="w-full h-16 bg-secondary hover:bg-secondary/90 text-lg font-black italic uppercase tracking-tighter rounded-xl shadow-[0_0_20px_rgba(0,128,128,0.3)]"
-                >
-                  Participar do Ranking
-                </Button>
+                <div className="space-y-4">
+                  <Button 
+                    type="submit" 
+                    disabled={!name.trim()}
+                    className="w-full h-16 bg-secondary hover:bg-secondary/90 text-lg font-black italic uppercase tracking-tighter rounded-xl shadow-[0_0_20px_rgba(0,128,128,0.3)]"
+                  >
+                    Participar do Ranking
+                  </Button>
+                  
+                  <Link href="/musica" className="block">
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      className="w-full h-14 border-blue-500/30 text-blue-400 font-black italic uppercase tracking-widest text-xs hover:bg-blue-500/10"
+                    >
+                      <Music className="w-4 h-4 mr-2" /> Pedir Música!
+                    </Button>
+                  </Link>
+                </div>
               </form>
             )}
           </CardContent>

@@ -155,6 +155,12 @@ export function useCounter() {
     updateDoc(counterRef, { 
       ...fields,
       updatedAt: Timestamp.now() 
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: fields
+      }));
     });
   };
 
@@ -172,9 +178,16 @@ export function useCounter() {
       imageUrl,
       status: autoApprove ? 'approved' : 'pending'
     };
+    
     updateDoc(counterRef, {
       participants: [...(data?.participants || []), newParticipant],
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: [...(data?.participants || []), newParticipant] }
+      }));
     });
     return true;
   };
@@ -192,6 +205,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: updatedParticipants }
+      }));
     });
   };
 
@@ -203,6 +222,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: updatedParticipants }
+      }));
     });
   };
 
@@ -217,6 +242,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: updatedParticipants }
+      }));
     });
   };
 
@@ -228,6 +259,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: updatedParticipants }
+      }));
     });
   };
 
@@ -239,18 +276,31 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: updatedParticipants }
+      }));
     });
   };
 
   const resetAll = () => {
     if (!counterRef) return;
-    updateDoc(counterRef, {
+    const resetData = {
       participants: [],
       messages: [],
       musicRequests: [],
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle' },
       announcement: { message: "", isActive: false, timestamp: null }
+    };
+    updateDoc(counterRef, resetData).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: resetData
+      }));
     });
   };
 
@@ -260,6 +310,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: resetParticipants,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: resetParticipants }
+      }));
     });
   };
 
@@ -269,6 +325,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: updatedParticipants,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: updatedParticipants }
+      }));
     });
   };
 
@@ -285,6 +347,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       messages: [...(data?.messages || []), newMessage],
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { messages: [...(data?.messages || []), newMessage] }
+      }));
     });
   };
 
@@ -296,6 +364,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       messages: updatedMessages,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { messages: updatedMessages }
+      }));
     });
   };
 
@@ -307,6 +381,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       messages: updatedMessages,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { messages: updatedMessages }
+      }));
     });
   };
 
@@ -322,6 +402,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       musicRequests: [...(data?.musicRequests || []), newRequest],
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { musicRequests: [...(data?.musicRequests || []), newRequest] }
+      }));
     });
   };
 
@@ -333,6 +419,12 @@ export function useCounter() {
     updateDoc(counterRef, {
       musicRequests: updatedRequests,
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { musicRequests: updatedRequests }
+      }));
     });
   };
 
@@ -351,6 +443,12 @@ export function useCounter() {
         startTime: Date.now(),
         type: 'raffle'
       }
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'raffle' } }
+      }));
     });
     setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 8000);
   };
@@ -369,6 +467,12 @@ export function useCounter() {
         startTime: Date.now(),
         type: 'challenge'
       }
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'challenge' } }
+      }));
     });
     setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 15000);
   };
@@ -379,6 +483,12 @@ export function useCounter() {
       "raffle.winnerId": null,
       "raffle.type": 'raffle',
       updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { "raffle.winnerId": null, "raffle.type": 'raffle' }
+      }));
     });
   };
 
@@ -390,6 +500,12 @@ export function useCounter() {
         isActive: true,
         timestamp: Date.now()
       }
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { announcement: { message: message.trim(), isActive: true, timestamp: Date.now() } }
+      }));
     });
     setTimeout(() => updateDoc(counterRef, { "announcement.isActive": false }), 8000);
   };
