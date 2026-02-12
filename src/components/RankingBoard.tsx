@@ -246,7 +246,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
     .sort((a, b) => a.timestamp - b.timestamp) // Mais antigas primeiro
-    .slice(0, 5);
+    .slice(0, 10);
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
 
@@ -319,7 +319,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             {top10.map((p, i) => (
               <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary transition-all">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-[10px] font-black text-white/20 w-4">{i + 4}º</span>
+                  <span className="text-[10px] font-black text-white/20 w-4">
+                    {p.count > 0 ? `${i + 4}º` : ""}
+                  </span>
                   <Avatar className="w-6 h-6 border border-white/10">
                     <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                   </Avatar>
@@ -464,12 +466,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                   <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                   <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                 </Avatar>
-                <div className={cn(
-                  "absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full w-12 h-12 flex items-center justify-center font-black italic shadow-lg border-2 border-white/20",
-                  actualIndex === 0 ? "bg-yellow-400 text-black" : actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white"
-                )}>
-                  {actualIndex + 1}º
-                </div>
+                {p.count > 0 && (
+                  <div className={cn(
+                    "absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full w-12 h-12 flex items-center justify-center font-black italic shadow-lg border-2 border-white/20",
+                    actualIndex === 0 ? "bg-yellow-400 text-black" : actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white"
+                  )}>
+                    {actualIndex + 1}º
+                  </div>
+                )}
               </div>
               
               <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter mb-2">{p.name}</h2>
