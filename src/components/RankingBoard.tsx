@@ -46,12 +46,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [notification, setNotification] = useState<{ 
     userName: string; 
     count: number; 
-    type: 'point' | 'leader';
+    type: 'point' | 'leader' | 'lantern';
     title?: string;
   } | null>(null);
   
   const lastParticipantsRef = useRef<Participant[]>([]);
   const lastLeaderIdRef = useRef<string | null>(null);
+  const lastLanternIdRef = useRef<string | null>(null);
   const lastAnnouncementTimeRef = useRef<number | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -86,10 +87,16 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (!overlay || data.participants.length === 0) return;
 
+    const sortedCurrent = [...data.participants].sort((a, b) => b.count - a.count);
+    const top10Current = sortedCurrent.slice(0, 10);
+    const currentLantern = (top10Current.length > 3 && top10Current[top10Current.length - 1].count > 0) 
+      ? top10Current[top10Current.length - 1] 
+      : null;
+
     if (lastParticipantsRef.current.length === 0) {
       lastParticipantsRef.current = data.participants;
-      const initialSorted = [...data.participants].sort((a, b) => b.count - a.count);
-      lastLeaderIdRef.current = initialSorted[0]?.id || null;
+      lastLeaderIdRef.current = sortedCurrent[0]?.id || null;
+      lastLanternIdRef.current = currentLantern?.id || null;
       return;
     }
 
@@ -101,9 +108,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       return prevP && p.count > prevP.count;
     });
 
-    const sortedCurrent = [...current].sort((a, b) => b.count - a.count);
     const currentLeader = sortedCurrent[0];
 
+    // Detect Leader Change
     if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
       playSound('leader');
       setNotification({
@@ -114,7 +121,21 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       });
       lastLeaderIdRef.current = currentLeader.id;
       setTimeout(() => setNotification(null), 5000);
-    } else if (updatedUser) {
+    } 
+    // Detect Lantern Change
+    else if (currentLantern && lastLanternIdRef.current && currentLantern.id !== lastLanternIdRef.current) {
+      playSound('announcement');
+      setNotification({
+        userName: currentLantern.name,
+        count: currentLantern.count,
+        type: 'lantern',
+        title: "NOVO LANTERNINHA! 🤡"
+      });
+      lastLanternIdRef.current = currentLantern.id;
+      setTimeout(() => setNotification(null), 5000);
+    }
+    // Detect Point Increment
+    else if (updatedUser) {
       playSound('point');
       setNotification({
         userName: updatedUser.name,
@@ -313,16 +334,26 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
             "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
-            notification.type === 'leader' ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" : "bg-primary/95 border-primary-foreground/20 text-white"
+            notification.type === 'leader' ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" : 
+            notification.type === 'lantern' ? "bg-red-600/95 border-red-300 text-white animate-pulse" :
+            "bg-primary/95 border-primary-foreground/20 text-white"
           )}>
             {notification.title && <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">{notification.title}</h2>}
             <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">{notification.userName}</h2>
             <div className="flex items-center gap-6 mt-4">
               <div className="flex flex-col items-end">
-                <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">Bebeu</span>
+                <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">
+                  {notification.type === 'lantern' ? "Tá Devendo" : "Bebeu"}
+                </span>
                 {notification.type === 'leader' && <Trophy className="w-8 h-8 mt-2" />}
+                {notification.type === 'lantern' && <CryingIcon className="w-8 h-8 mt-2" />}
               </div>
-              <span className={cn("text-8xl font-black italic uppercase tracking-tighter drop-shadow-md px-8 py-4 rounded-[2rem]", notification.type === 'leader' ? "bg-black text-yellow-400" : "bg-white/20 text-white")}>{notification.count}</span>
+              <span className={cn(
+                "text-8xl font-black italic uppercase tracking-tighter drop-shadow-md px-8 py-4 rounded-[2rem]", 
+                notification.type === 'leader' ? "bg-black text-yellow-400" : 
+                notification.type === 'lantern' ? "bg-black text-red-500" :
+                "bg-white/20 text-white"
+              )}>{notification.count}</span>
             </div>
           </div>
         </div>
