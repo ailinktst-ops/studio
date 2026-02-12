@@ -10,7 +10,7 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 330 81% 60%; /* Pink para Correio Elegante */
+    --primary: 262 83% 58%; /* Roxo para o Sistema e Login */
     --primary-foreground: 210 40% 98%;
     --secondary: 174 100% 29%; /* Teal para Botões Padrão */
     --secondary-foreground: 0 0% 98%;
@@ -24,6 +24,8 @@
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
     --radius: 1rem;
+    
+    --correio: 330 81% 60%; /* Pink exclusivo para o Correio */
   }
 }
 
@@ -34,7 +36,7 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(330, 81%, 60%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(262, 83%, 58%, 0.15) 0px, transparent 50%),
       radial-gradient(at 100% 100%, hsla(174, 100%, 29%, 0.1) 0px, transparent 50%),
       linear-gradient(to bottom, #0a0a0a, #121212);
     background-attachment: fixed;
@@ -72,3 +74,10 @@
 .scale-up-down {
   animation: scale-up-down 1.5s ease-in-out infinite;
 }
+
+/* Utilitários para a cor Pink do Correio */
+.bg-correio { background-color: hsl(var(--correio)); }
+.text-correio { color: hsl(var(--correio)); }
+.border-correio { border-color: hsl(var(--correio)); }
+.shadow-correio { box-shadow: 0 0 20px hsla(330, 81%, 60%, 0.3); }
+.shadow-correio-lg { box-shadow: 0 0 60px hsla(330, 81%, 60%, 0.5); }

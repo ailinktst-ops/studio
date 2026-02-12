@@ -3,16 +3,15 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
-  Trophy, Medal, Star, Flame, Loader2, 
-  Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, UserPlus, AlertCircle
+  Trophy, Loader2, 
+  Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
+  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, AlertCircle
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
 
 const ICON_MAP: Record<string, any> = {
-  Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
+  Beer, Wine, CupSoda, GlassWater, Trophy, Music, Pizza
 };
 
 const SOUND_URLS = {
@@ -33,7 +32,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
   
-  // States for transition phases
   const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [challengePhase, setChallengePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [correioPhase, setCorreioPhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
@@ -122,7 +120,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return null;
   }, [sortedParticipants]);
 
-  // Handle Notifications
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0) return;
     const currentLeader = sortedParticipants[0];
@@ -158,7 +155,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     lastParticipantsRef.current = current;
   }, [approvedParticipants, overlay, sortedParticipants, currentLantern]);
 
-  // Handle Correio Elegante Transition
   useEffect(() => {
     if (overlay && data.activeMessageId && data.activeMessageId !== lastMessageIdRef.current) {
       playSound('heart');
@@ -170,7 +166,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.activeMessageId, overlay]);
 
-  // Raffle Transition
   useEffect(() => {
     if (overlay && data.raffle?.winnerId && data.raffle.winnerId !== lastRaffleIdRef.current) {
       setRafflePhase('center');
@@ -181,7 +176,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.raffle?.winnerId, overlay]);
 
-  // Challenge Transition
   useEffect(() => {
     if (overlay && data.challenge?.winnerId && data.challenge.winnerId !== lastChallengeIdRef.current) {
       setChallengePhase('center');
@@ -192,7 +186,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.challenge?.winnerId, overlay]);
 
-  // Social & Piadinha logic
   useEffect(() => {
     if (overlay && data.socialAnnouncement?.isActive && data.socialAnnouncement.timestamp !== lastSocialAnnouncementRef.current) {
       playSound('social');
@@ -211,7 +204,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.piadinha, overlay, clearPiadinha]);
 
-  // Raffle Animation Loop
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (data.raffle?.isRaffling) {
@@ -234,7 +226,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return () => { if (interval) clearInterval(interval); };
   }, [data.raffle?.isRaffling, data.raffle?.candidates, approvedParticipants, data.raffle?.winnerId]);
 
-  // Challenge Animation Loop
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (data.challenge?.isRaffling) {
@@ -298,7 +289,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* MEMES AO VIVO! OVERLAY */}
       {overlay && data.piadinha?.isActive && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
@@ -319,14 +309,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* CORREIO ELEGANTE ALERT */}
       {overlay && activeMessage && correioPhase !== 'hidden' && (
         <div className={cn(
           "transition-all duration-1000 ease-in-out",
           correioPhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed left-8 bottom-32 z-[80] max-w-sm"
         )}>
           <div className={cn(
-            "bg-primary/95 backdrop-blur-2xl border-2 border-primary-foreground/20 p-8 rounded-[2rem] shadow-[0_0_60px_rgba(236,72,153,0.5)] transition-all duration-1000",
+            "bg-correio backdrop-blur-2xl border-2 border-white/20 p-8 rounded-[2rem] shadow-correio-lg transition-all duration-1000",
             correioPhase === 'center' ? "scale-150 rotate-0" : "scale-100 rotate-[-1deg]"
           )}>
             <div className="flex items-center gap-3 mb-4">
@@ -343,7 +332,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR CODES - DIREITA INFERIOR */}
       {overlay && (
         <div className="fixed right-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-col items-center gap-2">
@@ -352,7 +340,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20"><img src={qrCorreioUrl} alt="QR" className="w-24 h-24" /></div>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-correio/20"><img src={qrCorreioUrl} alt="QR" className="w-24 h-24" /></div>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Música</span>
@@ -361,7 +349,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* TOP 4-20 - ESQUERDA SUPERIOR */}
       {overlay && top20.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
@@ -383,7 +370,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* PLAYLIST - DIREITA SUPERIOR */}
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed right-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-right-20 duration-1000 text-right">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">Playlist <Disc className="w-3 h-3 animate-spin" /></h3>
@@ -398,7 +384,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* SORTEIO GERAL ALERT */}
       {overlay && (data.raffle?.isRaffling || raffleWinner) && rafflePhase !== 'hidden' && (
         <div className={cn(
           "transition-all duration-1000 ease-in-out",
@@ -422,7 +407,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* DESAFIO SURPRESA ALERT */}
       {overlay && (data.challenge?.isRaffling || challengeWinner) && challengePhase !== 'hidden' && (
         <div className={cn(
           "transition-all duration-1000 ease-in-out",
@@ -446,7 +430,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* LANTERNINHA */}
       {overlay && currentLantern && (
         <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="bg-red-600/20 backdrop-blur-xl border-2 border-red-500/30 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl">
@@ -468,7 +451,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* TOP 3 PÓDIO */}
       <div className="text-center space-y-4 mb-12">
         <div className="flex items-center justify-center gap-4 mb-2">
           <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-white/10")}>
@@ -507,14 +489,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         })}
       </div>
 
-      {/* NOTIFICAÇÃO PONTO/LÍDER */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
             "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
             notification.type === 'leader' ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" : 
             notification.type === 'lantern' ? "bg-red-600/95 border-red-300 text-white animate-pulse" :
-            "bg-primary/95 border-primary-foreground/20 text-white"
+            "bg-primary/95 border-white/20 text-white"
           )}>
             {notification.title && <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">{notification.title}</h2>}
             <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">{notification.userName}</h2>
@@ -526,7 +507,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* TICKER INFERIOR */}
       {overlay && (
         <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4">
           <div className="bg-black/60 backdrop-blur-2xl px-12 py-4 rounded-full border border-white/10 flex items-center shadow-2xl min-w-[500px] justify-center overflow-hidden">

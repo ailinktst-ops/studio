@@ -5,9 +5,9 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
-  Heart, Check, Ban, ImageIcon, History, Upload, UserCheck,
-  Music, X, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2, Copy, Smartphone, ExternalLink, Settings, Eraser
+  Heart, Check, Ban, Upload, History, UserCheck,
+  Music, Trophy, Mic, Image as ImageIconLucide,
+  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -33,7 +31,6 @@ import {
   Dialog, 
   DialogContent, 
   DialogDescription, 
-  DialogFooter, 
   DialogHeader, 
   DialogTitle,
   DialogTrigger
@@ -47,24 +44,15 @@ export function ControlPanel() {
     data, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
-    resetRaffleHistory, resetChallengeHistory, clearActiveMessage,
-    moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
-    updateAllParticipantsCategory, moderateMusic, removeMusicRequest,
-    submitJoke, updateJokeImage, removeJoke, triggerPiadinha, clearPiadinha
+    clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
+    clearPiadinha
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Gole");
-  const [bulkCategory, setBulkCategory] = useState("Gole");
-  const [bulkResetPoints, setBulkResetPoints] = useState(false);
-  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
-  const [isConfirmBulkOpen, setIsConfirmBulkOpen] = useState(false);
-  const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
-  
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
   
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
-  const jokeFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const adminAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const getParticipantAvatar = (p: Participant) => {
@@ -109,13 +97,6 @@ export function ControlPanel() {
     }
   };
 
-  const handleBulkUpdate = () => {
-    updateAllParticipantsCategory(bulkCategory, bulkResetPoints);
-    setIsConfirmBulkOpen(false);
-    setIsBulkDialogOpen(false);
-    toast({ title: "Ranking Atualizado!", description: `Todos os participantes agora são da categoria ${bulkCategory}.` });
-  };
-
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -147,18 +128,6 @@ export function ControlPanel() {
   const handleParticipantImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) handleImageCompression(file, (url) => updateParticipantImage(id, url), 400);
-  };
-
-  const handleJokeImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleImageCompression(file, (url) => updateJokeImage(id, url), 800);
-  };
-
-  const playAdminAudio = (audioUrl: string) => {
-    if (adminAudioRef.current) adminAudioRef.current.pause();
-    const audio = new Audio(audioUrl);
-    adminAudioRef.current = audio;
-    audio.play().catch(e => console.error("Erro ao tocar áudio:", e));
   };
 
   const ShareButton = ({ path, label, icon: Icon, colorClass, qrKey }: { path: string, label: string, icon: any, colorClass: string, qrKey: string }) => (
@@ -211,7 +180,7 @@ export function ControlPanel() {
         </div>
         <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
           <ShareButton path="/cadastro" label="Cadastro" icon={UserPlus} colorClass="hover:bg-secondary hover:text-white" qrKey="cadastro" />
-          <ShareButton path="/correio" label="Correio" icon={Heart} colorClass="hover:bg-primary hover:text-white" qrKey="correio" />
+          <ShareButton path="/correio" label="Correio" icon={Heart} colorClass="hover:bg-correio hover:text-white" qrKey="correio" />
           <ShareButton path="/musica" label="Música" icon={Music} colorClass="hover:bg-blue-600 hover:text-white" qrKey="musica" />
           <ShareButton path="/piadinha" label="Memes" icon={Mic} colorClass="hover:bg-orange-500 hover:text-white" qrKey="piadinha" />
           <Link href="/overlay" target="_blank" className="w-full">
@@ -272,14 +241,14 @@ export function ControlPanel() {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          <Card className="bg-card/30 border-white/10">
+          <Card className="bg-card/30 border-correio/20">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-black uppercase italic text-primary flex items-center gap-2"><Heart className="w-4 h-4" /> Correio Ativo</CardTitle>
+              <CardTitle className="text-sm font-black uppercase italic text-correio flex items-center gap-2"><Heart className="w-4 h-4" /> Correio Ativo</CardTitle>
               {data.activeMessageId && <Button onClick={clearActiveMessage} variant="ghost" size="sm" className="text-destructive text-[10px] font-bold uppercase">Limpar Telão</Button>}
             </CardHeader>
             <CardContent>
               {data.activeMessageId ? (
-                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl">
+                <div className="bg-correio/10 border border-correio/20 p-4 rounded-xl">
                    <p className="text-white font-bold italic">&ldquo;{data.messages.find(m => m.id === data.activeMessageId)?.content}&rdquo;</p>
                 </div>
               ) : (
@@ -381,13 +350,13 @@ export function ControlPanel() {
           </Card>
 
           <Card className="bg-card/30 backdrop-blur-md border-white/5">
-            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-primary"><Heart className="w-5 h-5" /> Correio Elegante ({pendingMessages.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-correio"><Heart className="w-5 h-5" /> Correio Elegante ({pendingMessages.length})</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {pendingMessages.map(msg => (
                 <div key={msg.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-primary/20 text-primary border-none font-bold italic uppercase text-[10px]">De: {msg.from}</Badge>
+                      <Badge className="bg-correio/20 text-correio border-none font-bold italic uppercase text-[10px]">De: {msg.from}</Badge>
                       <span className="text-white/20 text-xs">➔</span>
                       <Badge className="bg-secondary/20 text-secondary border-none font-bold italic uppercase text-[10px]">Para: {msg.to}</Badge>
                     </div>
