@@ -32,6 +32,7 @@ export function ControlPanel() {
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const copyToClipboard = (path: string, label: string) => {
+    if (typeof window === 'undefined') return;
     const url = `${window.location.origin}${path}`;
     navigator.clipboard.writeText(url).then(() => {
       toast({
@@ -230,7 +231,7 @@ export function ControlPanel() {
                       <span className="font-black text-xl text-white italic uppercase">{p.name}</span>
                       <div className="flex gap-2 mt-1">
                         <Badge variant="outline" className="border-secondary/30 text-secondary text-[10px] uppercase">{p.category}</Badge>
-                        <span className="text-sm font-bold text-primary">{p.count} pontos</span>
+                        <span className="text-sm font-bold text-primary">{p.count} gole</span>
                       </div>
                     </div>
                   </div>
