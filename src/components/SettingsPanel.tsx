@@ -2,15 +2,16 @@
 "use client";
 
 import { useState, useRef } from 'react';
-import { useCounter } from '@/hooks/useCounter';
+import { useCounter, SocialLink } from '@/hooks/useCounter';
 import { 
   Plus, Settings2, X, Upload, Megaphone,
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza,
-  Instagram, Youtube, Share2
+  Instagram, Youtube, Share2, Trash2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ICON_OPTIONS = [
   { id: 'Beer', icon: Beer },
@@ -32,8 +33,8 @@ export function SettingsPanel() {
 
   const [newPhrase, setNewPhrase] = useState("");
   const [customAnnouncement, setCustomAnnouncement] = useState("");
-  const [instagramInput, setInstagramInput] = useState(data.instagramUrl || "");
-  const [youtubeInput, setYoutubeInput] = useState(data.youtubeUrl || "");
+  const [newSocialType, setNewSocialType] = useState<'instagram' | 'youtube'>('instagram');
+  const [newSocialUrl, setNewSocialUrl] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,15 +50,28 @@ export function SettingsPanel() {
     updatePhrases(updated);
   };
 
+  const handleAddSocial = () => {
+    if (newSocialUrl.trim()) {
+      const newLink: SocialLink = {
+        id: Math.random().toString(36).substring(2, 11),
+        type: newSocialType,
+        url: newSocialUrl.trim()
+      };
+      updateSocialLinks([...(data.socialLinks || []), newLink]);
+      setNewSocialUrl("");
+    }
+  };
+
+  const handleRemoveSocial = (id: string) => {
+    const updated = (data.socialLinks || []).filter(l => l.id !== id);
+    updateSocialLinks(updated);
+  };
+
   const handleSendAnnouncement = () => {
     if (customAnnouncement.trim()) {
       triggerAnnouncement(customAnnouncement);
       setCustomAnnouncement("");
     }
-  };
-
-  const handleSaveSocial = () => {
-    updateSocialLinks(instagramInput.trim(), youtubeInput.trim());
   };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
@@ -105,6 +119,16 @@ export function SettingsPanel() {
         return;
       }
       handleImageCompression(file, (url) => updateBrandImage(url), 800);
+    }
+  };
+
+  const getSocialHandle = (url: string) => {
+    try {
+      const cleanUrl = url.replace(/\/$/, "");
+      const parts = cleanUrl.split('/');
+      return parts[parts.length - 1] || parts[parts.length - 2] || 'Social';
+    } catch {
+      return 'Social';
     }
   };
 
@@ -159,60 +183,74 @@ export function SettingsPanel() {
 
             <div className="space-y-4 pt-4 border-t border-white/5">
               <label className="text-[10px] font-bold uppercase text-white/40 flex items-center gap-2">
-                <Share2 className="w-3 h-3" /> Redes Sociais
+                <Share2 className="w-3 h-3" /> Redes Sociais Dinâmicas
               </label>
               
               <div className="space-y-4">
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-end">
                   <div className="flex-1 space-y-1">
-                    <label className="text-[8px] font-black uppercase text-white/20 tracking-widest ml-1">Instagram Link</label>
-                    <div className="relative">
-                      <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500" />
-                      <Input 
-                        placeholder="https://instagram.com/..." 
-                        value={instagramInput} 
-                        onChange={(e) => setInstagramInput(e.target.value)}
-                        className="bg-black/20 border-white/10 pl-10"
-                      />
-                    </div>
+                    <label className="text-[8px] font-black uppercase text-white/20 tracking-widest ml-1">Tipo</label>
+                    <Select value={newSocialType} onValueChange={(val: any) => setNewSocialType(val)}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10">
+                        <SelectItem value="instagram">Instagram</SelectItem>
+                        <SelectItem value="youtube">YouTube</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-[3] space-y-1">
+                    <label className="text-[8px] font-black uppercase text-white/20 tracking-widest ml-1">Link Completo (URL)</label>
+                    <Input 
+                      placeholder="https://..." 
+                      value={newSocialUrl} 
+                      onChange={(e) => setNewSocialUrl(e.target.value)}
+                      className="bg-black/20 border-white/10 h-10"
+                    />
                   </div>
                   <Button 
-                    onClick={() => triggerSocialAnnouncement('instagram')}
-                    disabled={!data.instagramUrl}
-                    className="h-10 mt-5 bg-pink-600 hover:bg-pink-700 text-white font-bold text-[10px] uppercase"
+                    onClick={handleAddSocial}
+                    disabled={!newSocialUrl.trim()}
+                    className="h-10 bg-secondary text-secondary-foreground"
                   >
-                    Divulgar
+                    <Plus className="w-4 h-4" />
                   </Button>
                 </div>
 
-                <div className="flex gap-2 items-center">
-                  <div className="flex-1 space-y-1">
-                    <label className="text-[8px] font-black uppercase text-white/20 tracking-widest ml-1">YouTube Link</label>
-                    <div className="relative">
-                      <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-600" />
-                      <Input 
-                        placeholder="https://youtube.com/..." 
-                        value={youtubeInput} 
-                        onChange={(e) => setYoutubeInput(e.target.value)}
-                        className="bg-black/20 border-white/10 pl-10"
-                      />
+                <div className="space-y-2 mt-4">
+                  {(data.socialLinks || []).map((link) => (
+                    <div key={link.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 group">
+                      <div className="flex items-center gap-3">
+                        {link.type === 'instagram' ? <Instagram className="w-4 h-4 text-pink-500" /> : <Youtube className="w-4 h-4 text-red-600" />}
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase text-white italic">{getSocialHandle(link.url)}</span>
+                          <span className="text-[8px] text-white/20 truncate max-w-[150px]">{link.url}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          onClick={() => triggerSocialAnnouncement(link.type, link.url)}
+                          size="sm"
+                          className={cn(
+                            "h-8 text-[9px] font-black uppercase px-3",
+                            link.type === 'instagram' ? "bg-pink-600 hover:bg-pink-700" : "bg-red-600 hover:bg-red-700"
+                          )}
+                        >
+                          Divulgar
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleRemoveSocial(link.id)}
+                          className="h-8 w-8 text-white/20 hover:text-destructive"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <Button 
-                    onClick={() => triggerSocialAnnouncement('youtube')}
-                    disabled={!data.youtubeUrl}
-                    className="h-10 mt-5 bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] uppercase"
-                  >
-                    Divulgar
-                  </Button>
+                  ))}
                 </div>
-
-                <Button 
-                  onClick={handleSaveSocial}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic tracking-tighter"
-                >
-                  Salvar Links Sociais
-                </Button>
               </div>
             </div>
 
@@ -249,4 +287,3 @@ export function SettingsPanel() {
     </div>
   );
 }
-

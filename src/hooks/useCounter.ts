@@ -33,6 +33,12 @@ export interface MusicRequest {
   timestamp: number;
 }
 
+export interface SocialLink {
+  id: string;
+  type: 'instagram' | 'youtube';
+  url: string;
+}
+
 export interface RaffleState {
   isRaffling: boolean;
   winnerId: string | null;
@@ -50,6 +56,7 @@ export interface AnnouncementState {
 
 export interface SocialAnnouncementState {
   type: 'instagram' | 'youtube' | null;
+  url: string;
   isActive: boolean;
   timestamp: number | null;
 }
@@ -60,8 +67,7 @@ export interface CounterState {
   brandName: string;
   brandIcon: string;
   brandImageUrl?: string;
-  instagramUrl?: string;
-  youtubeUrl?: string;
+  socialLinks: SocialLink[];
   participants: Participant[];
   messages: ElegantMessage[];
   musicRequests: MusicRequest[];
@@ -81,8 +87,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   brandName: "RankUp Counter",
   brandIcon: "Beer",
   brandImageUrl: "",
-  instagramUrl: "",
-  youtubeUrl: "",
+  socialLinks: [],
   participants: [],
   messages: [],
   musicRequests: [],
@@ -108,6 +113,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   },
   socialAnnouncement: {
     type: null,
+    url: "",
     isActive: false,
     timestamp: null
   }
@@ -135,10 +141,14 @@ export function useCounter() {
       id: DEFAULT_ID,
       ...state,
       categories: VALID_CATEGORIES,
+      socialLinks: state.socialLinks || [],
       participants: (state.participants || []).map(p => ({
         ...p,
         category: sanitize(p.category)
-      })),
+      })).sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return 0; // The hook caller will handle arrival order by original index
+      }),
       messages: state.messages || [],
       musicRequests: state.musicRequests || [],
       customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
@@ -333,7 +343,7 @@ export function useCounter() {
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle', winnersHistory: [] },
       announcement: { message: "", isActive: false, timestamp: null },
-      socialAnnouncement: { type: null, isActive: false, timestamp: null }
+      socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null }
     };
     updateDoc(counterRef, resetData).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -493,15 +503,6 @@ export function useCounter() {
     });
   };
 
-  const generateCandidates = (participants: Participant[]) => {
-    const names = participants.map(p => p.name);
-    let pool: string[] = [];
-    for(let j = 0; j < 20; j++) {
-      pool = [...pool, ...names];
-    }
-    return pool.sort(() => Math.random() - 0.5);
-  };
-
   const triggerRaffle = () => {
     if (!counterRef || !data) return;
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
@@ -517,7 +518,13 @@ export function useCounter() {
 
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
-    const candidates = generateCandidates(approvedParticipants);
+    
+    // Generate pool for animation: use all approved participants and triple them
+    let animPool: string[] = [];
+    for(let j = 0; j < 10; j++) {
+      animPool = [...animPool, ...approvedParticipants.map(p => p.name)];
+    }
+    const candidates = animPool.sort(() => Math.random() - 0.5);
 
     updateDoc(counterRef, {
       raffle: {
@@ -556,7 +563,13 @@ export function useCounter() {
 
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
-    const candidates = generateCandidates(approvedParticipants);
+    
+    // Generate pool for animation: use all approved participants and triple them
+    let animPool: string[] = [];
+    for(let j = 0; j < 10; j++) {
+      animPool = [...animPool, ...approvedParticipants.map(p => p.name)];
+    }
+    const candidates = animPool.sort(() => Math.random() - 0.5);
 
     updateDoc(counterRef, {
       raffle: {
@@ -627,11 +640,12 @@ export function useCounter() {
     setTimeout(() => updateDoc(counterRef, { "announcement.isActive": false }), 8000);
   };
 
-  const triggerSocialAnnouncement = (type: 'instagram' | 'youtube') => {
-    if (!counterRef || !data) return;
+  const triggerSocialAnnouncement = (type: 'instagram' | 'youtube', url: string) => {
+    if (!counterRef || !url) return;
     updateDoc(counterRef, {
       socialAnnouncement: {
         type,
+        url,
         isActive: true,
         timestamp: Date.now()
       }
@@ -639,14 +653,14 @@ export function useCounter() {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { socialAnnouncement: { type, isActive: true, timestamp: Date.now() } }
+        requestResourceData: { socialAnnouncement: { type, url, isActive: true, timestamp: Date.now() } }
       }));
     });
     setTimeout(() => updateDoc(counterRef, { "socialAnnouncement.isActive": false }), 15000);
   };
 
-  const updateSocialLinks = (instagramUrl: string, youtubeUrl: string) => {
-    updateDocField({ instagramUrl, youtubeUrl });
+  const updateSocialLinks = (socialLinks: SocialLink[]) => {
+    updateDocField({ socialLinks });
   };
 
   return {

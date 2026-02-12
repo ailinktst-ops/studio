@@ -12,8 +12,17 @@
         "brandName": { "type": "string", "description": "Nome da marca/festa." },
         "brandIcon": { "type": "string", "description": "ID do ícone Lucide selecionado." },
         "brandImageUrl": { "type": "string", "description": "URL em Base64 da logo personalizada." },
-        "instagramUrl": { "type": "string", "description": "Link do Instagram." },
-        "youtubeUrl": { "type": "string", "description": "Link do YouTube." },
+        "socialLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "type": { "type": "string", "enum": ["instagram", "youtube"] },
+              "url": { "type": "string" }
+            }
+          }
+        },
         "participants": {
           "type": "array",
           "items": {
@@ -79,6 +88,7 @@
           "type": "object",
           "properties": {
             "type": { "type": "string", "enum": ["instagram", "youtube"] },
+            "url": { "type": "string" },
             "isActive": { "type": "boolean" },
             "timestamp": { "type": "number" }
           }

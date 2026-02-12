@@ -96,15 +96,17 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     [data.participants]
   );
 
-  const sortedParticipants = useMemo(() => 
-    [...approvedParticipants].sort((a, b) => {
+  const sortedParticipants = useMemo(() => {
+    return [...approvedParticipants].sort((a, b) => {
+      // Primary sort: count descending
       if (b.count !== a.count) return b.count - a.count;
+      
+      // Secondary sort: arrival order (index in original list)
       const indexA = data.participants.findIndex(p => p.id === a.id);
       const indexB = data.participants.findIndex(p => p.id === b.id);
       return indexA - indexB;
-    }), 
-    [approvedParticipants, data.participants]
-  );
+    });
+  }, [approvedParticipants, data.participants]);
 
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0) return;
@@ -243,11 +245,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
 
-  // Extrair o handle (nome de usuário) do link
   const getSocialHandle = (url: string, type: 'instagram' | 'youtube') => {
     if (!url) return '';
     try {
-      const cleanUrl = url.replace(/\/$/, ""); // Remove barra final se houver
+      const cleanUrl = url.replace(/\/$/, ""); 
       const parts = cleanUrl.split('/');
       let handle = parts[parts.length - 1] || parts[parts.length - 2];
       
@@ -260,12 +261,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   };
 
-  const activeSocialUrl = data.socialAnnouncement?.type === 'instagram' ? data.instagramUrl : data.youtubeUrl;
+  const activeSocialUrl = data.socialAnnouncement?.url || "";
   const socialQrUrl = data.socialAnnouncement?.isActive && activeSocialUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeSocialUrl)}`
     : '';
   
-  const socialHandle = data.socialAnnouncement?.type ? getSocialHandle(activeSocialUrl || '', data.socialAnnouncement.type) : '';
+  const socialHandle = data.socialAnnouncement?.type ? getSocialHandle(activeSocialUrl, data.socialAnnouncement.type) : '';
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -557,4 +558,3 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     </div>
   );
 }
-
