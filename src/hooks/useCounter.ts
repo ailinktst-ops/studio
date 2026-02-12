@@ -132,18 +132,26 @@ export function useCounter() {
     });
   };
 
-  const addParticipant = (name: string, category: string) => {
-    if (!counterRef) return;
+  const addParticipant = (name: string, category: string, imageUrl?: string): boolean => {
+    if (!counterRef || !data) return false;
+    
+    const normalizedName = name.trim().toLowerCase();
+    const nameExists = data.participants.some(p => p.name.toLowerCase() === normalizedName);
+    
+    if (nameExists) return false;
+
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
-      name,
+      name: name.trim(),
       count: 0,
-      category: category || "Cerveja"
+      category: category || "Cerveja",
+      imageUrl
     };
     updateDoc(counterRef, {
       participants: [...(data?.participants || []), newParticipant],
       updatedAt: Timestamp.now()
     });
+    return true;
   };
 
   const updateParticipantImage = (id: string, imageUrl: string) => {

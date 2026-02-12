@@ -6,7 +6,7 @@ import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, Monitor, 
   Sparkles, Loader2, Zap, EyeOff,
-  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload
+  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, AlertCircle
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
 export function ControlPanel() {
@@ -32,8 +33,16 @@ export function ControlPanel() {
   const handleAddParticipant = (e: React.FormEvent) => {
     e.preventDefault();
     if (newParticipantName.trim()) {
-      addParticipant(newParticipantName.trim(), selectedCategory);
-      setNewParticipantName("");
+      const success = addParticipant(newParticipantName.trim(), selectedCategory);
+      if (success) {
+        setNewParticipantName("");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Nome duplicado",
+          description: "Já existe um participante com este nome.",
+        });
+      }
     }
   };
 

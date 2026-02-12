@@ -40,7 +40,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [showWinner, setShowWinner] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
-  const [qrUrl, setQrUrl] = useState("");
+  const [qrCorreioUrl, setQrCorreioUrl] = useState("");
+  const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   
   const [notification, setNotification] = useState<{ 
     userName: string; 
@@ -77,7 +78,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const origin = window.location.origin;
-      setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
+      setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
+      setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
     }
   }, []);
 
@@ -207,9 +209,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const sortedParticipants = [...data.participants].sort((a, b) => b.count - a.count);
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
-  const top6 = sortedParticipants.slice(0, 6);
-  // Lanterninha é o último do Top 6 que tem pelo menos 1 ponto
-  const lanterninha = (top6.length > 3 && top6[top6.length - 1].count > 0) ? top6[top6.length - 1] : null;
+  const top10 = sortedParticipants.slice(0, 10);
+  const lanterninha = (top10.length > 3 && top10[top10.length - 1].count > 0) ? top10[top10.length - 1] : null;
 
   const ranks4to10 = sortedParticipants.slice(3, 10).filter(p => p.count > 0);
 
@@ -247,16 +248,33 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR Code Correio Elegante */}
-      {overlay && qrUrl && (
-        <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
-              <img src={qrUrl} alt="QR Code" className="w-24 h-24" />
+      {/* QR Codes Overlay */}
+      {overlay && (
+        <>
+          {/* QR Code Correio Elegante */}
+          {qrCorreioUrl && (
+            <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
+                <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
+                  <img src={qrCorreioUrl} alt="QR Code Correio" className="w-24 h-24" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+
+          {/* QR Code Cadastro de Participante */}
+          {qrCadastroUrl && (
+            <div className="fixed right-8 bottom-32 z-[80] animate-in slide-in-from-right-10 duration-700">
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro Participante</span>
+                <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
+                  <img src={qrCadastroUrl} alt="QR Code Cadastro" className="w-24 h-24" />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Mensagem Correio Elegante (Lado Esquerdo Meio) */}
@@ -388,7 +406,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <CryingIcon className="absolute -top-2 -right-2 w-6 h-6 text-destructive animate-pulse" />
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-destructive">Lanterninha 🤡 (Top 6)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-destructive">Lanterninha 🤡 (Top 10)</span>
               <h3 className="text-2xl font-black italic text-white uppercase">{lanterninha.name}</h3>
             </div>
           </div>
