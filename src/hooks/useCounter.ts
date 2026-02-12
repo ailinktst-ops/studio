@@ -64,6 +64,8 @@ export interface CounterState {
 }
 
 const DEFAULT_ID = "current";
+const VALID_CATEGORIES = ["Gole", "Passa ou Repassa"];
+
 const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   title: "RANKING DE CONSUMO",
   brandName: "RankUp Counter",
@@ -72,7 +74,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   participants: [],
   messages: [],
   musicRequests: [],
-  categories: ["Gole", "Passa ou Repassa"],
+  categories: VALID_CATEGORIES,
   customPhrases: [
     "A ELITE DA RESENHA EM TEMPO REAL", 
     "SIGA O LÍDER!", 
@@ -106,14 +108,13 @@ export function useCounter() {
   const isLoading = isDocLoading || isUserLoading;
 
   const cleanData = (state: Partial<CounterState>): CounterState => {
-    const validCategories = ["Gole", "Passa ou Repassa"];
-    const sanitize = (cat: string) => validCategories.includes(cat) ? cat : "Gole";
+    const sanitize = (cat: string) => VALID_CATEGORIES.includes(cat) ? cat : "Gole";
     
     return {
       ...DEFAULT_STATE,
       id: DEFAULT_ID,
       ...state,
-      categories: validCategories,
+      categories: VALID_CATEGORIES,
       participants: (state.participants || []).map(p => ({
         ...p,
         category: sanitize(p.category)
@@ -175,7 +176,7 @@ export function useCounter() {
     const nameExists = data.participants.some(p => p.name.toLowerCase() === normalizedName);
     if (nameExists) return false;
 
-    const finalCategory = (category === "Passa ou Repassa" || category === "Gole") ? category : "Gole";
+    const finalCategory = VALID_CATEGORIES.includes(category) ? category : "Gole";
 
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
@@ -205,11 +206,12 @@ export function useCounter() {
     if (status === 'rejected') {
       updatedParticipants = data.participants.filter(p => p.id !== id);
     } else {
+      const finalCategory = category && VALID_CATEGORIES.includes(category) ? category : undefined;
       updatedParticipants = data.participants.map(p => 
         p.id === id ? { 
           ...p, 
           status: 'approved' as const, 
-          category: category || p.category 
+          category: finalCategory || p.category 
         } : p
       );
     }
@@ -227,8 +229,9 @@ export function useCounter() {
 
   const updateParticipantCategory = (id: string, category: string) => {
     if (!counterRef || !data) return;
+    const finalCategory = VALID_CATEGORIES.includes(category) ? category : "Gole";
     const updatedParticipants = data.participants.map(p => 
-      p.id === id ? { ...p, category: category } : p
+      p.id === id ? { ...p, category: finalCategory } : p
     );
     updateDoc(counterRef, {
       participants: updatedParticipants,
@@ -244,9 +247,10 @@ export function useCounter() {
 
   const updateAllParticipantsCategory = (category: string, resetPoints: boolean) => {
     if (!counterRef || !data) return;
+    const finalCategory = VALID_CATEGORIES.includes(category) ? category : "Gole";
     const updatedParticipants = data.participants.map(p => ({
       ...p,
-      category: category,
+      category: finalCategory,
       count: resetPoints ? 0 : p.count
     }));
     updateDoc(counterRef, {
