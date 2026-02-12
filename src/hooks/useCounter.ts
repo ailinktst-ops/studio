@@ -656,6 +656,7 @@ export function useCounter() {
     );
 
     if (status === 'approved') {
+      // Garantir que apenas as 10 mais recentes fiquem aprovadas se houver excesso
       const approvedOnes = updatedRequests.filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
       if (approvedOnes.length > 10) {
         const oldestId = approvedOnes[0].id;
@@ -695,9 +696,11 @@ export function useCounter() {
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
     if (approvedParticipants.length < 1) return;
 
+    // Filtra para não repetir quem já ganhou
     let winnersHistory = data.raffle?.winnersHistory || [];
     let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
 
+    // Se todos já ganharam, reseta automaticamente ou avisa. Aqui vamos resetar se o pool esvaziar.
     if (pool.length === 0) {
       winnersHistory = [];
       pool = approvedParticipants;
@@ -706,6 +709,7 @@ export function useCounter() {
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
     
+    // Animação com candidatos
     let animPool: string[] = [];
     for(let j = 0; j < 10; j++) {
       animPool = [...animPool, ...approvedParticipants.map(p => p.name)];

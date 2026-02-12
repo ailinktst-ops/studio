@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -45,6 +46,7 @@ export function ControlPanel() {
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
+    moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
     clearPiadinha
   } = useCounter();
 
@@ -53,10 +55,10 @@ export function ControlPanel() {
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
   
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
-  const adminAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
+    // Personagens aleatórios baseados no ID do participante
     return `https://picsum.photos/seed/${p.id}-movie-anime-character/200/200`;
   };
 
@@ -193,16 +195,20 @@ export function ControlPanel() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="bg-yellow-500/10 border-yellow-500/20 backdrop-blur-md">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-black uppercase italic text-yellow-500 flex items-center gap-2">
               <Sparkles className="w-4 h-4" /> Sorteio Geral
             </CardTitle>
+            <Button variant="ghost" size="sm" onClick={resetRaffleHistory} title="Zerar quem já ganhou" className="h-8 w-8 p-0 text-yellow-500/40 hover:text-yellow-500">
+               <RotateCcw className="w-3.5 h-3.5" />
+            </Button>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
              <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="w-full bg-yellow-500 hover:bg-yellow-600 h-12 rounded-xl text-md font-black uppercase italic shadow-[0_0_15px_rgba(234,179,8,0.3)]">
                 {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
                 Sorteio Geral
               </Button>
+              <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest text-center">Vencedores: {data.raffle?.winnersHistory?.length || 0} / {approvedParticipants.length}</p>
               {data.raffle?.winnerId && !data.raffle?.isRaffling && (
                 <Button onClick={clearRaffle} variant="outline" className="text-yellow-500 border-yellow-500/20 text-[10px] font-bold uppercase h-10">
                   <Eraser className="w-4 h-4 mr-2" /> Limpar Overlay
@@ -212,16 +218,20 @@ export function ControlPanel() {
         </Card>
 
         <Card className="bg-purple-500/10 border-purple-500/20 backdrop-blur-md">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-black uppercase italic text-purple-500 flex items-center gap-2">
               <Zap className="w-4 h-4" /> Desafio Rápido
             </CardTitle>
+            <Button variant="ghost" size="sm" onClick={resetChallengeHistory} title="Zerar histórico de desafios" className="h-8 w-8 p-0 text-purple-500/40 hover:text-purple-500">
+               <RotateCcw className="w-3.5 h-3.5" />
+            </Button>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
              <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.challenge?.isRaffling || loading} className="w-full bg-purple-600 hover:bg-purple-700 h-12 rounded-xl text-md font-black uppercase italic shadow-[0_0_15px_rgba(168,85,247,0.3)]">
                 {data.challenge?.isRaffling ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
                 Novo Desafio
               </Button>
+              <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest text-center">Desafiados: {data.challenge?.winnersHistory?.length || 0} / {approvedParticipants.length}</p>
               {data.challenge?.winnerId && !data.challenge?.isRaffling && (
                 <Button onClick={clearChallenge} variant="outline" className="text-purple-500 border-purple-500/20 text-[10px] font-bold uppercase h-10">
                   <Eraser className="w-4 h-4 mr-2" /> Limpar Overlay
@@ -343,6 +353,24 @@ export function ControlPanel() {
                   <div className="flex gap-2">
                     <Button onClick={() => moderateParticipant(p.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
                     <Button onClick={() => moderateParticipant(p.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-500"><Music className="w-5 h-5" /> Pedidos de Música ({pendingMusic.length})</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {pendingMusic.map(req => (
+                <div key={req.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <span className="block text-white font-black italic uppercase text-xs">{req.artist}</span>
+                    <span className="block text-white/40 font-bold uppercase text-[10px] tracking-widest">{req.song}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => moderateMusic(req.id, 'approved')} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
+                    <Button onClick={() => moderateMusic(req.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
                   </div>
                 </div>
               ))}
