@@ -486,8 +486,9 @@ export function useCounter() {
       pool = approvedParticipants;
     }
 
-    const candidates = [...approvedParticipants]
-      .map(p => p.name)
+    // Criar uma lista bem grande de candidatos para o efeito de caça-níqueis ser rico
+    const names = approvedParticipants.map(p => p.name);
+    const candidates = [...names, ...names, ...names]
       .sort(() => Math.random() - 0.5);
 
     const winner = pool[Math.floor(Math.random() * pool.length)];
@@ -525,8 +526,9 @@ export function useCounter() {
       pool = approvedParticipants;
     }
 
-    const candidates = [...approvedParticipants]
-      .map(p => p.name)
+    // Criar uma lista bem grande de candidatos para o efeito de caça-níqueis ser rico
+    const names = approvedParticipants.map(p => p.name);
+    const candidates = [...names, ...names, ...names]
       .sort(() => Math.random() - 0.5);
 
     const winner = pool[Math.floor(Math.random() * pool.length)];
@@ -562,6 +564,20 @@ export function useCounter() {
         path: counterRef.path,
         operation: 'update',
         requestResourceData: { "raffle.winnerId": null, "raffle.type": 'raffle' }
+      }));
+    });
+  };
+
+  const resetRaffleHistory = () => {
+    if (!counterRef) return;
+    updateDoc(counterRef, {
+      "raffle.winnersHistory": [],
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { "raffle.winnersHistory": [] }
       }));
     });
   };
@@ -610,6 +626,7 @@ export function useCounter() {
     triggerRaffle,
     triggerSurpriseChallenge,
     clearChallenge,
+    resetRaffleHistory,
     triggerAnnouncement
   };
 }

@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Share2, ExternalLink, Settings, Music, X
+  Share2, ExternalLink, Settings, Music, X, Trophy
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ export function ControlPanel() {
   const { 
     data, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
-    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
+    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge, resetRaffleHistory,
     moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
     updateAllParticipantsCategory, moderateMusic, removeMusicRequest
   } = useCounter();
@@ -152,6 +152,10 @@ export function ControlPanel() {
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
   const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => b.timestamp - a.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
+  
+  // Histórico de sorteio
+  const winnersHistoryIds = data.raffle?.winnersHistory || [];
+  const winnersHistory = winnersHistoryIds.map(id => approvedParticipants.find(p => p.id === id)).filter(Boolean);
 
   const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
 
@@ -377,6 +381,37 @@ export function ControlPanel() {
         </TabsContent>
 
         <TabsContent value="moderation" className="space-y-6">
+          {/* Histórico de Sorteados */}
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-yellow-500">
+                <Trophy className="w-5 h-5" /> Já Sorteados ({winnersHistory.length})
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={resetRaffleHistory}
+                disabled={winnersHistory.length === 0}
+                className="text-[10px] font-bold uppercase border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/10"
+              >
+                Resetar Sorteios
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {winnersHistory.length === 0 ? (
+                  <p className="text-[10px] font-bold uppercase text-white/20 italic">Ninguém sorteado ainda.</p>
+                ) : (
+                  winnersHistory.map((p: any) => (
+                    <Badge key={p.id} className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 font-black uppercase italic py-1">
+                      {p.name}
+                    </Badge>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="bg-card/30 backdrop-blur-md border-white/5">
             <CardHeader>
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-secondary">
