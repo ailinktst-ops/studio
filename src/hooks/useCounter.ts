@@ -12,6 +12,16 @@ export interface Participant {
   name: string;
   count: number;
   category: string;
+  imageUrl?: string;
+}
+
+export interface ElegantMessage {
+  id: string;
+  from: string;
+  to: string;
+  content: string;
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: number;
 }
 
 export interface RaffleState {
@@ -35,6 +45,7 @@ export interface CounterState {
   brandIcon: string;
   brandImageUrl?: string;
   participants: Participant[];
+  messages: ElegantMessage[];
   categories: string[];
   customPhrases: string[];
   updatedAt: any;
@@ -49,6 +60,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   brandIcon: "Beer",
   brandImageUrl: "",
   participants: [],
+  messages: [],
   categories: ["Cerveja", "Água", "Drink", "Shot", "Gelo"],
   customPhrases: ["A Elite da Resenha em Tempo Real", "Siga o líder!", "Quem não bebe, não conta história"],
   updatedAt: Timestamp.now(),
@@ -83,6 +95,7 @@ export function useCounter() {
     id: DEFAULT_ID,
     ...(rawData || {}),
     participants: rawData?.participants || [],
+    messages: rawData?.messages || [],
     customPhrases: rawData?.customPhrases || DEFAULT_STATE.customPhrases,
     raffle: {
       ...DEFAULT_STATE.raffle!,
@@ -116,7 +129,7 @@ export function useCounter() {
   };
 
   const addParticipant = (name: string, category: string) => {
-    if (!counterRef || !user) return;
+    if (!counterRef) return;
     const newParticipant: Participant = {
       id: Math.random().toString(36).substring(2, 11),
       name,
@@ -129,8 +142,19 @@ export function useCounter() {
     });
   };
 
+  const updateParticipantImage = (id: string, imageUrl: string) => {
+    if (!counterRef || !data) return;
+    const updatedParticipants = data.participants.map(p => 
+      p.id === id ? { ...p, imageUrl } : p
+    );
+    updateDoc(counterRef, {
+      participants: updatedParticipants,
+      updatedAt: Timestamp.now()
+    });
+  };
+
   const incrementCount = (id: string) => {
-    if (!counterRef || !data || !user) return;
+    if (!counterRef || !data) return;
     const updatedParticipants = data.participants.map(p => 
       p.id === id ? { ...p, count: p.count + 1 } : p
     );
@@ -140,18 +164,28 @@ export function useCounter() {
     });
   };
 
-  const resetCounts = () => {
-    if (!counterRef || !user) return;
+  const resetAll = () => {
+    if (!counterRef) return;
     updateDoc(counterRef, {
       participants: [],
+      messages: [],
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle' },
       announcement: { message: "", isActive: false, timestamp: null }
     });
   };
 
+  const resetOnlyPoints = () => {
+    if (!counterRef || !data) return;
+    const resetParticipants = data.participants.map(p => ({ ...p, count: 0 }));
+    updateDoc(counterRef, {
+      participants: resetParticipants,
+      updatedAt: Timestamp.now()
+    });
+  };
+
   const removeParticipant = (id: string) => {
-    if (!counterRef || !data || !user) return;
+    if (!counterRef || !data) return;
     const updatedParticipants = data.participants.filter(p => p.id !== id);
     updateDoc(counterRef, {
       participants: updatedParticipants,
@@ -159,8 +193,36 @@ export function useCounter() {
     });
   };
 
+  // Correio Elegante
+  const sendElegantMessage = (from: string, to: string, content: string) => {
+    if (!counterRef) return;
+    const newMessage: ElegantMessage = {
+      id: Math.random().toString(36).substring(2, 11),
+      from,
+      to,
+      content,
+      status: 'pending',
+      timestamp: Date.now()
+    };
+    updateDoc(counterRef, {
+      messages: [...(data?.messages || []), newMessage],
+      updatedAt: Timestamp.now()
+    });
+  };
+
+  const moderateMessage = (id: string, status: 'approved' | 'rejected') => {
+    if (!counterRef || !data) return;
+    const updatedMessages = data.messages.map(m => 
+      m.id === id ? { ...m, status } : m
+    );
+    updateDoc(counterRef, {
+      messages: updatedMessages,
+      updatedAt: Timestamp.now()
+    });
+  };
+
   const triggerRaffle = () => {
-    if (!counterRef || !data || !user || data.participants.length < 2) return;
+    if (!counterRef || !data || data.participants.length < 2) return;
     const top6 = [...data.participants].sort((a, b) => b.count - a.count).slice(0, 6);
     const candidates = top6.map(p => p.name);
     const winner = top6[Math.floor(Math.random() * top6.length)];
@@ -177,7 +239,7 @@ export function useCounter() {
   };
 
   const triggerSurpriseChallenge = () => {
-    if (!counterRef || !data || !user || data.participants.length < 1) return;
+    if (!counterRef || !data || data.participants.length < 1) return;
     const candidates = data.participants.map(p => p.name);
     const winner = data.participants[Math.floor(Math.random() * data.participants.length)];
     updateDoc(counterRef, {
@@ -193,7 +255,7 @@ export function useCounter() {
   };
 
   const clearChallenge = () => {
-    if (!counterRef || !user) return;
+    if (!counterRef) return;
     updateDoc(counterRef, {
       "raffle.winnerId": null,
       "raffle.type": 'raffle',
@@ -202,7 +264,7 @@ export function useCounter() {
   };
 
   const triggerAnnouncement = (message: string) => {
-    if (!counterRef || !user || !message.trim()) return;
+    if (!counterRef || !message.trim()) return;
     updateDoc(counterRef, {
       announcement: {
         message: message.trim(),
@@ -222,9 +284,13 @@ export function useCounter() {
     updateBrandImage: (brandImageUrl: string) => updateDocField({ brandImageUrl }),
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
     addParticipant,
+    updateParticipantImage,
     incrementCount,
-    resetCounts,
+    resetAll,
+    resetOnlyPoints,
     removeParticipant,
+    sendElegantMessage,
+    moderateMessage,
     triggerRaffle,
     triggerSurpriseChallenge,
     clearChallenge,

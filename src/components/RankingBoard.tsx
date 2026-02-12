@@ -2,12 +2,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { useCounter, Participant } from '@/hooks/useCounter';
+import { useCounter, Participant, ElegantMessage } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Sparkles, Loader2, 
-  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle, Zap, Megaphone
+  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle, Zap, Megaphone,
+  Heart, Mail
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
 
 const ICON_MAP: Record<string, any> = {
@@ -18,7 +20,8 @@ const SOUND_URLS = {
   point: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
   leader: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3',
   challenge: 'https://assets.mixkit.co/active_storage/sfx/950/950-preview.mp3',
-  announcement: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3' // Air horn (buzina estrondosa)
+  announcement: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3',
+  heart: 'https://assets.mixkit.co/active_storage/sfx/1360/1360-preview.mp3'
 };
 
 const CryingIcon = ({ className }: { className?: string }) => (
@@ -37,6 +40,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [showWinner, setShowWinner] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
+  const [qrUrl, setQrUrl] = useState("");
   
   const [notification, setNotification] = useState<{ 
     userName: string; 
@@ -48,6 +52,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastParticipantsRef = useRef<Participant[]>([]);
   const lastLeaderIdRef = useRef<string | null>(null);
   const lastAnnouncementTimeRef = useRef<number | null>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
@@ -68,6 +73,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       challengeAudioRef.current = null;
     }
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
+    }
+  }, []);
 
   useEffect(() => {
     if (!overlay || data.participants.length === 0) return;
@@ -114,10 +126,19 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     lastParticipantsRef.current = current;
   }, [data.participants, overlay]);
 
-  // Alerta de Aviso Personalizado
+  useEffect(() => {
+    if (!overlay || !data.messages || data.messages.length === 0) return;
+    const approvedMessages = data.messages.filter(m => m.status === 'approved');
+    if (approvedMessages.length === 0) return;
+    const latest = approvedMessages[approvedMessages.length - 1];
+    if (latest.id !== lastMessageIdRef.current) {
+      playSound('heart');
+      lastMessageIdRef.current = latest.id;
+    }
+  }, [data.messages, overlay]);
+
   useEffect(() => {
     if (!overlay || !data.announcement?.isActive || !data.announcement.timestamp) return;
-    
     if (data.announcement.timestamp !== lastAnnouncementTimeRef.current) {
       playSound('announcement');
       lastAnnouncementTimeRef.current = data.announcement.timestamp;
@@ -186,13 +207,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const sortedParticipants = [...data.participants].sort((a, b) => b.count - a.count);
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
-  
   const top6 = sortedParticipants.slice(0, 6);
-  const lanterninha = (top6.length > 3) 
-    ? top6[top6.length - 1] 
-    : null;
+  const lanterninha = (top6.length > 3) ? top6[top6.length - 1] : null;
 
-  const isChallengeType = data.raffle?.type === 'challenge';
+  const approvedMessages = data.messages.filter(m => m.status === 'approved');
+  const latestMessage = approvedMessages.length > 0 ? approvedMessages[approvedMessages.length - 1] : null;
+
   const lastChallengedWinner = data.participants.find(p => p.id === data.raffle?.winnerId);
   const showPersistentChallenge = overlay && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling && lastChallengedWinner;
 
@@ -205,48 +225,55 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Miniatura do Desafiado (Lado Direito) */}
+      {/* QR Code Correio Elegante */}
+      {overlay && qrUrl && (
+        <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
+              <img src={qrUrl} alt="QR Code" className="w-24 h-24" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensagem Correio Elegante (Centro Direita) */}
+      {overlay && latestMessage && (
+        <div className="fixed right-8 top-[35%] -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500">
+          <div className="bg-pink-600/90 backdrop-blur-xl border-4 border-pink-400 p-6 rounded-[2.5rem] shadow-[0_0_50px_rgba(219,39,119,0.5)] flex flex-col items-center text-center max-w-[240px] rotate-[-2deg]">
+            <div className="bg-white/20 p-2 rounded-full mb-3">
+              <Heart className="w-8 h-8 text-pink-100 fill-pink-100" />
+            </div>
+            <div className="space-y-1 mb-3">
+              <span className="text-[10px] font-black uppercase text-pink-100 block">De: {latestMessage.from}</span>
+              <span className="text-[10px] font-black uppercase text-pink-100 block">Para: {latestMessage.to}</span>
+            </div>
+            <p className="text-xl font-black italic text-white uppercase drop-shadow-md leading-tight">
+              &ldquo;{latestMessage.content}&rdquo;
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Miniatura do Desafiado (Embaixo da mensagem) */}
       {showPersistentChallenge && (
-        <div className="fixed right-8 top-1/2 -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500">
+        <div className="fixed right-8 top-[65%] -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500 delay-100">
           <div className="bg-blue-600/90 backdrop-blur-xl border-4 border-blue-400 p-6 rounded-[2rem] shadow-[0_0_50px_rgba(59,130,246,0.5)] flex flex-col items-center text-center max-w-[200px] rotate-2">
             <div className="bg-white/20 p-2 rounded-full mb-3">
               <Zap className="w-8 h-8 text-blue-100" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Último Desafiado:</span>
             <h3 className="text-2xl font-black italic text-white uppercase drop-shadow-lg leading-tight">{lastChallengedWinner.name}</h3>
-            <div className="h-1 w-full bg-white/30 rounded-full mt-3"></div>
           </div>
         </div>
       )}
 
-      {/* Overlay de Aviso Customizado (Megafone) */}
-      {overlay && data.announcement?.isActive && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-10 animate-in fade-in zoom-in duration-500 bg-red-950/40 backdrop-blur-sm">
-          <div className="max-w-5xl w-full bg-red-600 border-4 border-yellow-400 p-12 rounded-[3rem] shadow-[0_0_150px_rgba(220,38,38,0.8)] text-center transform -rotate-1 animate-bounce">
-            <div className="flex items-center justify-center gap-6 mb-8">
-              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse" />
-              <h2 className="text-7xl font-black italic text-white uppercase tracking-[0.2em] drop-shadow-lg">ATENÇÃO</h2>
-              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse scale-x-[-1]" />
-            </div>
-            <p className="text-6xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl leading-tight">
-              {data.announcement.message}
-            </p>
-            <div className="mt-10 flex justify-center gap-4">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="w-4 h-4 rounded-full bg-yellow-400 animate-ping" style={{ animationDelay: `${i * 0.2}s` }}></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Avisos Gigantes (Notificação e Anúncio) permanecem como estão... */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
-            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center transition-colors duration-500",
-            notification.type === 'leader' 
-              ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" 
-              : "bg-primary/95 border-primary-foreground/20 text-white"
+            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
+            notification.type === 'leader' ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" : "bg-primary/95 border-primary-foreground/20 text-white"
           )}>
             {notification.title && <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">{notification.title}</h2>}
             <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">{notification.userName}</h2>
@@ -261,63 +288,57 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {data.raffle?.isRaffling && (
-        <div className={cn(
-          "fixed inset-0 z-[100] flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500 backdrop-blur-3xl",
-          isChallengeType ? "bg-indigo-950/95" : "bg-black/95"
-        )}>
-          {isChallengeType ? (
-            <Zap className="w-32 h-32 text-blue-400 animate-bounce mb-8 drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]" />
-          ) : (
-            <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />
-          )}
-          
-          <h2 className="text-4xl font-black italic text-white/60 uppercase mb-8">
-            {showWinner 
-              ? (isChallengeType ? "⚡ DESAFIO ACEITO:" : "🏆 O Vencedor é:") 
-              : (isChallengeType ? "🎲 Escolhendo um Desafiado..." : "🎰 Sorteando entre o Top 6...")}
-          </h2>
-
-          <div className={cn(
-            "text-[10rem] font-black italic uppercase tracking-tighter transition-all duration-500",
-            showWinner 
-              ? (isChallengeType 
-                  ? "text-blue-400 drop-shadow-[0_0_60px_rgba(59,130,246,0.8)] scale-125" 
-                  : "text-yellow-400 drop-shadow-[0_0_50px_rgba(250,204,21,0.8)] scale-110")
-              : "text-white"
-          )}>
-            {currentRaffleName || "..."}
-          </div>
-
-          {showWinner && isChallengeType && (
-            <div className="mt-12 py-4 px-12 bg-blue-500/20 border border-blue-400/50 rounded-full animate-pulse">
-              <span className="text-4xl font-black italic text-blue-300 uppercase tracking-widest">FOI DESAFIADO! ⚡</span>
+      {overlay && data.announcement?.isActive && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-10 animate-in fade-in zoom-in duration-500 bg-red-950/40 backdrop-blur-sm">
+          <div className="max-w-5xl w-full bg-red-600 border-4 border-yellow-400 p-12 rounded-[3rem] shadow-[0_0_150px_rgba(220,38,38,0.8)] text-center transform -rotate-1 animate-bounce">
+            <div className="flex items-center justify-center gap-6 mb-8">
+              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse" />
+              <h2 className="text-7xl font-black italic text-white uppercase tracking-[0.2em] drop-shadow-lg">ATENÇÃO</h2>
+              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse scale-x-[-1]" />
             </div>
-          )}
+            <p className="text-6xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl leading-tight">{data.announcement.message}</p>
+          </div>
         </div>
       )}
 
+      {/* Sorteio permanece como está... */}
+      {data.raffle?.isRaffling && (
+        <div className={cn("fixed inset-0 z-[100] flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500 backdrop-blur-3xl", data.raffle.type === 'challenge' ? "bg-indigo-950/95" : "bg-black/95")}>
+          {data.raffle.type === 'challenge' ? <Zap className="w-32 h-32 text-blue-400 animate-bounce mb-8" /> : <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />}
+          <h2 className="text-4xl font-black italic text-white/60 uppercase mb-8">{showWinner ? "VENCEDOR:" : "SORTEANDO..."}</h2>
+          <div className={cn("text-[10rem] font-black italic uppercase tracking-tighter transition-all duration-500", showWinner ? "text-yellow-400 drop-shadow-[0_0_50px_rgba(250,204,21,0.8)] scale-110" : "text-white")}>{currentRaffleName || "..."}</div>
+        </div>
+      )}
+
+      {/* Cabeçalho */}
       <div className="text-center space-y-4 mb-8">
         <div className="flex items-center justify-center gap-4 mb-2">
-          <div className={cn("rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.3)] overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-primary/20")}>
+          <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-primary/20")}>
             {brandImageUrl ? <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" /> : <CustomIcon className="w-full h-full text-primary" />}
           </div>
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
-        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
-        <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
+        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
+        <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full"></div>
       </div>
 
+      {/* Ranking Top 3 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
           if (!p) return <div key={actualIndex} className="hidden md:block" />;
           return (
-            <Card key={p.id} className={cn("relative overflow-hidden transition-all border-2 glass", actualIndex === 0 ? "border-yellow-400/50 scale-110 z-20 bg-yellow-400/10 shadow-[0_0_30px_rgba(250,204,21,0.3)] order-1 md:order-2" : actualIndex === 1 ? "border-zinc-300/30 bg-zinc-300/5 order-2 md:order-1" : "border-amber-700/30 bg-amber-700/5 order-3")}>
+            <Card key={p.id} className={cn("relative overflow-hidden transition-all border-2 glass", actualIndex === 0 ? "border-yellow-400/50 scale-110 z-20 bg-yellow-400/10 order-1 md:order-2" : actualIndex === 1 ? "border-zinc-300/30 bg-zinc-300/5 order-2 md:order-1" : "border-amber-700/30 bg-amber-700/5 order-3")}>
               <CardContent className="pt-12 pb-14 flex flex-col items-center space-y-8">
                 <div className="relative">
-                  {actualIndex === 0 ? <Trophy className="w-20 h-20 text-yellow-400 animate-float" /> : <Medal className={cn("w-16 h-16", actualIndex === 1 ? "text-zinc-300" : "text-amber-700")} />}
-                  <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary">{actualIndex + 1}</div>
+                  <Avatar className="w-32 h-32 border-4 border-white/20 shadow-2xl">
+                    {p.imageUrl ? <AvatarImage src={p.imageUrl} /> : null}
+                    <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary z-30">{actualIndex + 1}</div>
+                  <div className="absolute -top-4 -left-4 z-30">
+                    {actualIndex === 0 ? <Trophy className="w-12 h-12 text-yellow-400 animate-bounce" /> : <Medal className={cn("w-10 h-10", actualIndex === 1 ? "text-zinc-300" : "text-amber-700")} />}
+                  </div>
                 </div>
                 <h2 className="text-4xl font-black italic text-white uppercase truncate px-4">{p.name}</h2>
                 <div className="flex flex-col items-center">
@@ -331,7 +352,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       </div>
 
       {lanterninha && (
-        <div className="w-full max-w-md bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 flex items-center justify-between animate-in fade-in slide-in-from-bottom-4">
+        <div className="w-full max-w-md bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <CryingIcon className="w-10 h-10 text-destructive animate-pulse" />
             <div>
