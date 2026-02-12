@@ -55,11 +55,6 @@ export function ControlPanel() {
   
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const getParticipantAvatar = (p: Participant) => {
-    if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}-movie-anime-character/200/200`;
-  };
-
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
     let origin = window.location.origin;
@@ -71,8 +66,14 @@ export function ControlPanel() {
     return `${origin}${path}`;
   };
 
+  const getParticipantAvatar = (p: Participant) => {
+    if (p.imageUrl) return p.imageUrl;
+    return `https://picsum.photos/seed/${p.id}-movie-anime-character/200/200`;
+  };
+
   useEffect(() => {
-    const generateQr = (path: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formatUrlWithCorrectPort(path))}`;
+    const origin = formatUrlWithCorrectPort('');
+    const generateQr = (path: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(origin + path)}`;
     setQrUrls({
       cadastro: generateQr('/cadastro'),
       correio: generateQr('/correio'),
@@ -196,7 +197,7 @@ export function ControlPanel() {
           <ShareButton path="/correio" label="Correio" icon={Heart} colorClass="hover:bg-correio hover:text-white" qrKey="correio" />
           <ShareButton path="/musica" label="Música" icon={Music} colorClass="hover:bg-blue-600 hover:text-white" qrKey="musica" />
           <ShareButton path="/piadinha" label="Memes" icon={Mic} colorClass="hover:bg-orange-500 hover:text-white" qrKey="piadinha" />
-          <Link href="/overlay" target="_blank" className="w-full">
+          <Link href={formatUrlWithCorrectPort('/overlay')} target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
               <ExternalLink className="w-4 h-4 mr-2" /> Telão
             </Button>

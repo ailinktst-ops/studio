@@ -7,7 +7,7 @@ import {
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
   Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, AlertCircle,
-  Megaphone
+  Megaphone, QrCode
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
@@ -88,14 +88,20 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   };
 
+  const formatUrlWithCorrectPort = (path: string) => {
+    if (typeof window === 'undefined') return path;
+    let origin = window.location.origin;
+    if (origin.includes("cloudworkstations.dev")) {
+      origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
+    } else if (origin.includes("localhost")) {
+      origin = "http://localhost:9000";
+    }
+    return `${origin}${path}`;
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      let origin = window.location.origin;
-      if (origin.includes("cloudworkstations.dev")) {
-        origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
-      } else if (origin.includes("localhost")) {
-        origin = "http://localhost:9000";
-      }
+      const origin = formatUrlWithCorrectPort('');
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
       setQrMusicaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/musica')}`);
@@ -315,24 +321,31 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {/* Social Announcement Popup */}
       {overlay && data.socialAnnouncement?.isActive && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-10 bg-black/80 backdrop-blur-xl animate-in fade-in zoom-in duration-500">
-          <div className="relative flex flex-col items-center gap-8 p-16 rounded-[4rem] bg-white text-black shadow-[0_0_150px_rgba(255,255,255,0.2)] border-8 border-white/20 transform rotate-1">
+          <div className="relative flex flex-col items-center gap-8 p-12 rounded-[4rem] bg-white text-black shadow-[0_0_150px_rgba(255,255,255,0.2)] border-8 border-white/20 transform rotate-1">
             <div className={cn(
-              "w-40 h-40 rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-bounce",
+              "w-32 h-32 rounded-[2rem] flex items-center justify-center shadow-2xl animate-bounce",
               data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]" : "bg-[#ff0000]"
             )}>
               {data.socialAnnouncement.type === 'instagram' ? (
-                <Instagram className="w-24 h-24 text-white" />
+                <Instagram className="w-20 h-20 text-white" />
               ) : (
-                <Youtube className="w-24 h-24 text-white" />
+                <Youtube className="w-20 h-20 text-white" />
               )}
             </div>
-            <div className="text-center">
-              <h2 className="text-3xl font-black italic uppercase tracking-[0.4em] mb-4 opacity-30">SEGUE LÁ NO {data.socialAnnouncement.type}</h2>
-              <p className="text-7xl font-black italic uppercase tracking-tighter">
+            <div className="text-center flex flex-col items-center">
+              <h2 className="text-2xl font-black italic uppercase tracking-[0.4em] mb-4 opacity-30">SEGUE LÁ NO {data.socialAnnouncement.type?.toUpperCase()}</h2>
+              <p className="text-5xl font-black italic uppercase tracking-tighter mb-8">
                 {data.socialAnnouncement.url.includes('instagram.com') 
                   ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Instagram'}`
                   : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}
               </p>
+              <div className="p-4 bg-white rounded-2xl border-4 border-black/5 shadow-inner">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.socialAnnouncement.url)}`} 
+                  alt="QR Social" 
+                  className="w-48 h-48"
+                />
+              </div>
             </div>
           </div>
         </div>
