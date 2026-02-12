@@ -10,9 +10,9 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 330 81% 60%;
+    --primary: 330 81% 60%; /* Pink para Correio Elegante */
     --primary-foreground: 210 40% 98%;
-    --secondary: 174 100% 29%;
+    --secondary: 174 100% 29%; /* Teal para Botões Padrão */
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
@@ -63,4 +63,12 @@
 
 .glass {
   @apply bg-white/5 backdrop-blur-xl border border-white/10;
+}
+
+@keyframes scale-up-down {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.scale-up-down {
+  animation: scale-up-down 1.5s ease-in-out infinite;
 }

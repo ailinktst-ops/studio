@@ -33,6 +33,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
   
+  // States for transition phases
+  const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
+  const [challengePhase, setChallengePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
+  const [correioPhase, setCorreioPhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
+
   const [notification, setNotification] = useState<{ 
     userName: string; 
     count: number; 
@@ -46,6 +51,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastSocialAnnouncementRef = useRef<number | null>(null);
   const lastPiadinhaTimestampRef = useRef<number | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
+  const lastRaffleIdRef = useRef<string | null>(null);
+  const lastChallengeIdRef = useRef<string | null>(null);
   
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
   const piadinhaAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -60,8 +67,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    // Seeded characters for unique film/anime avatars
-    return `https://picsum.photos/seed/${p.id}-character-movie-anime/400/400`;
+    return `https://picsum.photos/seed/${p.id}-movie-anime-character/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -116,69 +122,77 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return null;
   }, [sortedParticipants]);
 
+  // Handle Notifications
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0) return;
-
     const currentLeader = sortedParticipants[0];
-
     if (lastParticipantsRef.current.length === 0) {
       lastParticipantsRef.current = approvedParticipants;
       lastLeaderIdRef.current = currentLeader?.id || null;
       lastLanternIdRef.current = currentLantern?.id || null;
       return;
     }
-
     const prev = lastParticipantsRef.current;
     const current = approvedParticipants;
-
     const updatedUser = current.find(p => {
       const prevP = prev.find(pp => pp.id === p.id);
       return prevP && p.count > prevP.count;
     });
-
     if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
       playSound('leader');
-      setNotification({
-        userName: currentLeader.name,
-        count: currentLeader.count,
-        type: 'leader',
-        title: "NOVO LÍDER!"
-      });
+      setNotification({ userName: currentLeader.name, count: currentLeader.count, type: 'leader', title: "NOVO LÍDER!" });
       lastLeaderIdRef.current = currentLeader.id;
       setTimeout(() => setNotification(null), 5000);
     } 
     else if (currentLantern && lastLanternIdRef.current && currentLantern.id !== lastLanternIdRef.current) {
       playSound('announcement');
-      setNotification({
-        userName: currentLantern.name,
-        count: currentLantern.count,
-        type: 'lantern',
-        title: "NOVO LANTERNINHA! 🤡"
-      });
+      setNotification({ userName: currentLantern.name, count: currentLantern.count, type: 'lantern', title: "NOVO LANTERNINHA! 🤡" });
       lastLanternIdRef.current = currentLantern.id;
       setTimeout(() => setNotification(null), 5000);
     }
     else if (updatedUser) {
       playSound('point');
-      setNotification({
-        userName: updatedUser.name,
-        count: updatedUser.count,
-        type: 'point',
-        title: "MAIS UMA PARA!"
-      });
+      setNotification({ userName: updatedUser.name, count: updatedUser.count, type: 'point', title: "MAIS UMA PARA!" });
       setTimeout(() => setNotification(null), 3500);
     }
-
     lastParticipantsRef.current = current;
   }, [approvedParticipants, overlay, sortedParticipants, currentLantern]);
 
+  // Handle Correio Elegante Transition
   useEffect(() => {
     if (overlay && data.activeMessageId && data.activeMessageId !== lastMessageIdRef.current) {
       playSound('heart');
+      setCorreioPhase('center');
       lastMessageIdRef.current = data.activeMessageId;
+      setTimeout(() => setCorreioPhase('docked'), 5000);
+    } else if (!data.activeMessageId) {
+      setCorreioPhase('hidden');
     }
   }, [data.activeMessageId, overlay]);
 
+  // Raffle Transition
+  useEffect(() => {
+    if (overlay && data.raffle?.winnerId && data.raffle.winnerId !== lastRaffleIdRef.current) {
+      setRafflePhase('center');
+      lastRaffleIdRef.current = data.raffle.winnerId;
+      setTimeout(() => setRafflePhase('docked'), 6000);
+    } else if (!data.raffle?.winnerId) {
+      setRafflePhase('hidden');
+    }
+  }, [data.raffle?.winnerId, overlay]);
+
+  // Challenge Transition
+  useEffect(() => {
+    if (overlay && data.challenge?.winnerId && data.challenge.winnerId !== lastChallengeIdRef.current) {
+      setChallengePhase('center');
+      lastChallengeIdRef.current = data.challenge.winnerId;
+      setTimeout(() => setChallengePhase('docked'), 6000);
+    } else if (!data.challenge?.winnerId) {
+      setChallengePhase('hidden');
+    }
+  }, [data.challenge?.winnerId, overlay]);
+
+  // Social & Piadinha logic
   useEffect(() => {
     if (overlay && data.socialAnnouncement?.isActive && data.socialAnnouncement.timestamp !== lastSocialAnnouncementRef.current) {
       playSound('social');
@@ -188,21 +202,16 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   useEffect(() => {
     if (overlay && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
-      if (piadinhaAudioRef.current) {
-        piadinhaAudioRef.current.pause();
-      }
+      if (piadinhaAudioRef.current) piadinhaAudioRef.current.pause();
       const audio = new Audio(data.piadinha.audioUrl);
       piadinhaAudioRef.current = audio;
       audio.play().catch(() => {});
       lastPiadinhaTimestampRef.current = data.piadinha.timestamp;
-      
-      audio.onended = () => {
-        clearPiadinha();
-      };
+      audio.onended = () => clearPiadinha();
     }
   }, [data.piadinha, overlay, clearPiadinha]);
 
-  // Raffle Animation
+  // Raffle Animation Loop
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (data.raffle?.isRaffling) {
@@ -225,7 +234,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return () => { if (interval) clearInterval(interval); };
   }, [data.raffle?.isRaffling, data.raffle?.candidates, approvedParticipants, data.raffle?.winnerId]);
 
-  // Challenge Animation
+  // Challenge Animation Loop
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (data.challenge?.isRaffling) {
@@ -271,15 +280,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top3 = sortedParticipants.slice(0, 3);
   const top20 = sortedParticipants.slice(3, 20);
   const leader = sortedParticipants[0];
-  
+  const activeMessage = data.messages.find(m => m.id === data.activeMessageId);
+  const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
+  const challengeWinner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
+
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
     .sort((a, b) => a.timestamp - b.timestamp) 
     .slice(0, 10);
-
-  const activeMessage = data.messages.find(m => m.id === data.activeMessageId);
-  const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
-  const challengeWinner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -295,10 +303,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
               <div className="absolute inset-0 bg-orange-500 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
-              <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)] animate-bounce" style={{ animationDuration: '2s' }}>
-                <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-orange-500 bg-black flex items-center justify-center scale-up-down">
+              <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)] scale-up-down">
+                <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-orange-500 bg-black flex items-center justify-center">
                   {data.piadinha.imageUrl ? (
-                    <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Meme" data-ai-hint="funny meme" />
+                    <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Meme" />
                   ) : (
                     <Mic className="w-32 h-32 text-orange-500" />
                   )}
@@ -311,14 +319,18 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* CORREIO ELEGANTE FIXO - CANTO INFERIOR ESQUERDO */}
-      {overlay && activeMessage && (
-        <div className="fixed left-8 bottom-32 z-[80] max-w-sm animate-in slide-in-from-left-10 duration-700">
-          <div className="bg-primary/90 backdrop-blur-2xl border-2 border-primary-foreground/20 p-6 rounded-[2rem] shadow-[0_0_40px_rgba(236,72,153,0.4)] rotate-[-1deg]">
+      {/* CORREIO ELEGANTE ALERT */}
+      {overlay && activeMessage && correioPhase !== 'hidden' && (
+        <div className={cn(
+          "transition-all duration-1000 ease-in-out",
+          correioPhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed left-8 bottom-32 z-[80] max-w-sm"
+        )}>
+          <div className={cn(
+            "bg-primary/95 backdrop-blur-2xl border-2 border-primary-foreground/20 p-8 rounded-[2rem] shadow-[0_0_60px_rgba(236,72,153,0.5)] transition-all duration-1000",
+            correioPhase === 'center' ? "scale-150 rotate-0" : "scale-100 rotate-[-1deg]"
+          )}>
             <div className="flex items-center gap-3 mb-4">
-               <div className="bg-white/20 p-2 rounded-xl">
-                  <Heart className="w-6 h-6 text-white animate-pulse" />
-               </div>
+               <div className="bg-white/20 p-2 rounded-xl"><Heart className="w-6 h-6 text-white animate-pulse" /></div>
                <div>
                   <p className="text-[10px] font-black uppercase text-white/60 tracking-widest">Correio Elegante</p>
                   <p className="text-xs font-black text-white italic uppercase">De: {activeMessage.from} ➔ Para: {activeMessage.to}</p>
@@ -336,21 +348,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="fixed right-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
-              <img src={qrCadastroUrl} alt="QR Cadastro" className="w-24 h-24" />
-            </div>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20"><img src={qrCadastroUrl} alt="QR" className="w-24 h-24" /></div>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
-              <img src={qrCorreioUrl} alt="QR Correio" className="w-24 h-24" />
-            </div>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20"><img src={qrCorreioUrl} alt="QR" className="w-24 h-24" /></div>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Música</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
-              <img src={qrMusicaUrl} alt="QR Música" className="w-24 h-24" />
-            </div>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20"><img src={qrMusicaUrl} alt="QR" className="w-24 h-24" /></div>
           </div>
         </div>
       )}
@@ -358,16 +364,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {/* TOP 4-20 - ESQUERDA SUPERIOR */}
       {overlay && top20.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
-          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2">
-            <ListOrdered className="w-3 h-3" /> Classificação
-          </h3>
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
           <div className="space-y-0.5 max-h-[70vh] overflow-hidden">
             {top20.map((p, i) => (
-              <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary transition-all">
+              <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-[10px] font-black text-white/20 w-4">
-                    {p.count > 0 ? `${i + 4}º` : ""}
-                  </span>
+                  <span className="text-[10px] font-black text-white/20 w-4">{p.count > 0 ? `${i + 4}º` : ""}</span>
                   <Avatar className="w-6 h-6 border border-white/10">
                     <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                     <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
@@ -384,9 +386,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {/* PLAYLIST - DIREITA SUPERIOR */}
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed right-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-right-20 duration-1000 text-right">
-          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">
-             Playlist <Disc className="w-3 h-3 animate-spin" />
-          </h3>
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">Playlist <Disc className="w-3 h-3 animate-spin" /></h3>
           <div className="space-y-3">
             {approvedMusic.map((m, i) => (
               <div key={m.id} className="animate-in fade-in slide-in-from-right-4" style={{ animationDelay: `${i * 100}ms` }}>
@@ -398,81 +398,55 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* SORTEIO GERAL - ESQUERDA CENTRAL */}
-      {overlay && (data.raffle?.isRaffling || raffleWinner) && (
-        <div className="fixed left-8 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-10 duration-500">
-           <div className={cn(
-            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all",
-            data.raffle?.isRaffling ? "bg-yellow-400 border-white scale-110 animate-pulse" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1"
+      {/* SORTEIO GERAL ALERT */}
+      {overlay && (data.raffle?.isRaffling || raffleWinner) && rafflePhase !== 'hidden' && (
+        <div className={cn(
+          "transition-all duration-1000 ease-in-out",
+          rafflePhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed left-8 top-1/2 -translate-y-1/2 z-[100]"
+        )}>
+          <div className={cn(
+            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
+            rafflePhase === 'center' ? "bg-yellow-400 border-white scale-150" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1 scale-100",
+            data.raffle?.isRaffling ? "animate-pulse" : ""
           )}>
             <div className="flex items-center gap-3">
               <Sparkles className={cn("w-8 h-8", data.raffle?.isRaffling ? "animate-spin" : "")} />
-              <span className="text-lg font-black uppercase tracking-[0.2em] italic">SORTEIO GERAL</span>
+              <span className="text-lg font-black uppercase tracking-[0.2em] italic">SORTEADO(A)</span>
             </div>
             <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name}
               </span>
             </div>
-            {!data.raffle?.isRaffling && (
-              <span className="text-[10px] font-black uppercase opacity-60">SORTEADO(A) COM SUCESSO!</span>
-            )}
           </div>
         </div>
       )}
 
-      {/* DESAFIO SURPRESA - DIREITA CENTRAL */}
-      {overlay && (data.challenge?.isRaffling || challengeWinner) && (
-        <div className="fixed right-8 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-10 duration-500">
-           <div className={cn(
-            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all",
-            data.challenge?.isRaffling ? "bg-purple-500 border-white scale-110 animate-pulse" : "bg-purple-600/95 border-purple-300 text-white -rotate-1"
+      {/* DESAFIO SURPRESA ALERT */}
+      {overlay && (data.challenge?.isRaffling || challengeWinner) && challengePhase !== 'hidden' && (
+        <div className={cn(
+          "transition-all duration-1000 ease-in-out",
+          challengePhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed right-8 top-1/2 -translate-y-1/2 z-[100]"
+        )}>
+          <div className={cn(
+            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
+            challengePhase === 'center' ? "bg-purple-500 border-white scale-150" : "bg-purple-600/95 border-purple-300 text-white -rotate-1 scale-100",
+            data.challenge?.isRaffling ? "animate-pulse" : ""
           )}>
             <div className="flex items-center gap-3">
               <Zap className={cn("w-8 h-8", data.challenge?.isRaffling ? "animate-bounce" : "")} />
-              <span className="text-lg font-black uppercase tracking-[0.2em] italic">DESAFIO SURPRESA</span>
+              <span className="text-lg font-black uppercase tracking-[0.2em] italic">DESAFIADO(A)</span>
             </div>
             <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-white/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
               </span>
             </div>
-            {!data.challenge?.isRaffling && (
-              <span className="text-[10px] font-black uppercase opacity-60">DESAFIADO(A) COM SUCESSO!</span>
-            )}
           </div>
         </div>
       )}
 
-      {/* NOTIFICAÇÕES (LÍDER, PONTO, LANTERNA) */}
-      {overlay && notification && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
-          <div className={cn(
-            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
-            notification.type === 'leader' ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" : 
-            notification.type === 'lantern' ? "bg-red-600/95 border-red-300 text-white animate-pulse" :
-            "bg-primary/95 border-primary-foreground/20 text-white"
-          )}>
-            {notification.title && <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">{notification.title}</h2>}
-            <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">{notification.userName}</h2>
-            <div className="flex items-center gap-6 mt-4">
-              <div className="flex flex-col items-end">
-                <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">
-                  {notification.type === 'lantern' ? "Tá Devendo" : "Bebeu"}
-                </span>
-              </div>
-              <span className={cn(
-                "text-8xl font-black italic uppercase tracking-tighter drop-shadow-md px-8 py-4 rounded-[2rem]", 
-                notification.type === 'leader' ? "bg-black text-yellow-400" : 
-                notification.type === 'lantern' ? "bg-black text-red-500" :
-                "bg-white/20 text-white"
-              )}>{notification.count}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* LANTERNINHA - ABAIXO DO RANKING PRINCIPAL */}
+      {/* LANTERNINHA */}
       {overlay && currentLantern && (
         <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="bg-red-600/20 backdrop-blur-xl border-2 border-red-500/30 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl">
@@ -481,9 +455,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 <AvatarImage src={getParticipantAvatar(currentLantern)} className="object-cover" />
                 <AvatarFallback className="bg-white/5 font-bold uppercase">{currentLantern.name[0]}</AvatarFallback>
               </Avatar>
-              <div className="absolute -top-2 -right-2 bg-red-600 p-1 rounded-full shadow-lg animate-bounce">
-                <AlertCircle className="w-3 h-3 text-white" />
-              </div>
+              <div className="absolute -top-2 -right-2 bg-red-600 p-1 rounded-full shadow-lg animate-bounce"><AlertCircle className="w-3 h-3 text-white" /></div>
             </div>
             <div>
               <p className="text-[8px] font-black uppercase text-red-500 tracking-[0.2em] mb-0.5">Lanterninha do Ranking:</p>
@@ -496,9 +468,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* TOP 3 PÓDIO */}
       <div className="text-center space-y-4 mb-12">
         <div className="flex items-center justify-center gap-4 mb-2">
-          <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-primary/20")}>
+          <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-white/10")}>
             {brandImageUrl ? <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" /> : <CustomIcon className="w-full h-full text-primary" />}
           </div>
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
@@ -506,50 +479,52 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
-      {/* PÓDIO TOP 3 */}
       <div className="flex flex-row justify-center items-end gap-12 w-full max-w-6xl mt-4">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
           if (!p) return <div key={actualIndex} className="hidden md:block w-72" />;
           return (
-            <div 
-              key={p.id} 
-              className={cn(
-                "relative flex flex-col items-center p-8 transition-all duration-500 animate-in fade-in zoom-in",
-                actualIndex === 0 ? "scale-125 z-20 order-2" : actualIndex === 1 ? "order-1 opacity-80" : "order-3 opacity-80"
-              )}
-            >
+            <div key={p.id} className={cn("relative flex flex-col items-center p-8 transition-all duration-500", actualIndex === 0 ? "scale-125 z-20 order-2" : actualIndex === 1 ? "order-1 opacity-80" : "order-3 opacity-80")}>
               <div className="relative mb-6">
-                <div className={cn(
-                  "absolute inset-0 rounded-full blur-2xl opacity-20 animate-pulse",
-                  actualIndex === 0 ? "bg-yellow-400" : actualIndex === 1 ? "bg-zinc-400" : "bg-amber-800"
-                )}></div>
-                <Avatar className={cn(
-                  "w-40 h-40 border-8 shadow-2xl",
-                  actualIndex === 0 ? "border-yellow-400" : actualIndex === 1 ? "border-zinc-300" : "border-amber-700"
-                )}>
+                <div className={cn("absolute inset-0 rounded-full blur-2xl opacity-20 animate-pulse", actualIndex === 0 ? "bg-yellow-400" : actualIndex === 1 ? "bg-zinc-400" : "bg-amber-800")}></div>
+                <Avatar className={cn("w-40 h-40 border-8 shadow-2xl", actualIndex === 0 ? "border-yellow-400" : actualIndex === 1 ? "border-zinc-300" : "border-amber-700")}>
                   <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                   <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                 </Avatar>
                 {p.count > 0 && (
-                  <div className={cn(
-                    "absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full w-12 h-12 flex items-center justify-center font-black italic shadow-lg border-2 border-white/20",
-                    actualIndex === 0 ? "bg-yellow-400 text-black" : actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white"
-                  )}>
+                  <div className={cn("absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full w-12 h-12 flex items-center justify-center font-black italic border-2 border-white/20", actualIndex === 0 ? "bg-yellow-400 text-black" : actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white")}>
                     {actualIndex + 1}º
                   </div>
                 )}
               </div>
-              
               <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter mb-2">{p.name}</h2>
               <div className="flex items-center gap-3">
                 <span className="text-6xl font-black text-primary drop-shadow-lg">{p.count}</span>
-                <span className="text-white/20 font-bold uppercase text-[10px] tracking-widest leading-tight">{p.category}</span>
+                <span className="text-white/20 font-bold uppercase text-[10px] tracking-widest">{p.category}</span>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* NOTIFICAÇÃO PONTO/LÍDER */}
+      {overlay && notification && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
+          <div className={cn(
+            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
+            notification.type === 'leader' ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" : 
+            notification.type === 'lantern' ? "bg-red-600/95 border-red-300 text-white animate-pulse" :
+            "bg-primary/95 border-primary-foreground/20 text-white"
+          )}>
+            {notification.title && <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">{notification.title}</h2>}
+            <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">{notification.userName}</h2>
+            <div className="flex items-center gap-6 mt-4">
+              <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">{notification.type === 'lantern' ? "Tá Devendo" : "Bebeu"}</span>
+              <span className={cn("text-8xl font-black italic uppercase px-8 py-4 rounded-[2rem]", notification.type === 'leader' ? "bg-black text-yellow-400" : "bg-black text-white")}>{notification.count}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TICKER INFERIOR */}
       {overlay && (
@@ -570,16 +545,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           </div>
         </div>
       )}
-
-      <style jsx global>{`
-        @keyframes scale-up-down {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.15); }
-        }
-        .scale-up-down {
-          animation: scale-up-down 1.5s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 }
