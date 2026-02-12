@@ -208,6 +208,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   const top6 = sortedParticipants.slice(0, 6);
+  // Lanterninha é o último do Top 6 que tem pelo menos 1 ponto
   const lanterninha = (top6.length > 3 && top6[top6.length - 1].count > 0) ? top6[top6.length - 1] : null;
 
   const ranks4to10 = sortedParticipants.slice(3, 10).filter(p => p.count > 0);
@@ -227,9 +228,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Ranks 4-10 (Topo Esquerdo) */}
+      {/* Ranks 4-10 (Lista Vertical no Topo Esquerdo) */}
       {overlay && ranks4to10.length > 0 && (
-        <div className="fixed top-8 left-8 flex gap-3 z-[70] animate-in slide-in-from-top-10 duration-700">
+        <div className="fixed top-8 left-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-left-10 duration-700">
           {ranks4to10.map((p, i) => (
             <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md">
               <span className="text-[10px] font-black text-white/30 italic">{i + 4}º</span>
