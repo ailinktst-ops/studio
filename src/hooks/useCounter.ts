@@ -108,7 +108,10 @@ export function useCounter() {
   const isLoading = isDocLoading || isUserLoading;
 
   const cleanData = (state: Partial<CounterState>): CounterState => {
-    const sanitize = (cat: string) => VALID_CATEGORIES.includes(cat) ? cat : "Gole";
+    const sanitize = (cat: string) => {
+      if (cat === "Gelo") return "Passa ou Repassa";
+      return VALID_CATEGORIES.includes(cat) ? cat : "Gole";
+    };
     
     return {
       ...DEFAULT_STATE,

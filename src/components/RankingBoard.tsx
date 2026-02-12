@@ -81,9 +81,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let origin = window.location.origin;
-      // Forçar a porta 9002 se o origin reportar 6000
-      if (origin.includes(":6000")) {
-        origin = origin.replace(":6000", ":9002");
+      // Forçar porta 9002 se identificar 6000 no origin
+      if (origin.includes("6000")) {
+        origin = origin.replace(/6000/g, '9002');
       }
       
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);

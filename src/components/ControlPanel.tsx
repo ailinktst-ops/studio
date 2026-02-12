@@ -61,10 +61,12 @@ export function ControlPanel() {
 
   const copyToClipboard = (path: string, label: string) => {
     if (typeof window === 'undefined') return;
-    // Forçar a porta 9002 se o origin reportar 6000 (comum em sessões expiradas do Studio)
+    
     let origin = window.location.origin;
-    if (origin.includes(":6000")) {
-      origin = origin.replace(":6000", ":9002");
+    // Forçar a porta 9002 em qualquer cenário onde o origin reporte porta 6000
+    // Isso resolve tanto subdomínios quanto localhost
+    if (origin.includes("6000")) {
+      origin = origin.replace(/6000/g, '9002');
     }
     
     const url = `${origin}${path}`;
@@ -317,14 +319,14 @@ export function ControlPanel() {
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-card border-white/10 backdrop-blur-xl">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-white uppercase font-black italic">Tem certeza que deseja resetar todo o rank?</AlertDialogTitle>
+                      <AlertDialogTitle className="text-white uppercase font-black italic">Tem certeza absoluta?</AlertDialogTitle>
                       <AlertDialogDescription className="text-white/60 font-bold">
-                        Todos os participantes serão retirados permanentemente! Esta ação não pode ser desfeita.
+                        Tem certeza que deseja resetar todo o rank? Todos os participantes serão retirados!
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 font-bold uppercase">Não</AlertDialogCancel>
-                      <AlertDialogAction onClick={resetAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-black uppercase italic">Sim</AlertDialogAction>
+                      <AlertDialogAction onClick={resetAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-black uppercase italic">Sim, Zerar Tudo!</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -369,7 +371,7 @@ export function ControlPanel() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-sm font-bold text-primary">{p.count} gole</span>
+                        <span className="text-sm font-bold text-primary">{p.count} {p.category.toLowerCase()}</span>
                       </div>
                     </div>
                   </div>
