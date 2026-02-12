@@ -62,7 +62,11 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   participants: [],
   messages: [],
   categories: ["Cerveja", "Água", "Drink", "Shot", "Gelo"],
-  customPhrases: ["A ELITE DA RESENHA EM TEMPO REAL", "SIGA O LÍDER!", "QUEM NÃO BEBE, NÃO CONTA HISTÓRIA"],
+  customPhrases: [
+    "A ELITE DA RESENHA EM TEMPO REAL", 
+    "SIGA O LÍDER!", 
+    "QUEM NÃO BEBE, NÃO CONTA HISTÓRIA"
+  ],
   updatedAt: Timestamp.now(),
   raffle: {
     isRaffling: false,
@@ -193,7 +197,6 @@ export function useCounter() {
     });
   };
 
-  // Correio Elegante
   const sendElegantMessage = (from: string, to: string, content: string) => {
     if (!counterRef) return;
     const newMessage: ElegantMessage = {

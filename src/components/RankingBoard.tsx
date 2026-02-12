@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { useCounter, Participant, ElegantMessage } from '@/hooks/useCounter';
+import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
-  Trophy, Medal, Star, Flame, Sparkles, Loader2, 
-  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle, Zap, Megaphone,
-  Heart, Mail
+  Trophy, Medal, Star, Flame, Loader2, 
+  Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
+  Heart
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
