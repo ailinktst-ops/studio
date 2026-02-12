@@ -16,6 +16,11 @@ export interface Participant {
   status: 'pending' | 'approved';
 }
 
+export interface AdminUser {
+  username: string;
+  password: string;
+}
+
 export interface ElegantMessage {
   id: string;
   from: string;
@@ -81,6 +86,7 @@ export interface CounterState {
   brandName: string;
   brandIcon: string;
   brandImageUrl?: string;
+  admins: AdminUser[];
   socialLinks: SocialLink[];
   participants: Participant[];
   messages: ElegantMessage[];
@@ -103,6 +109,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   brandName: "RankUp Counter",
   brandIcon: "Beer",
   brandImageUrl: "",
+  admins: [],
   socialLinks: [],
   participants: [],
   messages: [],
@@ -164,6 +171,7 @@ export function useCounter() {
       id: DEFAULT_ID,
       ...state,
       categories: VALID_CATEGORIES,
+      admins: state.admins || [],
       socialLinks: state.socialLinks || [],
       participants: (state.participants || []).map(p => ({
         ...p,
@@ -228,6 +236,24 @@ export function useCounter() {
         requestResourceData: fields
       }));
     });
+  };
+
+  const addAdmin = (admin: AdminUser) => {
+    if (!counterRef || !data) return;
+    const exists = data.admins.some(a => a.username === admin.username);
+    if (exists) return false;
+    
+    updateDoc(counterRef, {
+      admins: [...data.admins, admin],
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { admins: [...data.admins, admin] }
+      }));
+    });
+    return true;
   };
 
   const addParticipant = (name: string, category: string, imageUrl?: string, autoApprove = false): boolean => {
@@ -772,6 +798,7 @@ export function useCounter() {
     updateBrandImage: (brandImageUrl: string) => updateDocField({ brandImageUrl }),
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
     updateSocialLinks,
+    addAdmin,
     addParticipant,
     moderateParticipant,
     updateParticipantCategory,

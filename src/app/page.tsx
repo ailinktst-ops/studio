@@ -23,14 +23,20 @@ const ICON_MAP: Record<string, any> = {
 export default function Home() {
   const { data } = useCounter();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [loggedUser, setLoggedUser] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "Link" && password === "123412") {
+    
+    const masterUser = username === "Link" && password === "123412";
+    const subAdmin = data.admins?.find(a => a.username === username && a.password === password);
+
+    if (masterUser || subAdmin) {
       setIsAuthorized(true);
+      setLoggedUser(username);
       setError("");
     } else {
       setError("Credenciais inválidas. Tente novamente.");
@@ -137,7 +143,10 @@ export default function Home() {
           </div>
           <Button 
             variant="ghost" 
-            onClick={() => setIsAuthorized(false)}
+            onClick={() => {
+              setIsAuthorized(false);
+              setLoggedUser("");
+            }}
             className="text-white/40 hover:text-white font-bold uppercase text-[10px] tracking-widest"
           >
             Sair do Painel
@@ -165,7 +174,7 @@ export default function Home() {
           </TabsContent>
           
           <TabsContent value="settings" className="mt-0 focus-visible:outline-none">
-            <SettingsPanel />
+            <SettingsPanel loggedUser={loggedUser} />
           </TabsContent>
         </Tabs>
       </div>

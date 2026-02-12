@@ -12,6 +12,16 @@
         "brandName": { "type": "string", "description": "Nome da marca/festa." },
         "brandIcon": { "type": "string", "description": "ID do ícone Lucide selecionado." },
         "brandImageUrl": { "type": "string", "description": "URL em Base64 da logo personalizada." },
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "username": { "type": "string" },
+              "password": { "type": "string" }
+            }
+          }
+        },
         "socialLinks": {
           "type": "array",
           "items": {

@@ -1,32 +1,29 @@
 
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useCounter, SocialLink } from '@/hooks/useCounter';
 import { 
   Plus, Settings2, X, Upload, Megaphone,
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza,
-  Instagram, Youtube, Share2, Trash2
+  Instagram, Youtube, Share2, Trash2, ShieldAlert, QrCode, Copy
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 
-const ICON_OPTIONS = [
-  { id: 'Beer', icon: Beer },
-  { id: 'Wine', icon: Wine },
-  { id: 'CupSoda', icon: CupSoda },
-  { id: 'GlassWater', icon: GlassWater },
-  { id: 'Trophy', icon: Trophy },
-  { id: 'Star', icon: Star },
-  { id: 'Flame', icon: Flame },
-  { id: 'Music', icon: Music },
-  { id: 'Pizza', icon: Pizza },
-];
-
-export function SettingsPanel() {
+export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const { 
     data, updateTitle, updateBrand, updatePhrases, updateBrandImage, 
     triggerAnnouncement, updateSocialLinks, triggerSocialAnnouncement
@@ -36,8 +33,29 @@ export function SettingsPanel() {
   const [customAnnouncement, setCustomAnnouncement] = useState("");
   const [newSocialType, setNewSocialType] = useState<'instagram' | 'youtube'>('instagram');
   const [newSocialUrl, setNewSocialUrl] = useState("");
+  const [qrAdminUrl, setQrAdminUrl] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isMaster = loggedUser === "Link";
+
+  const formatUrlWithCorrectPort = (path: string) => {
+    if (typeof window === 'undefined') return path;
+    let origin = window.location.origin;
+    if (origin.includes("cloudworkstations.dev")) {
+      origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
+    } else if (origin.includes("localhost")) {
+      origin = "http://localhost:9000";
+    }
+    return `${origin}${path}`;
+  };
+
+  useEffect(() => {
+    if (isMaster) {
+      const url = formatUrlWithCorrectPort('/admin-signup');
+      setQrAdminUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`);
+    }
+  }, [isMaster]);
 
   const handleAddPhrase = () => {
     if (newPhrase.trim()) {
@@ -134,8 +152,60 @@ export function SettingsPanel() {
     }
   };
 
+  const copyAdminLink = () => {
+    const url = formatUrlWithCorrectPort('/admin-signup');
+    navigator.clipboard.writeText(url).then(() => {
+      toast({
+        title: "Link Copiado!",
+        description: "O link de cadastro de novo administrador foi copiado.",
+      });
+    });
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {isMaster && (
+        <Card className="bg-primary/10 border-primary/20 backdrop-blur-md overflow-hidden animate-in slide-in-from-top-4 duration-500">
+          <div className="px-6 py-4 bg-primary/20 flex items-center justify-between">
+             <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-primary" />
+                <span className="text-xs font-black uppercase tracking-widest text-white">Master Control (Link Only)</span>
+             </div>
+          </div>
+          <CardContent className="p-6 flex flex-col items-center gap-6">
+             <p className="text-[10px] font-bold uppercase text-white/40 text-center tracking-widest leading-relaxed">
+               Gere um acesso para um novo administrador padrão. <br/>
+               Ele terá acesso a tudo, exceto esta função de criar novos usuários.
+             </p>
+             
+             <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase italic h-14 w-full max-w-xs rounded-2xl shadow-lg">
+                    <QrCode className="w-5 h-5 mr-2" /> Gerar Convite Admin
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
+                  <DialogHeader className="mb-4">
+                    <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">NOVO ADMIN</DialogTitle>
+                    <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">Convite restrito para novos gestores</DialogDescription>
+                  </DialogHeader>
+                  <div className="flex flex-col items-center gap-8">
+                    <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                      <img src={qrAdminUrl} alt="QR Admin" className="w-48 h-48" />
+                    </div>
+                    <Button 
+                      className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl"
+                      onClick={copyAdminLink}
+                    >
+                      <Copy className="w-4 h-4 mr-2" /> Copiar Link Secreto
+                    </Button>
+                  </div>
+                </DialogContent>
+             </Dialog>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="bg-card/30 backdrop-blur-md border-white/5">
         <CardContent className="pt-8 space-y-6">
           <div className="flex items-center gap-2 text-white/60 font-bold uppercase tracking-widest text-xs mb-4">
