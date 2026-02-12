@@ -317,6 +317,25 @@ export function ControlPanel() {
           </CardContent>
         </Card>
 
+        <Card className="bg-yellow-500/10 border-yellow-500/20 backdrop-blur-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase italic text-yellow-500 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" /> Sorteio Geral
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col h-[calc(100%-3rem)] justify-center gap-3">
+             <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="w-full bg-yellow-500 hover:bg-yellow-600 h-12 rounded-xl text-md font-black uppercase italic shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                {data.raffle?.isRaffling && data.raffle.type === 'raffle' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+                Sorteio Geral
+              </Button>
+              {data.raffle?.winnerId && data.raffle.type === 'raffle' && !data.raffle?.isRaffling && (
+                <Button onClick={clearChallenge} variant="ghost" className="text-yellow-500 text-[10px] font-bold uppercase">
+                  Limpar
+                </Button>
+              )}
+          </CardContent>
+        </Card>
+
         <Card className="bg-purple-500/10 border-purple-500/20 backdrop-blur-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase italic text-purple-500 flex items-center gap-2">
@@ -328,7 +347,7 @@ export function ControlPanel() {
                 {data.raffle?.isRaffling && data.raffle.type === 'challenge' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
                 Novo Desafio
               </Button>
-              {data.raffle?.winnerId && data.raffle.type === 'challenge' && (
+              {data.raffle?.winnerId && data.raffle.type === 'challenge' && !data.raffle?.isRaffling && (
                 <Button onClick={clearChallenge} variant="ghost" className="text-purple-500 text-[10px] font-bold uppercase">
                   Limpar
                 </Button>
@@ -351,23 +370,6 @@ export function ControlPanel() {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
-              {data.raffle?.isRaffling && data.raffle.type === 'raffle' ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
-              Sorteio Geral de Brindes
-            </Button>
-            
-            {data.raffle?.winnerId && data.raffle.type === 'raffle' && !data.raffle?.isRaffling && (
-              <Button 
-                onClick={clearChallenge} 
-                variant="outline" 
-                className="w-full h-12 border-red-500/30 bg-red-500/5 text-red-500 font-black uppercase italic hover:bg-red-500/10"
-              >
-                <X className="w-4 h-4 mr-2" /> Limpar Resultado do Sorteio
-              </Button>
-            )}
-          </div>
-
           <Card className="bg-card/50 border-secondary/20">
             <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-secondary"><UserPlus className="w-5 h-5" /> Adicionar Participante</CardTitle></CardHeader>
             <CardContent>
