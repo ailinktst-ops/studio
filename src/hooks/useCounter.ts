@@ -55,14 +55,14 @@ export interface CounterState {
 
 const DEFAULT_ID = "current";
 const DEFAULT_STATE: Omit<CounterState, 'id'> = {
-  title: "Resenha Épica",
+  title: "RANKING DE CONSUMO",
   brandName: "RankUp Counter",
   brandIcon: "Beer",
   brandImageUrl: "",
   participants: [],
   messages: [],
   categories: ["Cerveja", "Água", "Drink", "Shot", "Gelo"],
-  customPhrases: ["A Elite da Resenha em Tempo Real", "Siga o líder!", "Quem não bebe, não conta história"],
+  customPhrases: ["A ELITE DA RESENHA EM TEMPO REAL", "SIGA O LÍDER!", "QUEM NÃO BEBE, NÃO CONTA HISTÓRIA"],
   updatedAt: Timestamp.now(),
   raffle: {
     isRaffling: false,

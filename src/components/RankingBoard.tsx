@@ -208,7 +208,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   const top6 = sortedParticipants.slice(0, 6);
-  const lanterninha = (top6.length > 3) ? top6[top6.length - 1] : null;
+  const lanterninha = (top6.length > 3 && top6[top6.length - 1].count > 0) ? top6[top6.length - 1] : null;
+
+  const ranks4to10 = sortedParticipants.slice(3, 10).filter(p => p.count > 0);
 
   const approvedMessages = data.messages.filter(m => m.status === 'approved');
   const latestMessage = approvedMessages.length > 0 ? approvedMessages[approvedMessages.length - 1] : null;
@@ -222,6 +224,25 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && brandImageUrl && (
         <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
           <img src={brandImageUrl} alt="Watermark" className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]" />
+        </div>
+      )}
+
+      {/* Ranks 4-10 (Topo Esquerdo) */}
+      {overlay && ranks4to10.length > 0 && (
+        <div className="fixed top-8 left-8 flex gap-3 z-[70] animate-in slide-in-from-top-10 duration-700">
+          {ranks4to10.map((p, i) => (
+            <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-2 border-white/5 shadow-lg backdrop-blur-md">
+              <span className="text-[10px] font-black text-white/30 italic">{i + 4}º</span>
+              <Avatar className="w-8 h-8 border border-white/10">
+                {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
+                <AvatarFallback className="bg-white/5 text-[10px] font-bold">{p.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-white uppercase max-w-[60px] truncate leading-none">{p.name}</span>
+                <span className="text-[10px] font-black text-primary leading-none mt-0.5">{p.count} pts</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -239,7 +260,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {/* Mensagem Correio Elegante (Lado Esquerdo Meio) */}
       {overlay && latestMessage && (
-        <div className="fixed left-8 top-[35%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
+        <div className="fixed left-8 top-[45%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
           <div className="bg-pink-600/90 backdrop-blur-xl border-4 border-pink-400 p-6 rounded-[2.5rem] shadow-[0_0_50px_rgba(219,39,119,0.5)] flex flex-col items-center text-center max-w-[240px] rotate-[-2deg]">
             <div className="bg-white/20 p-2 rounded-full mb-3">
               <Heart className="w-8 h-8 text-pink-100 fill-pink-100" />
@@ -335,10 +356,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                     {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
                     <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary z-30">{actualIndex + 1}</div>
-                  <div className="absolute -top-4 -left-4 z-30">
-                    {actualIndex === 0 ? <Trophy className="w-12 h-12 text-yellow-400 animate-bounce" /> : <Medal className={cn("w-10 h-10", actualIndex === 1 ? "text-zinc-300" : "text-amber-700")} />}
-                  </div>
+                  {p.count > 0 && (
+                    <>
+                      <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary z-30">{actualIndex + 1}º</div>
+                      <div className="absolute -top-4 -left-4 z-30">
+                        {actualIndex === 0 ? <Trophy className="w-12 h-12 text-yellow-400 animate-bounce" /> : <Medal className={cn("w-10 h-10", actualIndex === 1 ? "text-zinc-300" : "text-amber-700")} />}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <h2 className="text-4xl font-black italic text-white uppercase truncate px-4">{p.name}</h2>
                 <div className="flex flex-col items-center">
@@ -375,7 +400,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               ))}
               <div className={cn("absolute transition-all duration-1000 transform", tickerIndex === data.customPhrases.length ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}>
                 <span className="text-secondary text-sm font-black italic uppercase tracking-widest">
-                  Liderança: <span className="text-white">{leader?.name || "---"}</span> com <span className="text-white">{leader?.count || 0}</span> pontos
+                  Liderança: <span className="text-white">{leader?.count > 0 ? leader.name : "---"}</span> {leader?.count > 0 && <span>com <span className="text-white">{leader.count}</span> pontos</span>}
                 </span>
               </div>
             </div>
