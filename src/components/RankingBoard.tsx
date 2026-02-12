@@ -56,7 +56,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    // Usando o ID do participante como seed para garantir avatares de personagens consistentes e variados
+    // Usando o ID do participante como seed para garantir avatares de personagens de filmes/animes consistentes
     return `https://picsum.photos/seed/${p.id}-movie-character/400/400`;
   };
 
@@ -108,9 +108,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     if (!overlay || approvedParticipants.length === 0) return;
 
     const currentLeader = sortedParticipants[0];
-    const top10Current = sortedParticipants.slice(0, 10);
-    const currentLantern = (top10Current.length > 3 && top10Current[top10Current.length - 1].count > 0) 
-      ? top10Current[top10Current.length - 1] 
+    const top20Current = sortedParticipants.slice(0, 20);
+    const currentLantern = (top20Current.length > 3 && top20Current[top20Current.length - 1].count > 0) 
+      ? top20Current[top20Current.length - 1] 
       : null;
 
     if (lastParticipantsRef.current.length === 0) {
@@ -241,7 +241,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }
 
   const top3 = sortedParticipants.slice(0, 3);
-  const top10 = sortedParticipants.slice(3, 10);
+  const top20 = sortedParticipants.slice(3, 20);
   const leader = sortedParticipants[0];
   
   // Playlist: Mais antigas em cima, mais novas embaixo (ordem de aprovação), limite 10.
@@ -282,9 +282,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR CODES INFERIORES */}
+      {/* QR CODES INFERIORES - AGORA À DIREITA */}
       {overlay && (
-        <div className="fixed left-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-left-10 duration-700">
+        <div className="fixed right-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Participar</span>
             <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
@@ -306,14 +306,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* TOP 4-10 PANEL - CANTO ESQUERDO SUPERIOR */}
-      {overlay && top10.length > 0 && (
-        <div className="fixed left-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-left-20 duration-1000">
+      {/* TOP 4-20 PANEL - CANTO ESQUERDO SUPERIOR */}
+      {overlay && top20.length > 0 && (
+        <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2">
             <ListOrdered className="w-3 h-3" /> Classificação
           </h3>
-          <div className="space-y-1">
-            {top10.map((p, i) => (
+          <div className="space-y-0.5 max-h-[70vh] overflow-hidden">
+            {top20.map((p, i) => (
               <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary transition-all">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <span className="text-[10px] font-black text-white/20 w-4">
@@ -516,4 +516,3 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     </div>
   );
 }
-
