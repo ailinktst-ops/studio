@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -111,17 +110,25 @@ export function useCounter() {
     }
   };
 
+  // Garante que a inicialização só ocorra se tivermos certeza que o documento NÃO existe
   useEffect(() => {
-    if (!isDocLoading && !rawData && counterRef && user && !isUserLoading) {
-      setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
-        .catch((e) => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: counterRef.path,
-            operation: 'create',
-            requestResourceData: DEFAULT_STATE
-          }));
-        });
+    async function initDoc() {
+      if (!isDocLoading && !rawData && counterRef && user && !isUserLoading) {
+        // Verifica no servidor se o documento realmente não existe para evitar sobrescrever dados locais
+        const snap = await getDoc(counterRef);
+        if (!snap.exists()) {
+          setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
+            .catch((e) => {
+              errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: counterRef.path,
+                operation: 'create',
+                requestResourceData: DEFAULT_STATE
+              }));
+            });
+        }
+      }
     }
+    initDoc();
   }, [isDocLoading, rawData, counterRef, user, isUserLoading]);
 
   const updateDocField = (fields: Partial<CounterState>) => {
