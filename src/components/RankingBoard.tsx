@@ -6,7 +6,8 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
-  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, AlertCircle
+  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, AlertCircle,
+  Megaphone
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
@@ -52,6 +53,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastMessageIdRef = useRef<string | null>(null);
   const lastRaffleIdRef = useRef<string | null>(null);
   const lastChallengeIdRef = useRef<string | null>(null);
+  const lastAnnouncementTimestampRef = useRef<number | null>(null);
   
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
   const piadinhaAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -66,7 +68,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}-movie-anime-character/400/400`;
+    const seed = p.id || "guest";
+    return `https://picsum.photos/seed/${seed}-character-pop-culture/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -195,6 +198,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [data.socialAnnouncement, overlay]);
 
   useEffect(() => {
+    if (overlay && data.announcement?.isActive && data.announcement.timestamp !== lastAnnouncementTimestampRef.current) {
+      playSound('announcement');
+      lastAnnouncementTimestampRef.current = data.announcement.timestamp;
+    }
+  }, [data.announcement, overlay]);
+
+  useEffect(() => {
     if (overlay && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
       if (piadinhaAudioRef.current) piadinhaAudioRef.current.pause();
       const audio = new Audio(data.piadinha.audioUrl);
@@ -287,6 +297,44 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && brandImageUrl && (
         <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
           <img src={brandImageUrl} alt="Watermark" className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]" />
+        </div>
+      )}
+
+      {/* Urgent Announcement (Buzina) */}
+      {overlay && data.announcement?.isActive && (
+        <div className="fixed inset-0 z-[220] flex items-center justify-center p-10 bg-red-600/90 backdrop-blur-2xl animate-in fade-in duration-300">
+           <div className="flex flex-col items-center gap-12 text-center animate-bounce">
+              <Megaphone className="w-48 h-48 text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]" />
+              <h2 className="text-8xl font-black italic uppercase text-white tracking-tighter drop-shadow-2xl">
+                {data.announcement.message}
+              </h2>
+           </div>
+        </div>
+      )}
+
+      {/* Social Announcement Popup */}
+      {overlay && data.socialAnnouncement?.isActive && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-10 bg-black/80 backdrop-blur-xl animate-in fade-in zoom-in duration-500">
+          <div className="relative flex flex-col items-center gap-8 p-16 rounded-[4rem] bg-white text-black shadow-[0_0_150px_rgba(255,255,255,0.2)] border-8 border-white/20 transform rotate-1">
+            <div className={cn(
+              "w-40 h-40 rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-bounce",
+              data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]" : "bg-[#ff0000]"
+            )}>
+              {data.socialAnnouncement.type === 'instagram' ? (
+                <Instagram className="w-24 h-24 text-white" />
+              ) : (
+                <Youtube className="w-24 h-24 text-white" />
+              )}
+            </div>
+            <div className="text-center">
+              <h2 className="text-3xl font-black italic uppercase tracking-[0.4em] mb-4 opacity-30">SEGUE LÁ NO {data.socialAnnouncement.type}</h2>
+              <p className="text-7xl font-black italic uppercase tracking-tighter">
+                {data.socialAnnouncement.url.includes('instagram.com') 
+                  ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Instagram'}`
+                  : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
