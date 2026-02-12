@@ -223,7 +223,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         }, 5000);
       }
     } else {
-      // Don't reset everything immediately to allow "Last Winner" display
       setCurrentRaffleName("");
       stopChallengeSound();
     }

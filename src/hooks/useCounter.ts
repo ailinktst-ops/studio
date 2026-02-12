@@ -39,6 +39,7 @@ export interface RaffleState {
   candidates: string[];
   startTime: number | null;
   type?: 'raffle' | 'challenge';
+  winnersHistory?: string[]; // IDs de quem já ganhou
 }
 
 export interface AnnouncementState {
@@ -86,7 +87,8 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
     winnerId: null,
     candidates: [],
     startTime: null,
-    type: 'raffle'
+    type: 'raffle',
+    winnersHistory: []
   },
   announcement: {
     message: "",
@@ -129,7 +131,8 @@ export function useCounter() {
         : DEFAULT_STATE.customPhrases,
       raffle: {
         ...DEFAULT_STATE.raffle!,
-        ...(state.raffle || {})
+        ...(state.raffle || {}),
+        winnersHistory: state.raffle?.winnersHistory || []
       },
       announcement: {
         ...DEFAULT_STATE.announcement!,
@@ -309,7 +312,7 @@ export function useCounter() {
       messages: [],
       musicRequests: [],
       updatedAt: Timestamp.now(),
-      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle' },
+      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle', winnersHistory: [] },
       announcement: { message: "", isActive: false, timestamp: null }
     };
     updateDoc(counterRef, resetData).catch(e => {
@@ -473,23 +476,40 @@ export function useCounter() {
   const triggerRaffle = () => {
     if (!counterRef || !data) return;
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
-    if (approvedParticipants.length < 2) return;
-    // Raffle now amongst all approved participants
-    const candidates = approvedParticipants.map(p => p.name);
-    const winner = approvedParticipants[Math.floor(Math.random() * approvedParticipants.length)];
+    if (approvedParticipants.length < 1) return;
+
+    // Lógica para não repetir ganhadores
+    let winnersHistory = data.raffle?.winnersHistory || [];
+    let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
+
+    // Se todos já ganharam, reseta o histórico
+    if (pool.length === 0) {
+      winnersHistory = [];
+      pool = approvedParticipants;
+    }
+
+    // Embaralha nomes para a animação
+    const candidates = [...approvedParticipants]
+      .map(p => p.name)
+      .sort(() => Math.random() - 0.5);
+
+    const winner = pool[Math.floor(Math.random() * pool.length)];
+    const newHistory = [...winnersHistory, winner.id];
+
     updateDoc(counterRef, {
       raffle: {
         isRaffling: true,
         winnerId: winner.id,
         candidates: candidates,
         startTime: Date.now(),
-        type: 'raffle'
+        type: 'raffle',
+        winnersHistory: newHistory
       }
     }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'raffle' } }
+        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'raffle', winnersHistory: newHistory } }
       }));
     });
     setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 6000);
@@ -499,21 +519,36 @@ export function useCounter() {
     if (!counterRef || !data) return;
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
     if (approvedParticipants.length < 1) return;
-    const candidates = approvedParticipants.map(p => p.name);
-    const winner = approvedParticipants[Math.floor(Math.random() * approvedParticipants.length)];
+
+    let winnersHistory = data.raffle?.winnersHistory || [];
+    let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
+
+    if (pool.length === 0) {
+      winnersHistory = [];
+      pool = approvedParticipants;
+    }
+
+    const candidates = [...approvedParticipants]
+      .map(p => p.name)
+      .sort(() => Math.random() - 0.5);
+
+    const winner = pool[Math.floor(Math.random() * pool.length)];
+    const newHistory = [...winnersHistory, winner.id];
+
     updateDoc(counterRef, {
       raffle: {
         isRaffling: true,
         winnerId: winner.id,
         candidates: candidates,
         startTime: Date.now(),
-        type: 'challenge'
+        type: 'challenge',
+        winnersHistory: newHistory
       }
     }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'challenge' } }
+        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'challenge', winnersHistory: newHistory } }
       }));
     });
     setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 6000);
