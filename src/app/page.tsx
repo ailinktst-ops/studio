@@ -1,12 +1,20 @@
 
 "use client";
 
+import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ControlPanel } from "@/components/ControlPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { useCounter } from "@/hooks/useCounter";
-import { LayoutDashboard, Settings2, Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza } from "lucide-react";
+import { 
+  LayoutDashboard, Settings2, Beer, Wine, CupSoda, GlassWater, 
+  Trophy, Star, Flame, Music, Pizza, Lock, LogIn, AlertCircle 
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ICON_MAP: Record<string, any> = {
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
@@ -14,6 +22,20 @@ const ICON_MAP: Record<string, any> = {
 
 export default function Home() {
   const { data } = useCounter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (username === "Link" && password === "123412") {
+      setIsAuthorized(true);
+      setError("");
+    } else {
+      setError("Credenciais inválidas. Tente novamente.");
+    }
+  };
   
   const brandName = data?.brandName || "RankUp Counter";
   const brandIcon = data?.brandIcon || "Beer";
@@ -24,6 +46,70 @@ export default function Home() {
   const nameParts = brandName.split(' ');
   const firstName = nameParts[0];
   const restOfName = nameParts.slice(1).join(' ');
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
+        <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-500">
+          <div className="text-center space-y-4">
+            <div className="bg-primary/20 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-primary/20 shadow-[0_0_30px_rgba(168,85,247,0.2)] rotate-3">
+              <Lock className="w-10 h-10 text-primary" />
+            </div>
+            <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none">
+              Acesso <span className="text-secondary">Restrito</span>
+            </h1>
+            <p className="text-white/40 font-bold uppercase tracking-widest text-xs">
+              Área Administrativa do {brandName}
+            </p>
+          </div>
+
+          <Card className="bg-card/30 backdrop-blur-xl border-white/10 shadow-2xl overflow-hidden">
+            <CardContent className="pt-8">
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Usuário:</label>
+                  <Input 
+                    placeholder="Seu usuário" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="bg-black/40 border-white/10 h-12 font-bold focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Senha:</label>
+                  <Input 
+                    type="password"
+                    placeholder="Sua senha" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-black/40 border-white/10 h-12 font-bold focus:ring-primary"
+                  />
+                </div>
+
+                {error && (
+                  <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 py-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-[10px] font-bold uppercase">{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-14 bg-primary hover:bg-primary/90 text-lg font-black italic uppercase tracking-tighter rounded-xl shadow-lg transition-all active:scale-95"
+                >
+                  <LogIn className="w-5 h-5 mr-2" /> Acessar Painel
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+          
+          <p className="text-center text-[10px] text-white/20 font-bold uppercase tracking-[0.3em]">
+            Apenas pessoal autorizado
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-transparent">
@@ -49,6 +135,13 @@ export default function Home() {
               </p>
             </div>
           </div>
+          <Button 
+            variant="ghost" 
+            onClick={() => setIsAuthorized(false)}
+            className="text-white/40 hover:text-white font-bold uppercase text-[10px] tracking-widest"
+          >
+            Sair do Painel
+          </Button>
         </div>
       </header>
 
