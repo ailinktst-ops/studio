@@ -58,6 +58,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastApprovedMusicIdRef = useRef<string | null>(null);
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Refs para o sistema de sorteio não resetar com o sync do banco
+  const raffleAnimationIndexRef = useRef(0);
+  const isRafflingPersistedRef = useRef(false);
+
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
 
@@ -80,11 +84,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let origin = window.location.origin;
-      
       if (origin.includes("cloudworkstations.dev")) {
         origin = origin.replace(/:\d+/, ':9000');
       }
-      
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
       setQrMusicaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/musica')}`);
@@ -98,9 +100,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const sortedParticipants = useMemo(() => 
     [...approvedParticipants].sort((a, b) => {
-      if (b.count !== a.count) {
-        return b.count - a.count;
-      }
+      if (b.count !== a.count) return b.count - a.count;
+      // Ordem de chegada (cadastro) para desempate
       const indexA = data.participants.findIndex(p => p.id === a.id);
       const indexB = data.participants.findIndex(p => p.id === b.id);
       return indexA - indexB;
@@ -168,76 +169,45 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     lastParticipantsRef.current = current;
   }, [approvedParticipants, overlay, sortedParticipants]);
 
-  useEffect(() => {
-    if (!overlay || !data.messages || data.messages.length === 0) return;
-    const approvedMessages = data.messages.filter(m => m.status === 'approved');
-    if (approvedMessages.length === 0) return;
-    const latest = approvedMessages[approvedMessages.length - 1];
-    if (latest.id !== lastMessageIdRef.current) {
-      playSound('heart');
-      lastMessageIdRef.current = latest.id;
-    }
-  }, [data.messages, overlay]);
-
-  useEffect(() => {
-    if (!overlay || !data.musicRequests || data.musicRequests.length === 0) return;
-    const approvedMusic = data.musicRequests.filter(m => m.status === 'approved');
-    if (approvedMusic.length === 0) return;
-    const latest = approvedMusic[approvedMusic.length - 1];
-    if (latest.id !== lastApprovedMusicIdRef.current) {
-      playSound('announcement');
-      lastApprovedMusicIdRef.current = latest.id;
-    }
-  }, [data.musicRequests, overlay]);
-
-  useEffect(() => {
-    if (!overlay || !data.announcement?.isActive || !data.announcement.timestamp) return;
-    if (data.announcement.timestamp !== lastAnnouncementTimeRef.current) {
-      playSound('announcement');
-      lastAnnouncementTimeRef.current = data.announcement.timestamp;
-    }
-  }, [data.announcement, overlay]);
-
-  // Efeito do Caça-Níqueis do Sorteio
+  // Efeito do Caça-Níqueis do Sorteio (CORRIGIDO PARA NÃO RESETAR)
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    let winnerTimeout: NodeJS.Timeout;
 
     if (data.raffle?.isRaffling) {
+      if (!isRafflingPersistedRef.current) {
+        isRafflingPersistedRef.current = true;
+        raffleAnimationIndexRef.current = 0;
+        
+        // Som apenas no início real do sorteio
+        if (data.raffle.type === 'challenge') {
+          playSound('challenge');
+        }
+      }
+
       const candidates = data.raffle.candidates || [];
-      const isChallenge = data.raffle.type === 'challenge';
-
       if (candidates.length > 0) {
-        let i = 0;
-        // Intervalo fixo para garantir que todos os nomes passem pela tela de forma visível mas rápida
         interval = setInterval(() => {
-          setCurrentRaffleName(candidates[i % candidates.length]);
-          i++;
-        }, 120);
-
-        winnerTimeout = setTimeout(() => {
-          clearInterval(interval);
-          const winner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
-          if (winner) {
-            setCurrentRaffleName(winner.name);
-            if (isChallenge) {
-              playSound('challenge');
-            } else {
-              playSound('leader');
-            }
-          }
-        }, 5000);
+          raffleAnimationIndexRef.current++;
+          setCurrentRaffleName(candidates[raffleAnimationIndexRef.current % candidates.length]);
+        }, 100);
       }
     } else {
-      setCurrentRaffleName("");
+      isRafflingPersistedRef.current = false;
       stopChallengeSound();
+      
+      // Mostrar o vencedor final se houver
+      const winner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
+      if (winner && !data.raffle?.isRaffling) {
+        setCurrentRaffleName(winner.name);
+      } else {
+        setCurrentRaffleName("");
+      }
     }
+
     return () => { 
       if (interval) clearInterval(interval); 
-      if (winnerTimeout) clearTimeout(winnerTimeout);
-      stopChallengeSound();
     };
-  }, [data.raffle?.isRaffling, data.raffle?.winnerId, approvedParticipants]);
+  }, [data.raffle?.isRaffling, data.raffle?.candidates, approvedParticipants]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -412,7 +382,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               {data.raffle.type === 'challenge' ? <Zap className="w-20 h-20" /> : <Sparkles className="w-20 h-20" />}
             </div>
             <div className="bg-black/20 px-12 py-8 rounded-[3rem] w-full min-h-[200px] flex items-center justify-center border-4 border-white/10 overflow-hidden">
-              <span className="text-8xl font-black italic uppercase tracking-tighter transition-all duration-75">
+              <span className="text-8xl font-black italic uppercase tracking-tighter">
                 {currentRaffleName || '...'}
               </span>
             </div>

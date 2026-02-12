@@ -474,11 +474,12 @@ export function useCounter() {
 
   const generateCandidates = (participants: Participant[]) => {
     const names = participants.map(p => p.name);
-    // Gerar uma lista bem grande e embaralhada para garantir que o "caça-níqueis" seja variado
+    // Gerar um pool GRANDE (20 repetições) para garantir que o "giro" cubra todos e dure o tempo certo
     let pool: string[] = [];
-    for(let j = 0; j < 5; j++) {
+    for(let j = 0; j < 20; j++) {
       pool = [...pool, ...names];
     }
+    // Embaralhar o pool
     return pool.sort(() => Math.random() - 0.5);
   };
 
@@ -490,6 +491,7 @@ export function useCounter() {
     let winnersHistory = data.raffle?.winnersHistory || [];
     let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
 
+    // Resetar histórico se todos já ganharam
     if (pool.length === 0) {
       winnersHistory = [];
       pool = approvedParticipants;
@@ -515,7 +517,11 @@ export function useCounter() {
         requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'raffle', winnersHistory: newHistory } }
       }));
     });
-    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 6000);
+    
+    // Finalizar o sorteio após 5 segundos
+    setTimeout(() => {
+      updateDoc(counterRef, { "raffle.isRaffling": false });
+    }, 5500);
   };
 
   const triggerSurpriseChallenge = () => {
@@ -551,7 +557,10 @@ export function useCounter() {
         requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'challenge', winnersHistory: newHistory } }
       }));
     });
-    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 6000);
+
+    setTimeout(() => {
+      updateDoc(counterRef, { "raffle.isRaffling": false });
+    }, 5500);
   };
 
   const clearChallenge = () => {
