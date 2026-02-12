@@ -5,10 +5,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
-  Sparkles, Loader2, Zap, EyeOff,
-  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Share2, ExternalLink, Settings, Music, X, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2, Copy, Smartphone
+  Sparkles, Loader2, Zap,
+  Heart, Check, Ban, ImageIcon, History, Upload, UserCheck,
+  Music, X, Trophy, Mic, Image as ImageIconLucide,
+  Play, Volume2, Copy, Smartphone, ExternalLink, Settings
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,7 @@ export function ControlPanel() {
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge, resetRaffleHistory,
     moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
     updateAllParticipantsCategory, moderateMusic, removeMusicRequest,
-    updatePiadinhaImage, triggerPiadinha, clearPiadinha, updatePiadinhaAudio
+    submitJoke, updateJokeImage, removeJoke, triggerPiadinha, clearPiadinha
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -65,7 +65,7 @@ export function ControlPanel() {
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
   
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
-  const piadinhaFileRef = useRef<HTMLInputElement | null>(null);
+  const jokeFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const adminAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const defaultAvatar = PlaceHolderImages.find(img => img.id === 'default-avatar')?.imageUrl || '';
@@ -169,30 +169,20 @@ export function ControlPanel() {
     }
   };
 
-  const handlePiadinhaImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleJokeImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleImageCompression(file, (url) => updatePiadinhaImage(url), 800);
+      handleImageCompression(file, (url) => updateJokeImage(id, url), 800);
     }
   };
 
-  const playAdminAudio = () => {
-    if (data.piadinha?.audioUrl) {
-      if (adminAudioRef.current) {
-        adminAudioRef.current.pause();
-      }
-      const audio = new Audio(data.piadinha.audioUrl);
-      adminAudioRef.current = audio;
-      audio.play().catch(e => console.error("Erro ao tocar áudio no painel:", e));
+  const playAdminAudio = (audioUrl: string) => {
+    if (adminAudioRef.current) {
+      adminAudioRef.current.pause();
     }
-  };
-
-  const deletePiadinhaAudio = () => {
-    updatePiadinhaAudio("");
-    toast({
-      title: "Áudio Removido",
-      description: "A piadinha foi deletada com sucesso.",
-    });
+    const audio = new Audio(audioUrl);
+    adminAudioRef.current = audio;
+    audio.play().catch(e => console.error("Erro ao tocar áudio no painel:", e));
   };
 
   const ShareButton = ({ path, label, icon: Icon, colorClass, qrKey }: { path: string, label: string, icon: any, colorClass: string, qrKey: string }) => (
@@ -266,75 +256,64 @@ export function ControlPanel() {
       </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="bg-orange-500/10 border-orange-500/20 backdrop-blur-md">
+        <Card className="bg-orange-500/10 border-orange-500/20 backdrop-blur-md col-span-1 sm:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase italic text-orange-500 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Mic className="w-4 h-4" /> Piadinha do Dia
+                <Mic className="w-4 h-4" /> Banco de Piadinhas ({data.jokes?.length || 0})
               </div>
-              {data.piadinha?.audioUrl && (
-                <div className="flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={playAdminAudio}
-                    className="h-8 w-8 text-orange-500 hover:bg-orange-500/20"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={deletePiadinhaAudio}
-                    className="h-8 w-8 text-red-500 hover:bg-red-500/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <Avatar className="w-16 h-16 border-2 border-orange-500/30">
-                  {data.piadinha?.imageUrl ? <AvatarImage src={data.piadinha.imageUrl} className="object-cover" /> : null}
-                  <AvatarFallback className="bg-black/20"><ImageIconLucide className="w-6 h-6 text-orange-500/40" /></AvatarFallback>
-                </Avatar>
-                <button 
-                  onClick={() => piadinhaFileRef.current?.click()}
-                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-full transition-opacity"
-                >
-                  <Upload className="w-4 h-4 text-white" />
-                </button>
-                <input 
-                  type="file" accept="image/*" className="hidden" 
-                  ref={piadinhaFileRef}
-                  onChange={handlePiadinhaImageUpload} 
-                />
+          <CardContent className="space-y-4 max-h-[400px] overflow-y-auto">
+            {(!data.jokes || data.jokes.length === 0) ? (
+              <p className="text-[10px] font-bold uppercase text-white/20 text-center py-10 italic">Nenhuma piadinha recebida ainda.</p>
+            ) : (
+              <div className="grid gap-3">
+                {data.jokes.map((joke) => (
+                  <div key={joke.id} className="bg-black/40 p-4 rounded-2xl border border-white/5 flex items-center justify-between group">
+                    <div className="flex items-center gap-4">
+                      <div className="relative group/img">
+                        <Avatar className="w-14 h-14 border-2 border-orange-500/30">
+                          {joke.imageUrl ? <AvatarImage src={joke.imageUrl} className="object-cover" /> : null}
+                          <AvatarFallback className="bg-white/5"><ImageIconLucide className="w-6 h-6 text-orange-500/40" /></AvatarFallback>
+                        </Avatar>
+                        <button 
+                          onClick={() => jokeFilesRef.current[joke.id]?.click()}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center rounded-full transition-opacity"
+                        >
+                          <Upload className="w-4 h-4 text-white" />
+                        </button>
+                        <input 
+                          type="file" accept="image/*" className="hidden" 
+                          ref={el => jokeFilesRef.current[joke.id] = el}
+                          onChange={(e) => handleJokeImageUpload(joke.id, e)} 
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black uppercase text-white/40 block">Recebido em:</span>
+                        <span className="text-xs font-bold text-white/80">{new Date(joke.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => playAdminAudio(joke.audioUrl)} className="text-orange-500 hover:bg-orange-500/20"><Volume2 className="w-4 h-4" /></Button>
+                      <Button 
+                        onClick={() => triggerPiadinha(joke)} 
+                        disabled={data.piadinha?.isActive}
+                        className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase italic text-[10px] h-10 px-4"
+                      >
+                        {data.piadinha?.isActive ? <Loader2 className="animate-spin w-4 h-4" /> : "Lançar!"}
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeJoke(joke.id)} className="text-red-500 hover:bg-red-500/20"><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex-1">
-                <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Status do Áudio:</p>
-                <Badge className={cn("mt-1 font-black uppercase italic", data.piadinha?.audioUrl ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500")}>
-                  {data.piadinha?.audioUrl ? "Áudio Pronto" : "Sem Áudio"}
-                </Badge>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button 
-                onClick={triggerPiadinha} 
-                disabled={!data.piadinha?.audioUrl || data.piadinha?.isActive}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black uppercase italic shadow-[0_0_15px_rgba(249,115,22,0.3)] h-12"
-              >
-                {data.piadinha?.isActive ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Mic className="w-5 h-5 mr-2" />}
-                Lançar Piadinha!
+            )}
+            {data.piadinha?.isActive && (
+              <Button variant="ghost" size="sm" onClick={clearPiadinha} className="w-full text-orange-500 text-[10px] font-bold uppercase hover:bg-orange-500/10 h-8">
+                Parar Exibição Atual
               </Button>
-              {data.piadinha?.isActive && (
-                <Button variant="ghost" size="sm" onClick={clearPiadinha} className="text-orange-500 text-[10px] font-bold uppercase hover:bg-orange-500/10">
-                  Parar Piadinha
-                </Button>
-              )}
-            </div>
+            )}
           </CardContent>
         </Card>
 

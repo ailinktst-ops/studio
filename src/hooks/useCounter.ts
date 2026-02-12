@@ -39,6 +39,13 @@ export interface SocialLink {
   url: string;
 }
 
+export interface Joke {
+  id: string;
+  audioUrl: string;
+  imageUrl?: string;
+  timestamp: number;
+}
+
 export interface RaffleState {
   isRaffling: boolean;
   winnerId: string | null;
@@ -78,6 +85,7 @@ export interface CounterState {
   participants: Participant[];
   messages: ElegantMessage[];
   musicRequests: MusicRequest[];
+  jokes: Joke[];
   categories: string[];
   customPhrases: string[];
   updatedAt: any;
@@ -99,6 +107,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   participants: [],
   messages: [],
   musicRequests: [],
+  jokes: [],
   categories: VALID_CATEGORIES,
   customPhrases: [
     "A ELITE DA RESENHA EM TEMPO REAL", 
@@ -159,12 +168,10 @@ export function useCounter() {
       participants: (state.participants || []).map(p => ({
         ...p,
         category: sanitize(p.category)
-      })).sort((a, b) => {
-        if (b.count !== a.count) return b.count - a.count;
-        return 0;
-      }),
+      })),
       messages: state.messages || [],
       musicRequests: state.musicRequests || [],
+      jokes: state.jokes || [],
       customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
         ? state.customPhrases 
         : DEFAULT_STATE.customPhrases,
@@ -251,6 +258,76 @@ export function useCounter() {
       }));
     });
     return true;
+  };
+
+  const submitJoke = (audioUrl: string) => {
+    if (!counterRef || !data) return;
+    const newJoke: Joke = {
+      id: Math.random().toString(36).substring(2, 11),
+      audioUrl,
+      timestamp: Date.now()
+    };
+    updateDoc(counterRef, {
+      jokes: [...(data.jokes || []), newJoke],
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { jokes: [...(data.jokes || []), newJoke] }
+      }));
+    });
+  };
+
+  const updateJokeImage = (id: string, imageUrl: string) => {
+    if (!counterRef || !data) return;
+    const updatedJokes = data.jokes.map(j => 
+      j.id === id ? { ...j, imageUrl } : j
+    );
+    updateDoc(counterRef, {
+      jokes: updatedJokes,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { jokes: updatedJokes }
+      }));
+    });
+  };
+
+  const removeJoke = (id: string) => {
+    if (!counterRef || !data) return;
+    const updatedJokes = data.jokes.filter(j => j.id !== id);
+    updateDoc(counterRef, {
+      jokes: updatedJokes,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { jokes: updatedJokes }
+      }));
+    });
+  };
+
+  const triggerPiadinha = (joke: Joke) => {
+    if (!counterRef || !joke.audioUrl) return;
+    updateDoc(counterRef, {
+      piadinha: {
+        audioUrl: joke.audioUrl,
+        imageUrl: joke.imageUrl || "",
+        isActive: true,
+        timestamp: Date.now()
+      }
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { piadinha: { audioUrl: joke.audioUrl, imageUrl: joke.imageUrl || "", isActive: true, timestamp: Date.now() } }
+      }));
+    });
+    setTimeout(() => updateDoc(counterRef, { "piadinha.isActive": false }), 30000);
   };
 
   const moderateParticipant = (id: string, status: 'approved' | 'rejected', category?: string) => {
@@ -358,6 +435,7 @@ export function useCounter() {
       participants: [],
       messages: [],
       musicRequests: [],
+      jokes: [],
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle', winnersHistory: [] },
       announcement: { message: "", isActive: false, timestamp: null },
@@ -680,31 +758,6 @@ export function useCounter() {
     updateDocField({ socialLinks });
   };
 
-  const updatePiadinhaAudio = (audioUrl: string) => {
-    updateDocField({ "piadinha.audioUrl": audioUrl });
-  };
-
-  const updatePiadinhaImage = (imageUrl: string) => {
-    updateDocField({ "piadinha.imageUrl": imageUrl });
-  };
-
-  const triggerPiadinha = () => {
-    if (!counterRef || !data.piadinha?.audioUrl) return;
-    updateDoc(counterRef, {
-      "piadinha.isActive": true,
-      "piadinha.timestamp": Date.now()
-    }).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: counterRef.path,
-        operation: 'update',
-        requestResourceData: { "piadinha.isActive": true, "piadinha.timestamp": Date.now() }
-      }));
-    });
-    // The overlay will play the audio and the admin can reset if needed, 
-    // but we automatically hide it after a reasonable time or manually.
-    setTimeout(() => updateDoc(counterRef, { "piadinha.isActive": false }), 30000);
-  };
-
   const clearPiadinha = () => {
     updateDocField({ "piadinha.isActive": false });
   };
@@ -739,8 +792,9 @@ export function useCounter() {
     resetRaffleHistory,
     triggerAnnouncement,
     triggerSocialAnnouncement,
-    updatePiadinhaAudio,
-    updatePiadinhaImage,
+    submitJoke,
+    updateJokeImage,
+    removeJoke,
     triggerPiadinha,
     clearPiadinha
   };

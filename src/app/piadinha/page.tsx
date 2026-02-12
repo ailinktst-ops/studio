@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { Mic, Square, Send, Loader2, Play, Trash2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { toast } from "@/hooks/use-toast";
 
 export default function PiadinhaPage() {
-  const { data, updatePiadinhaAudio, isInitializing } = useCounter();
+  const { data, submitJoke, isInitializing } = useCounter();
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -52,7 +52,6 @@ export default function PiadinhaPage() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      // Stop all tracks in the stream
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
   };
@@ -66,13 +65,13 @@ export default function PiadinhaPage() {
       reader.readAsDataURL(audioBlob);
       reader.onloadend = () => {
         const base64Audio = reader.result as string;
-        updatePiadinhaAudio(base64Audio);
+        submitJoke(base64Audio);
         setIsUploading(false);
         setAudioBlob(null);
         setAudioUrl(null);
         toast({
           title: "Piadinha Enviada!",
-          description: "Seu áudio está pronto para ser lançado pelo admin.",
+          description: "Seu áudio entrou no banco de piadas do administrador.",
         });
       };
     } catch (err) {

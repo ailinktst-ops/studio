@@ -64,6 +64,18 @@
             }
           }
         },
+        "jokes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "audioUrl": { "type": "string" },
+              "imageUrl": { "type": "string" },
+              "timestamp": { "type": "number" }
+            }
+          }
+        },
         "categories": { "type": "array", "items": { "type": "string" } },
         "customPhrases": { "type": "array", "items": { "type": "string" } },
         "raffle": {
