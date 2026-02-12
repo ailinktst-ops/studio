@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -42,16 +41,10 @@ export function ControlPanel() {
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Cerveja");
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [tempTitle, setTempTitle] = useState("");
   const [newPhrase, setNewPhrase] = useState("");
   const [customAnnouncement, setCustomAnnouncement] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
-
-  useEffect(() => {
-    if (data.title && !editingTitle) setTempTitle(data.title);
-  }, [data.title, editingTitle]);
 
   const handleAddParticipant = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +73,6 @@ export function ControlPanel() {
     }
   };
 
-  /**
-   * Redimensiona e comprime a imagem mantendo a proporção original.
-   * Garante que a imagem caiba no limite de documento do Firestore (1MB) convertendo para Base64 otimizado.
-   */
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -93,7 +82,6 @@ export function ControlPanel() {
         let width = img.width;
         let height = img.height;
 
-        // Lógica de Redimensionamento Mantendo Proporção
         if (width > height) {
           if (width > maxSize) {
             height *= maxSize / width;
@@ -110,12 +98,9 @@ export function ControlPanel() {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          // Garante fundo branco para JPEGs com transparência se necessário
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          
-          // Qualidade 0.7 é o balanço ideal entre fidelidade visual e tamanho de arquivo
           const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
           callback(optimizedDataUrl);
         }
@@ -139,7 +124,6 @@ export function ControlPanel() {
   const handleParticipantImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Para fotos de participantes, usamos um tamanho um pouco menor (400px) para economizar dados
       handleImageCompression(file, (url) => updateParticipantImage(id, url), 400);
     }
   };
@@ -184,6 +168,16 @@ export function ControlPanel() {
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-6 space-y-6">
                   <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-white/40">Título do Ranking</label>
+                      <Input 
+                        placeholder="Ex: Resenha Épica" 
+                        value={data.title} 
+                        onChange={(e) => updateTitle(e.target.value)}
+                        className="bg-black/20 border-white/10"
+                      />
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase text-white/40">Nome da Marca</label>
