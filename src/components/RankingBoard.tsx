@@ -255,11 +255,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastChallengedWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
   const showPersistentChallenge = overlay && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling && lastChallengedWinner;
 
-  // Lista de músicas aprovadas (máximo 10, FIFO)
+  // Lista de músicas aprovadas em ordem cronológica (mais recentes no final, limitado a 10)
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => b.timestamp - a.timestamp) // Mais recentes primeiro
-    .slice(0, 10);
+    .sort((a, b) => a.timestamp - b.timestamp) // Ordem cronológica (mais antigas primeiro)
+    .slice(-10); // Pega as 10 mais recentes da lista cronológica (as que entrarão embaixo)
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>

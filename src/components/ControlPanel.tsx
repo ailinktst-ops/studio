@@ -47,7 +47,7 @@ export function ControlPanel() {
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
     moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
-    updateAllParticipantsCategory, moderateMusic
+    updateAllParticipantsCategory, moderateMusic, removeMusicRequest
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -144,6 +144,7 @@ export function ControlPanel() {
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
+  const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => b.timestamp - a.timestamp);
   const hasActiveMessage = data.messages.some(m => m.status === 'approved');
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
 
@@ -474,36 +475,55 @@ export function ControlPanel() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pendingMusic.length === 0 ? (
+              {pendingMusic.length === 0 && approvedMusic.length === 0 ? (
                 <div className="text-center py-10">
                   <Music className="w-12 h-12 text-white/5 mx-auto mb-4" />
-                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum pedido de música pendente</p>
+                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum pedido de música</p>
                 </div>
               ) : (
-                pendingMusic.map(m => (
-                  <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Badge className="bg-blue-500/20 text-blue-500 border-none font-bold italic uppercase text-[10px]">Pedido Recebido</Badge>
-                      <span className="text-white/20 text-[10px]">{new Date(m.timestamp).toLocaleTimeString()}</span>
+                <>
+                  {pendingMusic.map(m => (
+                    <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Badge className="bg-blue-500/20 text-blue-500 border-none font-bold italic uppercase text-[10px]">Pedido Pendente</Badge>
+                        <span className="text-white/20 text-[10px]">{new Date(m.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                      <div>
+                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Banda:</p>
+                        <p className="text-white font-black italic text-xl uppercase">{m.artist}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Música:</p>
+                        <p className="text-white font-black italic text-xl uppercase">{m.song}</p>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button onClick={() => moderateMusic(m.id, 'approved')} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest">
+                          <Check className="w-4 h-4 mr-2" /> Aprovar
+                        </Button>
+                        <Button onClick={() => removeMusicRequest(m.id)} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
+                          <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                        </Button>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Banda:</p>
-                      <p className="text-white font-black italic text-xl uppercase">{m.artist}</p>
+                  ))}
+
+                  {approvedMusic.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Playlist Ativa ({approvedMusic.length})</Label>
+                      {approvedMusic.map(m => (
+                        <div key={m.id} className="bg-blue-600/5 border border-blue-500/10 p-4 rounded-xl flex items-center justify-between group">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Playlist</span>
+                            <span className="text-sm font-black italic text-white uppercase">{m.artist} - {m.song}</span>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => removeMusicRequest(m.id)} className="text-white/20 hover:text-destructive group-hover:opacity-100 transition-opacity">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Música:</p>
-                      <p className="text-white font-black italic text-xl uppercase">{m.song}</p>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button onClick={() => moderateMusic(m.id, 'approved')} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest">
-                        <Check className="w-4 h-4 mr-2" /> Aprovar
-                      </Button>
-                      <Button onClick={() => moderateMusic(m.id, 'rejected')} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest">
-                        <Ban className="w-4 h-4 mr-2" /> Rejeitar
-                      </Button>
-                    </div>
-                  </div>
-                ))
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

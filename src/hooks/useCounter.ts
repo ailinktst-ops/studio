@@ -105,7 +105,6 @@ export function useCounter() {
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
   const isLoading = isDocLoading || isUserLoading;
 
-  // Função interna para limpar qualquer resquício da palavra "Gelo"
   const cleanData = (state: Partial<CounterState>): CounterState => {
     const sanitize = (cat: string) => cat === "Gelo" ? "Passa ou repassa" : cat;
     
@@ -440,6 +439,21 @@ export function useCounter() {
     });
   };
 
+  const removeMusicRequest = (id: string) => {
+    if (!counterRef || !data) return;
+    const updatedRequests = data.musicRequests.filter(m => m.id !== id);
+    updateDoc(counterRef, {
+      musicRequests: updatedRequests,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { musicRequests: updatedRequests }
+      }));
+    });
+  };
+
   const triggerRaffle = () => {
     if (!counterRef || !data) return;
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
@@ -544,6 +558,7 @@ export function useCounter() {
     clearElegantMessages,
     sendMusicRequest,
     moderateMusic,
+    removeMusicRequest,
     triggerRaffle,
     triggerSurpriseChallenge,
     clearChallenge,
