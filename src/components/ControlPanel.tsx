@@ -59,7 +59,7 @@ export function ControlPanel() {
     if (typeof window === 'undefined') return path;
     let origin = window.location.origin;
     if (origin.includes("cloudworkstations.dev")) {
-      origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
+      origin = origin.replace(/https?:\/\/(\d+)-/, (match, port) => match.replace(port, '9000'));
     } else if (origin.includes("localhost")) {
       origin = "http://localhost:9000";
     }

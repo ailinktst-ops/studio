@@ -782,7 +782,7 @@ export function useCounter() {
         requestResourceData: { socialAnnouncement: { type, url, isActive: true, timestamp: Date.now() } }
       }));
     });
-    setTimeout(() => updateDoc(counterRef, { "socialAnnouncement.isActive": false }), 15000);
+    setTimeout(() => updateDoc(counterRef, { "socialAnnouncement.isActive": false }), 10000);
   };
 
   const updateSocialLinks = (socialLinks: SocialLink[]) => {

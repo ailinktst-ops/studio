@@ -92,7 +92,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     if (typeof window === 'undefined') return path;
     let origin = window.location.origin;
     if (origin.includes("cloudworkstations.dev")) {
-      origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
+      origin = origin.replace(/https?:\/\/(\d+)-/, (match, port) => match.replace(port, '9000'));
     } else if (origin.includes("localhost")) {
       origin = "http://localhost:9000";
     }
@@ -318,32 +318,32 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Social Announcement Popup */}
+      {/* Social Announcement Popup - Minimalist on the Right Side */}
       {overlay && data.socialAnnouncement?.isActive && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-10 bg-black/80 backdrop-blur-xl animate-in fade-in zoom-in duration-500">
-          <div className="relative flex flex-col items-center gap-8 p-12 rounded-[4rem] bg-white text-black shadow-[0_0_150px_rgba(255,255,255,0.2)] border-8 border-white/20 transform rotate-1">
+        <div className="fixed right-8 top-[30%] z-[110] animate-in slide-in-from-right-full duration-700">
+          <div className="bg-white text-black p-4 rounded-[1.5rem] shadow-2xl border-4 border-white/20 flex flex-col items-center gap-2 min-w-[160px]">
             <div className={cn(
-              "w-32 h-32 rounded-[2rem] flex items-center justify-center shadow-2xl animate-bounce",
+              "w-8 h-8 rounded-lg flex items-center justify-center shadow-lg animate-bounce",
               data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]" : "bg-[#ff0000]"
             )}>
               {data.socialAnnouncement.type === 'instagram' ? (
-                <Instagram className="w-20 h-20 text-white" />
+                <Instagram className="w-5 h-5 text-white" />
               ) : (
-                <Youtube className="w-20 h-20 text-white" />
+                <Youtube className="w-5 h-5 text-white" />
               )}
             </div>
-            <div className="text-center flex flex-col items-center">
-              <h2 className="text-2xl font-black italic uppercase tracking-[0.4em] mb-4 opacity-30">SEGUE LÁ NO {data.socialAnnouncement.type?.toUpperCase()}</h2>
-              <p className="text-5xl font-black italic uppercase tracking-tighter mb-8">
+            <div className="text-center">
+              <p className="text-[6px] font-black uppercase opacity-40 tracking-[0.2em] mb-0.5">SIGA-NOS NO {data.socialAnnouncement.type?.toUpperCase()}</p>
+              <p className="text-sm font-black italic uppercase tracking-tighter mb-2 truncate max-w-[140px]">
                 {data.socialAnnouncement.url.includes('instagram.com') 
-                  ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Instagram'}`
+                  ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Social'}`
                   : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}
               </p>
-              <div className="p-4 bg-white rounded-2xl border-4 border-black/5 shadow-inner">
+              <div className="p-1 bg-white rounded-lg border border-black/5 shadow-inner">
                 <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.socialAnnouncement.url)}`} 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(data.socialAnnouncement.url)}`} 
                   alt="QR Social" 
-                  className="w-48 h-48"
+                  className="w-20 h-20"
                 />
               </div>
             </div>
