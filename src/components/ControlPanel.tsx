@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, 
   Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
   Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap, EyeOff, Megaphone,
-  Heart, Check, Ban, ImageIcon, History
+  Heart, Check, Ban, ImageIcon, History, ExternalLink
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -284,7 +284,12 @@ export function ControlPanel() {
           <Card className="bg-card/50 border-white/5">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-bold">Participantes</CardTitle>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <Link href="/overlay" target="_blank">
+                  <Button variant="outline" size="sm" className="text-secondary border-secondary/20 hover:bg-secondary/10 bg-transparent">
+                    <Monitor className="w-4 h-4 mr-1" /> Abrir Overlay
+                  </Button>
+                </Link>
                 <Button variant="outline" size="sm" onClick={resetOnlyPoints} className="text-primary border-primary/20 hover:bg-primary/10 bg-transparent">
                   <History className="w-4 h-4 mr-1" /> Zerar Pontos
                 </Button>

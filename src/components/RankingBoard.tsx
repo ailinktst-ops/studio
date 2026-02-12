@@ -237,9 +237,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Mensagem Correio Elegante (Centro Direita) */}
+      {/* Mensagem Correio Elegante (Lado Esquerdo Meio) */}
       {overlay && latestMessage && (
-        <div className="fixed right-8 top-[35%] -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500">
+        <div className="fixed left-8 top-[35%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
           <div className="bg-pink-600/90 backdrop-blur-xl border-4 border-pink-400 p-6 rounded-[2.5rem] shadow-[0_0_50px_rgba(219,39,119,0.5)] flex flex-col items-center text-center max-w-[240px] rotate-[-2deg]">
             <div className="bg-white/20 p-2 rounded-full mb-3">
               <Heart className="w-8 h-8 text-pink-100 fill-pink-100" />
@@ -255,9 +255,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Miniatura do Desafiado (Embaixo da mensagem) */}
+      {/* Miniatura do Desafiado (Centro Direita) */}
       {showPersistentChallenge && (
-        <div className="fixed right-8 top-[65%] -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500 delay-100">
+        <div className="fixed right-8 top-[50%] -translate-y-1/2 z-[80] animate-in slide-in-from-right-10 duration-500 delay-100">
           <div className="bg-blue-600/90 backdrop-blur-xl border-4 border-blue-400 p-6 rounded-[2rem] shadow-[0_0_50px_rgba(59,130,246,0.5)] flex flex-col items-center text-center max-w-[200px] rotate-2">
             <div className="bg-white/20 p-2 rounded-full mb-3">
               <Zap className="w-8 h-8 text-blue-100" />
@@ -268,7 +268,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Avisos Gigantes (Notificação e Anúncio) permanecem como estão... */}
+      {/* Avisos Gigantes (Notificação e Anúncio) */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
@@ -301,7 +301,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Sorteio permanece como está... */}
+      {/* Sorteio */}
       {data.raffle?.isRaffling && (
         <div className={cn("fixed inset-0 z-[100] flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-500 backdrop-blur-3xl", data.raffle.type === 'challenge' ? "bg-indigo-950/95" : "bg-black/95")}>
           {data.raffle.type === 'challenge' ? <Zap className="w-32 h-32 text-blue-400 animate-bounce mb-8" /> : <Star className="w-32 h-32 text-yellow-500 animate-pulse mb-8" />}
