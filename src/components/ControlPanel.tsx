@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
   Share2, ExternalLink, Settings, Music, X, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2
+  Play, Volume2, Copy, Smartphone
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -36,9 +36,11 @@ import {
   DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle 
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export function ControlPanel() {
@@ -58,30 +60,40 @@ export function ControlPanel() {
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [isConfirmBulkOpen, setIsConfirmBulkOpen] = useState(false);
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
+  
+  const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
+  
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const piadinhaFileRef = useRef<HTMLInputElement | null>(null);
   const adminAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
-    
     let origin = window.location.origin;
-    
     if (origin.includes("cloudworkstations.dev")) {
       origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
     } else if (origin.includes("localhost")) {
       origin = "http://localhost:9000";
     }
-    
     return `${origin}${path}`;
   };
+
+  useEffect(() => {
+    const generateQr = (path: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formatUrlWithCorrectPort(path))}`;
+    setQrUrls({
+      cadastro: generateQr('/cadastro'),
+      correio: generateQr('/correio'),
+      musica: generateQr('/musica'),
+      piadinha: generateQr('/piadinha')
+    });
+  }, []);
 
   const copyToClipboard = (path: string, label: string) => {
     const url = formatUrlWithCorrectPort(path);
     navigator.clipboard.writeText(url).then(() => {
       toast({
         title: "Link Copiado!",
-        description: `O link para ${label} foi copiado (Porta 9000).`,
+        description: `O link para ${label} foi copiado.`,
       });
     });
   };
@@ -120,7 +132,6 @@ export function ControlPanel() {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-
         if (width > height) {
           if (width > maxSize) {
             height *= maxSize / width;
@@ -132,7 +143,6 @@ export function ControlPanel() {
             height = maxSize;
           }
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
@@ -182,6 +192,35 @@ export function ControlPanel() {
     });
   };
 
+  const ShareButton = ({ path, label, icon: Icon, colorClass, qrKey }: { path: string, label: string, icon: any, colorClass: string, qrKey: string }) => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className={cn("h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all", colorClass)}>
+          <Icon className="w-4 h-4 mr-2" /> {label}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">QR CODE {label}</DialogTitle>
+          <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">Aponte a câmera para acessar</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col items-center gap-8">
+          <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+            <img src={qrUrls[qrKey]} alt={`QR ${label}`} className="w-48 h-48" />
+          </div>
+          <div className="flex w-full gap-2">
+            <Button 
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl"
+              onClick={() => copyToClipboard(path, label)}
+            >
+              <Copy className="w-4 h-4 mr-2" /> Copiar Link
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
@@ -207,22 +246,14 @@ export function ControlPanel() {
       <Card className="bg-white/5 border-white/10 backdrop-blur-md overflow-hidden">
         <div className="px-6 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
-            <Share2 className="w-3 h-3" /> Compartilhar Evento
+            <Smartphone className="w-3 h-3" /> QR Codes & Compartilhamento
           </span>
         </div>
         <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/cadastro', 'Cadastro')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-secondary hover:text-white transition-all">
-            <UserPlus className="w-4 h-4 mr-2" /> Cadastro
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio Elegante')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
-            <Heart className="w-4 h-4 mr-2" /> Correio
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/musica', 'Pedir Música')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
-            <Music className="w-4 h-4 mr-2" /> Música
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/piadinha', 'Piadinha')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all">
-            <Mic className="w-4 h-4 mr-2" /> Piadinha
-          </Button>
+          <ShareButton path="/cadastro" label="Cadastro" icon={UserPlus} colorClass="hover:bg-secondary hover:text-white" qrKey="cadastro" />
+          <ShareButton path="/correio" label="Correio" icon={Heart} colorClass="hover:bg-primary hover:text-white" qrKey="correio" />
+          <ShareButton path="/musica" label="Música" icon={Music} colorClass="hover:bg-blue-600 hover:text-white" qrKey="musica" />
+          <ShareButton path="/piadinha" label="Piadinha" icon={Mic} colorClass="hover:bg-orange-500 hover:text-white" qrKey="piadinha" />
           <Link href="/overlay" target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
               <ExternalLink className="w-4 h-4 mr-2" /> Telão
