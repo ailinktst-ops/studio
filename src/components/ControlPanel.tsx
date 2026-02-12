@@ -1,49 +1,32 @@
+
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { 
-  Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, 
-  Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
-  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap, EyeOff, Megaphone,
-  Heart, Check, Ban, ImageIcon, History, ExternalLink, HeartOff
+  Plus, RotateCcw, UserPlus, Trash2, Monitor, 
+  Sparkles, Loader2, Zap, EyeOff,
+  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from 'next/link';
 
-const ICON_OPTIONS = [
-  { id: 'Beer', icon: Beer },
-  { id: 'Wine', icon: Wine },
-  { id: 'CupSoda', icon: CupSoda },
-  { id: 'GlassWater', icon: GlassWater },
-  { id: 'Trophy', icon: Trophy },
-  { id: 'Star', icon: Star },
-  { id: 'Flame', icon: Flame },
-  { id: 'Music', icon: Music },
-  { id: 'Pizza', icon: Pizza },
-];
-
 export function ControlPanel() {
   const { 
     data, loading, isInitializing, 
-    updateTitle, updateBrand, updatePhrases, updateBrandImage,
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
-    triggerAnnouncement, moderateMessage, clearElegantMessages
+    moderateMessage, clearElegantMessages
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Cerveja");
-  const [newPhrase, setNewPhrase] = useState("");
-  const [customAnnouncement, setCustomAnnouncement] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleAddParticipant = (e: React.FormEvent) => {
@@ -51,25 +34,6 @@ export function ControlPanel() {
     if (newParticipantName.trim()) {
       addParticipant(newParticipantName.trim(), selectedCategory);
       setNewParticipantName("");
-    }
-  };
-
-  const handleAddPhrase = () => {
-    if (newPhrase.trim()) {
-      updatePhrases([...data.customPhrases, newPhrase.trim()]);
-      setNewPhrase("");
-    }
-  };
-
-  const handleRemovePhrase = (index: number) => {
-    const updated = data.customPhrases.filter((_, i) => i !== index);
-    updatePhrases(updated);
-  };
-
-  const handleSendAnnouncement = () => {
-    if (customAnnouncement.trim()) {
-      triggerAnnouncement(customAnnouncement);
-      setCustomAnnouncement("");
     }
   };
 
@@ -110,17 +74,6 @@ export function ControlPanel() {
     reader.readAsDataURL(file);
   };
 
-  const handleBrandImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("A imagem é muito grande. Escolha uma imagem de até 2MB.");
-        return;
-      }
-      handleImageCompression(file, (url) => updateBrandImage(url), 800);
-    }
-  };
-
   const handleParticipantImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -157,106 +110,6 @@ export function ControlPanel() {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          <Card className="bg-card/30 backdrop-blur-md border-white/5">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="settings" className="border-none">
-                <AccordionTrigger className="px-6 hover:no-underline">
-                  <div className="flex items-center gap-2 text-white/60 font-bold uppercase tracking-widest text-xs">
-                    <Settings2 className="w-4 h-4" />
-                    Personalizar Identidade e Overlay
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6 space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase text-white/40">Título do Ranking</label>
-                      <Input 
-                        placeholder="Ex: Resenha Épica" 
-                        value={data.title} 
-                        onChange={(e) => updateTitle(e.target.value)}
-                        className="bg-black/20 border-white/10"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase text-white/40">Nome da Marca</label>
-                        <Input 
-                          value={data.brandName} 
-                          onChange={(e) => updateBrand(e.target.value, data.brandIcon)}
-                          className="bg-black/20 border-white/10"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase text-white/40">Logo Personalizada (Máx. 2MB)</label>
-                        <div className="flex items-center gap-3">
-                          <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleBrandImageUpload} />
-                          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="bg-white/5 border-white/10 hover:bg-white/10 text-xs h-10">
-                            <Upload className="w-4 h-4 mr-2" /> Upload
-                          </Button>
-                          {data.brandImageUrl && (
-                            <div className="relative group">
-                              <img src={data.brandImageUrl} className="w-10 h-10 rounded-lg object-cover border border-white/20" alt="Brand Logo" />
-                              <button onClick={() => updateBrandImage("")} className="absolute -top-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {!data.brandImageUrl && (
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase text-white/40">Ou ícone padrão</label>
-                        <div className="flex flex-wrap gap-2">
-                          {ICON_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.id}
-                              onClick={() => updateBrand(data.brandName, opt.id)}
-                              className={`p-2 rounded-lg border transition-all ${data.brandIcon === opt.id ? 'bg-primary border-primary text-white shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-black/20 border-white/10 text-white/40 hover:border-white/20'}`}
-                            >
-                              <opt.icon className="w-4 h-4" />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase text-white/40">Frases do Overlay</label>
-                      <div className="flex gap-2 mb-3">
-                        <Input placeholder="Nova frase..." value={newPhrase} onChange={(e) => setNewPhrase(e.target.value)} className="bg-black/20 border-white/10" />
-                        <Button onClick={handleAddPhrase} className="bg-secondary text-secondary-foreground"><Plus className="w-4 h-4" /></Button>
-                      </div>
-                      <div className="space-y-2">
-                        {data.customPhrases.map((phrase, i) => (
-                          <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 text-xs text-white/80">
-                            {phrase}
-                            <button onClick={() => handleRemovePhrase(i)} className="text-white/20 hover:text-destructive">
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 pt-4 border-t border-white/5">
-                      <label className="text-[10px] font-bold uppercase text-white/40">Aviso Urgente (Buzina)</label>
-                      <div className="flex gap-2">
-                        <Input placeholder="Digite o aviso..." value={customAnnouncement} onChange={(e) => setCustomAnnouncement(e.target.value)} className="bg-black/20 border-white/10" />
-                        <Button onClick={handleSendAnnouncement} disabled={!customAnnouncement.trim()} className="bg-red-600 hover:bg-red-700 text-white font-bold">
-                          <Megaphone className="w-4 h-4 mr-2" /> ENVIAR
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </Card>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Button onClick={triggerRaffle} disabled={data.participants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
               {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}

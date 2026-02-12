@@ -3,9 +3,9 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ControlPanel } from "@/components/ControlPanel";
-import { RankingBoard } from "@/components/RankingBoard";
+import { SettingsPanel } from "@/components/SettingsPanel";
 import { useCounter } from "@/hooks/useCounter";
-import { LayoutDashboard, Trophy, Beer, Wine, CupSoda, GlassWater, Flame, Music, Pizza, Star } from "lucide-react";
+import { LayoutDashboard, Settings2, Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, any> = {
@@ -60,9 +60,9 @@ export default function Home() {
                 <LayoutDashboard className="w-5 h-5" />
                 Painel
               </TabsTrigger>
-              <TabsTrigger value="view" className="flex-1 flex items-center gap-3 rounded-xl data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground text-white/60 font-black italic uppercase transition-all">
-                <Trophy className="w-5 h-5" />
-                Ranking
+              <TabsTrigger value="settings" className="flex-1 flex items-center gap-3 rounded-xl data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground text-white/60 font-black italic uppercase transition-all">
+                <Settings2 className="w-5 h-5" />
+                Personalizar
               </TabsTrigger>
             </TabsList>
           </div>
@@ -71,10 +71,8 @@ export default function Home() {
             <ControlPanel />
           </TabsContent>
           
-          <TabsContent value="view" className="mt-0 focus-visible:outline-none">
-            <div className="bg-black/20 rounded-[2rem] border border-white/5 backdrop-blur-sm">
-              <RankingBoard />
-            </div>
+          <TabsContent value="settings" className="mt-0 focus-visible:outline-none">
+            <SettingsPanel />
           </TabsContent>
         </Tabs>
       </div>
