@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useCounter, SocialLink } from '@/hooks/useCounter';
+import { useCounter, SocialLink, AdminUser } from '@/hooks/useCounter';
 import { 
   Plus, Settings2, X, Upload, Megaphone,
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza,
-  Instagram, Youtube, Share2, Trash2, ShieldAlert, QrCode, Copy
+  Instagram, Youtube, Share2, Trash2, ShieldAlert, QrCode, Copy, Edit, Lock, User
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,15 +18,18 @@ import {
   DialogDescription, 
   DialogHeader, 
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const { 
     data, updateTitle, updateBrand, updatePhrases, updateBrandImage, 
-    triggerAnnouncement, updateSocialLinks, triggerSocialAnnouncement
+    triggerAnnouncement, updateSocialLinks, triggerSocialAnnouncement,
+    removeAdmin, updateAdmin
   } = useCounter();
 
   const [newPhrase, setNewPhrase] = useState("");
@@ -35,6 +38,12 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const [newSocialUrl, setNewSocialUrl] = useState("");
   const [qrAdminUrl, setQrAdminUrl] = useState("");
   
+  // Edit Admin State
+  const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
+  const [editUsername, setEditUsername] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [originalUsername, setOriginalUsername] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isMaster = loggedUser === "Link";
@@ -162,6 +171,23 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
     });
   };
 
+  const startEditingAdmin = (admin: AdminUser) => {
+    setEditingAdmin(admin);
+    setEditUsername(admin.username);
+    setEditPassword(admin.password);
+    setOriginalUsername(admin.username);
+  };
+
+  const handleUpdateAdmin = () => {
+    if (!editUsername.trim() || !editPassword.trim()) return;
+    updateAdmin(originalUsername, { username: editUsername.trim(), password: editPassword.trim() });
+    setEditingAdmin(null);
+    toast({
+      title: "Admin Atualizado!",
+      description: `O acesso de ${editUsername} foi modificado.`,
+    });
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {isMaster && (
@@ -173,35 +199,99 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
              </div>
           </div>
           <CardContent className="p-6 flex flex-col items-center gap-6">
-             <p className="text-[10px] font-bold uppercase text-white/40 text-center tracking-widest leading-relaxed">
-               Gere um acesso para um novo administrador padrão. <br/>
-               Ele terá acesso a tudo, exceto esta função de criar novos usuários.
-             </p>
-             
-             <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase italic h-14 w-full max-w-xs rounded-2xl shadow-lg">
-                    <QrCode className="w-5 h-5 mr-2" /> Gerar Convite Admin
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
-                  <DialogHeader className="mb-4">
-                    <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">NOVO ADMIN</DialogTitle>
-                    <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">Convite restrito para novos gestores</DialogDescription>
-                  </DialogHeader>
-                  <div className="flex flex-col items-center gap-8">
-                    <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-                      <img src={qrAdminUrl} alt="QR Admin" className="w-48 h-48" />
-                    </div>
-                    <Button 
-                      className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl"
-                      onClick={copyAdminLink}
-                    >
-                      <Copy className="w-4 h-4 mr-2" /> Copiar Link Secreto
-                    </Button>
-                  </div>
-                </DialogContent>
-             </Dialog>
+             <div className="w-full space-y-4">
+                <p className="text-[10px] font-bold uppercase text-white/40 text-center tracking-widest leading-relaxed">
+                  Gerencie os acessos administrativos da plataforma.
+                </p>
+                
+                <div className="grid grid-cols-1 gap-4">
+                   <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase italic h-14 w-full rounded-2xl shadow-lg">
+                          <QrCode className="w-5 h-5 mr-2" /> Gerar Convite Novo Admin
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
+                        <DialogHeader className="mb-4">
+                          <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">NOVO ADMIN</DialogTitle>
+                          <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">Convite restrito para novos gestores</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center gap-8">
+                          <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                            <img src={qrAdminUrl} alt="QR Admin" className="w-48 h-48" />
+                          </div>
+                          <Button 
+                            className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl"
+                            onClick={copyAdminLink}
+                          >
+                            <Copy className="w-4 h-4 mr-2" /> Copiar Link Secreto
+                          </Button>
+                        </div>
+                      </DialogContent>
+                   </Dialog>
+                </div>
+
+                <div className="space-y-3 mt-6">
+                   <Label className="text-[10px] font-black uppercase text-white/20 tracking-widest">Administradores Ativos:</Label>
+                   {data.admins.length === 0 ? (
+                      <p className="text-[10px] font-bold uppercase text-white/10 italic text-center py-4">Nenhum sub-administrador criado.</p>
+                   ) : (
+                      <div className="space-y-2">
+                         {data.admins.map((admin) => (
+                            <div key={admin.username} className="bg-white/5 border border-white/5 p-4 rounded-xl flex items-center justify-between group">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                                     <User className="w-4 h-4 text-primary" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                     <span className="text-sm font-black italic uppercase text-white">{admin.username}</span>
+                                     <span className="text-[10px] font-bold text-white/20 uppercase">Acesso Padrão</span>
+                                  </div>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                  <Dialog open={!!editingAdmin && editingAdmin.username === admin.username} onOpenChange={(open) => !open && setEditingAdmin(null)}>
+                                     <DialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={() => startEditingAdmin(admin)} className="h-8 w-8 text-white/20 hover:text-white">
+                                           <Edit className="w-3.5 h-3.5" />
+                                        </Button>
+                                     </DialogTrigger>
+                                     <DialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                                        <DialogHeader>
+                                           <DialogTitle className="text-white uppercase font-black italic">Editar Administrador</DialogTitle>
+                                           <DialogDescription className="text-white/40 font-bold">Altere as credenciais de acesso para {admin.username}.</DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-4 py-4">
+                                           <div className="space-y-2">
+                                              <Label className="text-[10px] font-black uppercase tracking-widest text-white/40">Username:</Label>
+                                              <div className="relative">
+                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                                 <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="bg-black/40 border-white/10 h-12 pl-10" />
+                                              </div>
+                                           </div>
+                                           <div className="space-y-2">
+                                              <Label className="text-[10px] font-black uppercase tracking-widest text-white/40">Nova Senha:</Label>
+                                              <div className="relative">
+                                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                                 <Input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} className="bg-black/40 border-white/10 h-12 pl-10" />
+                                              </div>
+                                           </div>
+                                        </div>
+                                        <DialogFooter>
+                                           <Button onClick={handleUpdateAdmin} className="w-full bg-primary text-white font-black uppercase italic h-12">Salvar Alterações</Button>
+                                        </DialogFooter>
+                                     </DialogContent>
+                                  </Dialog>
+                                  
+                                  <Button variant="ghost" size="icon" onClick={() => removeAdmin(admin.username)} className="h-8 w-8 text-white/20 hover:text-destructive">
+                                     <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   )}
+                </div>
+             </div>
           </CardContent>
         </Card>
       )}

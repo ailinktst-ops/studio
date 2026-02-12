@@ -256,6 +256,37 @@ export function useCounter() {
     return true;
   };
 
+  const updateAdmin = (oldUsername: string, updatedAdmin: AdminUser) => {
+    if (!counterRef || !data) return false;
+    const updatedAdmins = data.admins.map(a => a.username === oldUsername ? updatedAdmin : a);
+    updateDoc(counterRef, {
+      admins: updatedAdmins,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { admins: updatedAdmins }
+      }));
+    });
+    return true;
+  };
+
+  const removeAdmin = (username: string) => {
+    if (!counterRef || !data) return;
+    const updatedAdmins = data.admins.filter(a => a.username !== username);
+    updateDoc(counterRef, {
+      admins: updatedAdmins,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { admins: updatedAdmins }
+      }));
+    });
+  };
+
   const addParticipant = (name: string, category: string, imageUrl?: string, autoApprove = false): boolean => {
     if (!counterRef || !data) return false;
     const normalizedName = name.trim().toLowerCase();
@@ -799,6 +830,8 @@ export function useCounter() {
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
     updateSocialLinks,
     addAdmin,
+    updateAdmin,
+    removeAdmin,
     addParticipant,
     moderateParticipant,
     updateParticipantCategory,
