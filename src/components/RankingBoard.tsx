@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -61,7 +60,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}-movie-series-character/400/400`;
+    // Seeded characters for unique film/anime avatars
+    return `https://picsum.photos/seed/${p.id}-character-movie-anime/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -314,7 +314,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {/* CORREIO ELEGANTE FIXO - CANTO INFERIOR ESQUERDO */}
       {overlay && activeMessage && (
         <div className="fixed left-8 bottom-32 z-[80] max-w-sm animate-in slide-in-from-left-10 duration-700">
-          <div className="bg-primary/90 backdrop-blur-2xl border-2 border-primary-foreground/20 p-6 rounded-[2rem] shadow-[0_0_40px_rgba(168,85,247,0.4)] rotate-[-1deg]">
+          <div className="bg-primary/90 backdrop-blur-2xl border-2 border-primary-foreground/20 p-6 rounded-[2rem] shadow-[0_0_40px_rgba(236,72,153,0.4)] rotate-[-1deg]">
             <div className="flex items-center gap-3 mb-4">
                <div className="bg-white/20 p-2 rounded-xl">
                   <Heart className="w-6 h-6 text-white animate-pulse" />

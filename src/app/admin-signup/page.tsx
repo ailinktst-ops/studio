@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -52,7 +51,7 @@ export default function AdminSignupPage() {
     <div className="min-h-screen bg-background p-6 flex flex-col items-center justify-center">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-2">
-          <div className="bg-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+          <div className="bg-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20 shadow-[0_0_20px_rgba(236,72,153,0.2)]">
             <ShieldCheck className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">

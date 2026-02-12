@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -58,7 +57,7 @@ export default function Home() {
       <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
         <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-500">
           <div className="text-center space-y-4">
-            <div className="bg-primary/20 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-primary/20 shadow-[0_0_30px_rgba(168,85,247,0.2)] rotate-3">
+            <div className="bg-primary/20 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-primary/20 shadow-[0_0_30px_rgba(236,72,153,0.2)] rotate-3">
               <Lock className="w-10 h-10 text-primary" />
             </div>
             <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none">
@@ -123,8 +122,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={cn(
-              "bg-primary rounded-xl text-primary-foreground shadow-[0_0_20px_rgba(168,85,247,0.3)] rotate-3 overflow-hidden flex items-center justify-center transition-all",
-              brandImageUrl ? "w-12 h-12 p-0" : "w-14 h-14 p-3"
+              "bg-primary rounded-xl text-primary-foreground shadow-[0_0_20px_rgba(236,72,153,0.3)] rotate-3 overflow-hidden flex items-center justify-center transition-all",
+              brandImageUrl ? "w-12 h-12 p-0" : "h-14 w-14 p-3"
             )}>
               {brandImageUrl ? (
                 <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" />
