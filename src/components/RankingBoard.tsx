@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Sparkles, Loader2, 
-  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle, Zap
+  Beer, Wine, CupSoda, GlassWater, Music, Pizza, AlertCircle, Zap, Megaphone
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,8 @@ const ICON_MAP: Record<string, any> = {
 const SOUND_URLS = {
   point: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
   leader: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3',
-  challenge: 'https://assets.mixkit.co/active_storage/sfx/950/950-preview.mp3' // Alarme de emergência
+  challenge: 'https://assets.mixkit.co/active_storage/sfx/950/950-preview.mp3',
+  announcement: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3' // Air horn (buzina estrondosa)
 };
 
 const CryingIcon = ({ className }: { className?: string }) => (
@@ -46,12 +47,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   
   const lastParticipantsRef = useRef<Participant[]>([]);
   const lastLeaderIdRef = useRef<string | null>(null);
+  const lastAnnouncementTimeRef = useRef<number | null>(null);
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
 
-  const playSound = (type: 'point' | 'leader' | 'challenge') => {
+  const playSound = (type: keyof typeof SOUND_URLS) => {
     const audio = new Audio(SOUND_URLS[type]);
     if (type === 'challenge') {
       audio.loop = true;
@@ -111,6 +113,16 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
     lastParticipantsRef.current = current;
   }, [data.participants, overlay]);
+
+  // Alerta de Aviso Personalizado
+  useEffect(() => {
+    if (!overlay || !data.announcement?.isActive || !data.announcement.timestamp) return;
+    
+    if (data.announcement.timestamp !== lastAnnouncementTimeRef.current) {
+      playSound('announcement');
+      lastAnnouncementTimeRef.current = data.announcement.timestamp;
+    }
+  }, [data.announcement, overlay]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -203,6 +215,27 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Último Desafiado:</span>
             <h3 className="text-2xl font-black italic text-white uppercase drop-shadow-lg leading-tight">{lastChallengedWinner.name}</h3>
             <div className="h-1 w-full bg-white/30 rounded-full mt-3"></div>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay de Aviso Customizado (Megafone) */}
+      {overlay && data.announcement?.isActive && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-10 animate-in fade-in zoom-in duration-500 bg-red-950/40 backdrop-blur-sm">
+          <div className="max-w-5xl w-full bg-red-600 border-4 border-yellow-400 p-12 rounded-[3rem] shadow-[0_0_150px_rgba(220,38,38,0.8)] text-center transform -rotate-1 animate-bounce">
+            <div className="flex items-center justify-center gap-6 mb-8">
+              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse" />
+              <h2 className="text-7xl font-black italic text-white uppercase tracking-[0.2em] drop-shadow-lg">ATENÇÃO</h2>
+              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse scale-x-[-1]" />
+            </div>
+            <p className="text-6xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl leading-tight">
+              {data.announcement.message}
+            </p>
+            <div className="mt-10 flex justify-center gap-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="w-4 h-4 rounded-full bg-yellow-400 animate-ping" style={{ animationDelay: `${i * 0.2}s` }}></div>
+              ))}
+            </div>
           </div>
         </div>
       )}

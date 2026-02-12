@@ -6,7 +6,7 @@ import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, Edit3, Monitor, 
   Beer, Sparkles, Loader2, Wine, CupSoda, GlassWater, 
-  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap, EyeOff
+  Trophy, Star, Flame, Music, Pizza, Settings2, X, Upload, Zap, EyeOff, Megaphone
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,8 @@ export function ControlPanel() {
     data, loading, isInitializing, 
     updateTitle, updateBrand, updatePhrases, updateBrandImage,
     addParticipant, incrementCount, resetCounts, 
-    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge
+    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
+    triggerAnnouncement
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -41,6 +42,7 @@ export function ControlPanel() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState("");
   const [newPhrase, setNewPhrase] = useState("");
+  const [customAnnouncement, setCustomAnnouncement] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -65,6 +67,13 @@ export function ControlPanel() {
   const handleRemovePhrase = (index: number) => {
     const updated = data.customPhrases.filter((_, i) => i !== index);
     updatePhrases(updated);
+  };
+
+  const handleSendAnnouncement = () => {
+    if (customAnnouncement.trim()) {
+      triggerAnnouncement(customAnnouncement);
+      setCustomAnnouncement("");
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,6 +227,25 @@ export function ControlPanel() {
                         </button>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-4 border-t border-white/5">
+                  <label className="text-[10px] font-bold uppercase text-white/40">Aviso de Atenção no Overlay</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Digite um aviso importante..." 
+                      value={customAnnouncement}
+                      onChange={(e) => setCustomAnnouncement(e.target.value)}
+                      className="bg-black/20 border-white/10"
+                    />
+                    <Button 
+                      onClick={handleSendAnnouncement} 
+                      disabled={!customAnnouncement.trim()}
+                      className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                    >
+                      <Megaphone className="w-4 h-4 mr-2" /> ENVIAR
+                    </Button>
                   </div>
                 </div>
               </div>

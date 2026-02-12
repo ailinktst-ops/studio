@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Counter": {
@@ -32,6 +33,14 @@
             "winnerId": { "type": "string", "nullable": true },
             "candidates": { "type": "array", "items": { "type": "string" } },
             "type": { "type": "string", "enum": ["raffle", "challenge"] }
+          }
+        },
+        "announcement": {
+          "type": "object",
+          "properties": {
+            "message": { "type": "string" },
+            "isActive": { "type": "boolean" },
+            "timestamp": { "type": "number" }
           }
         },
         "updatedAt": { "type": "string", "format": "date-time" }

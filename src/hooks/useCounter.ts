@@ -22,6 +22,12 @@ export interface RaffleState {
   type?: 'raffle' | 'challenge';
 }
 
+export interface AnnouncementState {
+  message: string;
+  isActive: boolean;
+  timestamp: number | null;
+}
+
 export interface CounterState {
   id: string;
   title: string;
@@ -33,6 +39,7 @@ export interface CounterState {
   customPhrases: string[];
   updatedAt: any;
   raffle?: RaffleState;
+  announcement?: AnnouncementState;
 }
 
 const DEFAULT_ID = "current";
@@ -51,6 +58,11 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
     candidates: [],
     startTime: null,
     type: 'raffle'
+  },
+  announcement: {
+    message: "",
+    isActive: false,
+    timestamp: null
   }
 };
 
@@ -75,6 +87,10 @@ export function useCounter() {
     raffle: {
       ...DEFAULT_STATE.raffle!,
       ...(rawData?.raffle || {})
+    },
+    announcement: {
+      ...DEFAULT_STATE.announcement!,
+      ...(rawData?.announcement || {})
     }
   };
 
@@ -129,7 +145,8 @@ export function useCounter() {
     updateDoc(counterRef, {
       participants: [],
       updatedAt: Timestamp.now(),
-      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle' }
+      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle' },
+      announcement: { message: "", isActive: false, timestamp: null }
     });
   };
 
@@ -184,6 +201,18 @@ export function useCounter() {
     });
   };
 
+  const triggerAnnouncement = (message: string) => {
+    if (!counterRef || !user || !message.trim()) return;
+    updateDoc(counterRef, {
+      announcement: {
+        message: message.trim(),
+        isActive: true,
+        timestamp: Date.now()
+      }
+    });
+    setTimeout(() => updateDoc(counterRef, { "announcement.isActive": false }), 8000);
+  };
+
   return {
     data,
     loading: isLoading,
@@ -198,6 +227,7 @@ export function useCounter() {
     removeParticipant,
     triggerRaffle,
     triggerSurpriseChallenge,
-    clearChallenge
+    clearChallenge,
+    triggerAnnouncement
   };
 }
