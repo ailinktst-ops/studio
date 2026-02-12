@@ -69,7 +69,7 @@ export function ControlPanel() {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}/200/200`;
+    return `https://picsum.photos/seed/${p.id}-character/200/200`;
   };
 
   const formatUrlWithCorrectPort = (path: string) => {
@@ -248,7 +248,7 @@ export function ControlPanel() {
           <ShareButton path="/cadastro" label="Cadastro" icon={UserPlus} colorClass="hover:bg-secondary hover:text-white" qrKey="cadastro" />
           <ShareButton path="/correio" label="Correio" icon={Heart} colorClass="hover:bg-primary hover:text-white" qrKey="correio" />
           <ShareButton path="/musica" label="Música" icon={Music} colorClass="hover:bg-blue-600 hover:text-white" qrKey="musica" />
-          <ShareButton path="/piadinha" label="Piadinha" icon={Mic} colorClass="hover:bg-orange-500 hover:text-white" qrKey="piadinha" />
+          <ShareButton path="/piadinha" label="Memes" icon={Mic} colorClass="hover:bg-orange-500 hover:text-white" qrKey="piadinha" />
           <Link href="/overlay" target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
               <ExternalLink className="w-4 h-4 mr-2" /> Telão
@@ -262,13 +262,13 @@ export function ControlPanel() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase italic text-orange-500 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Mic className="w-4 h-4" /> Banco de Piadinhas ({data.jokes?.length || 0})
+                <Mic className="w-4 h-4" /> Memes Ao Vivo! ({data.jokes?.length || 0})
               </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 max-h-[400px] overflow-y-auto">
             {(!data.jokes || data.jokes.length === 0) ? (
-              <p className="text-[10px] font-bold uppercase text-white/20 text-center py-10 italic">Nenhuma piadinha recebida ainda.</p>
+              <p className="text-[10px] font-bold uppercase text-white/20 text-center py-10 italic">Nenhum meme recebido ainda.</p>
             ) : (
               <div className="grid gap-3">
                 {data.jokes.map((joke) => (
@@ -292,7 +292,7 @@ export function ControlPanel() {
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-black uppercase text-white/40 block">Recebido em:</span>
+                        <span className="text-[10px] font-black uppercase text-white/40 block">Meme de:</span>
                         <span className="text-xs font-bold text-white/80">{new Date(joke.timestamp).toLocaleTimeString()}</span>
                       </div>
                     </div>

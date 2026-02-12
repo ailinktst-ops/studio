@@ -260,11 +260,12 @@ export function useCounter() {
     return true;
   };
 
-  const submitJoke = (audioUrl: string) => {
+  const submitJoke = (audioUrl: string, imageUrl?: string) => {
     if (!counterRef || !data) return;
     const newJoke: Joke = {
       id: Math.random().toString(36).substring(2, 11),
       audioUrl,
+      imageUrl,
       timestamp: Date.now()
     };
     updateDoc(counterRef, {

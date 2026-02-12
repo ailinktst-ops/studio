@@ -56,7 +56,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}/200/200`;
+    return `https://picsum.photos/seed/${p.id}-char/200/200`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -245,7 +245,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => a.timestamp - b.timestamp) // Mais antigas primeiro
+    .sort((a, b) => a.timestamp - b.timestamp) 
     .slice(0, 10);
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
@@ -259,7 +259,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* PIADINHA OVERLAY */}
+      {/* MEMES AO VIVO OVERLAY */}
       {overlay && data.piadinha?.isActive && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
@@ -267,14 +267,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)] animate-bounce" style={{ animationDuration: '2s' }}>
                 <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-orange-500 bg-black flex items-center justify-center scale-up-down">
                   {data.piadinha.imageUrl ? (
-                    <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Piadinha" />
+                    <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Meme" data-ai-hint="funny meme" />
                   ) : (
                     <Mic className="w-32 h-32 text-orange-500" />
                   )}
                 </div>
               </div>
-              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-8 py-2 rounded-full font-black uppercase italic shadow-lg animate-pulse">
-                OUÇA A PIADINHA!
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-8 py-2 rounded-full font-black uppercase italic shadow-lg animate-pulse whitespace-nowrap">
+                MEME AO VIVO!
               </div>
            </div>
         </div>
@@ -282,31 +282,20 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {/* QR CODES INFERIORES */}
       {overlay && (
-        <>
-          <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
-              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
-                <img src={qrCadastroUrl} alt="QR" className="w-24 h-24" />
-              </div>
+        <div className="fixed left-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-left-10 duration-700">
+           <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
+              <img src={qrCorreioUrl} alt="QR" className="w-24 h-24" />
             </div>
           </div>
-
-          <div className="fixed left-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-left-10 duration-700">
-             <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
-              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
-                <img src={qrCorreioUrl} alt="QR" className="w-24 h-24" />
-              </div>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
-              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
-                <img src={qrMusicaUrl} alt="QR" className="w-24 h-24" />
-              </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
+              <img src={qrMusicaUrl} alt="QR" className="w-24 h-24" />
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* TOP 4-10 PANEL - CANTO ESQUERDO SUPERIOR */}
@@ -323,7 +312,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                     {p.count > 0 ? `${i + 4}º` : ""}
                   </span>
                   <Avatar className="w-6 h-6 border border-white/10">
-                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="movie character" />
+                    <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-bold text-white/80 uppercase truncate">{p.name}</span>
                 </div>
@@ -415,7 +405,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}>
             <div className="relative">
               <Avatar className="w-16 h-16 border-2 border-white/20">
-                <AvatarImage src={getParticipantAvatar(raffleWinner)} className="object-cover" />
+                <AvatarImage src={getParticipantAvatar(raffleWinner)} className="object-cover" data-ai-hint="movie character" />
                 <AvatarFallback className="bg-white/10 font-bold uppercase">{raffleWinner.name[0]}</AvatarFallback>
               </Avatar>
             </div>
@@ -463,7 +453,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                   "w-40 h-40 border-8 shadow-2xl",
                   actualIndex === 0 ? "border-yellow-400" : actualIndex === 1 ? "border-zinc-300" : "border-amber-700"
                 )}>
-                  <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                  <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="movie character" />
                   <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                 </Avatar>
                 {p.count > 0 && (

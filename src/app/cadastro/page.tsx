@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { UserPlus, Camera, AlertCircle, Loader2, ArrowRight, Clock, Music } from 'lucide-react';
+import { UserPlus, Camera, AlertCircle, Loader2, ArrowRight, Clock, Music, Mic } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,11 +18,10 @@ export default function CadastroPage() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Avatar aleatório para o preview baseado no nome (deterministic)
   const getPreviewAvatar = () => {
     if (imageUrl) return imageUrl;
     const seed = name.trim() || "guest";
-    return `https://picsum.photos/seed/${seed}/200/200`;
+    return `https://picsum.photos/seed/${seed}-character/200/200`;
   };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 400) => {
@@ -73,7 +72,6 @@ export default function CadastroPage() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    // Default category is "Gole"
     const success = addParticipant(name.trim(), "Gole", imageUrl, false);
     
     if (success) {
@@ -133,7 +131,7 @@ export default function CadastroPage() {
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative group">
                     <Avatar className="w-32 h-32 border-4 border-white/10 shadow-xl">
-                      <AvatarImage src={getPreviewAvatar()} className="object-cover" />
+                      <AvatarImage src={getPreviewAvatar()} className="object-cover" data-ai-hint="movie character" />
                       <AvatarFallback className="bg-white/5 font-black uppercase text-4xl">
                         {name[0] || "?"}
                       </AvatarFallback>
@@ -174,15 +172,26 @@ export default function CadastroPage() {
                     Participar do Ranking
                   </Button>
                   
-                  <Link href="/musica" className="block">
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      className="w-full h-14 border-blue-500/30 text-blue-400 font-black italic uppercase tracking-widest text-xs hover:bg-blue-500/10"
-                    >
-                      <Music className="w-4 h-4 mr-2" /> Pedir Música!
-                    </Button>
-                  </Link>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Link href="/musica">
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        className="w-full h-14 border-blue-500/30 text-blue-400 font-black italic uppercase tracking-widest text-[10px] hover:bg-blue-500/10"
+                      >
+                        <Music className="w-4 h-4 mr-2" /> Pedir Música
+                      </Button>
+                    </Link>
+                    <Link href="/piadinha">
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        className="w-full h-14 border-orange-500/30 text-orange-400 font-black italic uppercase tracking-widest text-[10px] hover:bg-orange-500/10"
+                      >
+                        <Mic className="w-4 h-4 mr-2" /> Mandar Meme
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </form>
             )}
