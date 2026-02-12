@@ -28,6 +28,7 @@ const SOUND_URLS = {
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const { data, loading, isInitializing, clearPiadinha } = useCounter();
   const [currentRaffleName, setCurrentRaffleName] = useState("");
+  const [currentChallengeName, setCurrentChallengeName] = useState("");
   const [tickerIndex, setTickerIndex] = useState(0);
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
@@ -45,11 +46,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastLanternIdRef = useRef<string | null>(null);
   const lastSocialAnnouncementRef = useRef<number | null>(null);
   const lastPiadinhaTimestampRef = useRef<number | null>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
+  
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
   const piadinhaAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const raffleAnimationIndexRef = useRef(0);
+  const challengeAnimationIndexRef = useRef(0);
   const isRafflingPersistedRef = useRef(false);
+  const isChallengingPersistedRef = useRef(false);
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
@@ -168,6 +173,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [approvedParticipants, overlay, sortedParticipants, currentLantern]);
 
   useEffect(() => {
+    if (overlay && data.activeMessageId && data.activeMessageId !== lastMessageIdRef.current) {
+      playSound('heart');
+      lastMessageIdRef.current = data.activeMessageId;
+    }
+  }, [data.activeMessageId, overlay]);
+
+  useEffect(() => {
     if (overlay && data.socialAnnouncement?.isActive && data.socialAnnouncement.timestamp !== lastSocialAnnouncementRef.current) {
       playSound('social');
       lastSocialAnnouncementRef.current = data.socialAnnouncement.timestamp;
@@ -190,18 +202,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.piadinha, overlay, clearPiadinha]);
 
+  // Raffle Animation
   useEffect(() => {
     let interval: NodeJS.Timeout;
-
     if (data.raffle?.isRaffling) {
       if (!isRafflingPersistedRef.current) {
         isRafflingPersistedRef.current = true;
         raffleAnimationIndexRef.current = 0;
-        if (data.raffle.type === 'challenge') {
-          playSound('challenge');
-        }
       }
-
       const candidates = data.raffle.candidates || [];
       if (candidates.length > 0) {
         interval = setInterval(() => {
@@ -211,19 +219,36 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       }
     } else {
       isRafflingPersistedRef.current = false;
-      stopChallengeSound();
       const winner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
-      if (winner && !data.raffle?.isRaffling) {
-        setCurrentRaffleName(winner.name);
-      } else {
-        setCurrentRaffleName("");
-      }
+      if (winner) setCurrentRaffleName(winner.name);
     }
+    return () => { if (interval) clearInterval(interval); };
+  }, [data.raffle?.isRaffling, data.raffle?.candidates, approvedParticipants, data.raffle?.winnerId]);
 
-    return () => { 
-      if (interval) clearInterval(interval); 
-    };
-  }, [data.raffle?.isRaffling, data.raffle?.candidates, approvedParticipants]);
+  // Challenge Animation
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (data.challenge?.isRaffling) {
+      if (!isChallengingPersistedRef.current) {
+        isChallengingPersistedRef.current = true;
+        challengeAnimationIndexRef.current = 0;
+        playSound('challenge');
+      }
+      const candidates = data.challenge.candidates || [];
+      if (candidates.length > 0) {
+        interval = setInterval(() => {
+          challengeAnimationIndexRef.current++;
+          setCurrentChallengeName(candidates[challengeAnimationIndexRef.current % candidates.length]);
+        }, 100);
+      }
+    } else {
+      isChallengingPersistedRef.current = false;
+      stopChallengeSound();
+      const winner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
+      if (winner) setCurrentChallengeName(winner.name);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [data.challenge?.isRaffling, data.challenge?.candidates, approvedParticipants, data.challenge?.winnerId]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -252,7 +277,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     .sort((a, b) => a.timestamp - b.timestamp) 
     .slice(0, 10);
 
+  const activeMessage = data.messages.find(m => m.id === data.activeMessageId);
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
+  const challengeWinner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -281,6 +308,26 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 MEMES AO VIVO!
               </div>
            </div>
+        </div>
+      )}
+
+      {/* CORREIO ELEGANTE FIXO - CANTO INFERIOR ESQUERDO */}
+      {overlay && activeMessage && (
+        <div className="fixed left-8 bottom-32 z-[80] max-w-sm animate-in slide-in-from-left-10 duration-700">
+          <div className="bg-primary/90 backdrop-blur-2xl border-2 border-primary-foreground/20 p-6 rounded-[2rem] shadow-[0_0_40px_rgba(168,85,247,0.4)] rotate-[-1deg]">
+            <div className="flex items-center gap-3 mb-4">
+               <div className="bg-white/20 p-2 rounded-xl">
+                  <Heart className="w-6 h-6 text-white animate-pulse" />
+               </div>
+               <div>
+                  <p className="text-[10px] font-black uppercase text-white/60 tracking-widest">Correio Elegante</p>
+                  <p className="text-xs font-black text-white italic uppercase">De: {activeMessage.from} ➔ Para: {activeMessage.to}</p>
+               </div>
+            </div>
+            <p className="text-2xl font-black italic text-white uppercase tracking-tighter leading-tight drop-shadow-md">
+              &ldquo;{activeMessage.content}&rdquo;
+            </p>
+          </div>
         </div>
       )}
 
@@ -351,6 +398,52 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* SORTEIO GERAL - ESQUERDA CENTRAL */}
+      {overlay && (data.raffle?.isRaffling || raffleWinner) && (
+        <div className="fixed left-8 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-10 duration-500">
+           <div className={cn(
+            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all",
+            data.raffle?.isRaffling ? "bg-yellow-400 border-white scale-110 animate-pulse" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1"
+          )}>
+            <div className="flex items-center gap-3">
+              <Sparkles className={cn("w-8 h-8", data.raffle?.isRaffling ? "animate-spin" : "")} />
+              <span className="text-lg font-black uppercase tracking-[0.2em] italic">SORTEIO GERAL</span>
+            </div>
+            <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
+              <span className="text-4xl font-black italic uppercase tracking-tighter">
+                {data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name}
+              </span>
+            </div>
+            {!data.raffle?.isRaffling && (
+              <span className="text-[10px] font-black uppercase opacity-60">SORTEADO(A) COM SUCESSO!</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* DESAFIO SURPRESA - DIREITA CENTRAL */}
+      {overlay && (data.challenge?.isRaffling || challengeWinner) && (
+        <div className="fixed right-8 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-10 duration-500">
+           <div className={cn(
+            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all",
+            data.challenge?.isRaffling ? "bg-purple-500 border-white scale-110 animate-pulse" : "bg-purple-600/95 border-purple-300 text-white -rotate-1"
+          )}>
+            <div className="flex items-center gap-3">
+              <Zap className={cn("w-8 h-8", data.challenge?.isRaffling ? "animate-bounce" : "")} />
+              <span className="text-lg font-black uppercase tracking-[0.2em] italic">DESAFIO SURPRESA</span>
+            </div>
+            <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-white/5">
+              <span className="text-4xl font-black italic uppercase tracking-tighter">
+                {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
+              </span>
+            </div>
+            {!data.challenge?.isRaffling && (
+              <span className="text-[10px] font-black uppercase opacity-60">DESAFIADO(A) COM SUCESSO!</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* NOTIFICAÇÕES (LÍDER, PONTO, LANTERNA) */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
@@ -398,63 +491,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 <p className="text-xl font-black italic uppercase text-white leading-none">{currentLantern.name}</p>
                 <span className="text-xs font-black text-red-400 bg-red-500/20 px-2 py-0.5 rounded-lg border border-red-500/20">{currentLantern.count}</span>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SORTEIO/DESAFIO EM ANDAMENTO */}
-      {overlay && data.raffle?.isRaffling && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-10 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className={cn(
-            "max-w-4xl w-full p-16 rounded-[4rem] border-8 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col items-center justify-center animate-pulse",
-            data.raffle.type === 'challenge' 
-              ? "bg-purple-600 border-purple-400 text-white" 
-              : "bg-yellow-500 border-yellow-300 text-black"
-          )}>
-            <div className="flex items-center gap-6 mb-8">
-              {data.raffle.type === 'challenge' ? <Zap className="w-20 h-20" /> : <Sparkles className="w-20 h-20" />}
-              <h2 className="text-6xl font-black italic uppercase tracking-[0.2em] drop-shadow-lg">
-                {data.raffle.type === 'challenge' ? 'DESAFIO SURPRESA' : 'SORTEIO GERAL'}
-              </h2>
-              {data.raffle.type === 'challenge' ? <Zap className="w-20 h-20" /> : <Sparkles className="w-20 h-20" />}
-            </div>
-            <div className="bg-black/20 px-12 py-8 rounded-[3rem] w-full min-h-[200px] flex items-center justify-center border-4 border-white/10 overflow-hidden">
-              <span className="text-8xl font-black italic uppercase tracking-tighter">
-                {currentRaffleName || '...'}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* RESULTADO SORTEIO / DESAFIO (LATERAIS) */}
-      {overlay && !data.raffle?.isRaffling && raffleWinner && (
-        <div className={cn(
-          "fixed z-[60] animate-in duration-500",
-          data.raffle?.type === 'challenge' 
-            ? "right-8 top-1/2 -translate-y-1/2 slide-in-from-right-10" 
-            : "left-8 top-1/2 -translate-y-1/2 slide-in-from-left-10"
-        )}>
-          <div className={cn(
-            "px-8 py-4 rounded-[2rem] border-4 shadow-2xl flex items-center gap-6",
-            data.raffle?.type === 'challenge' 
-              ? "bg-purple-600/95 border-purple-300 text-white shadow-purple-500/20 -rotate-1" 
-              : "bg-yellow-500/95 border-yellow-300 text-black shadow-yellow-500/20 rotate-1"
-          )}>
-            <div className="relative">
-              <Avatar className="w-16 h-16 border-2 border-white/20">
-                <AvatarImage src={getParticipantAvatar(raffleWinner)} className="object-cover" />
-                <AvatarFallback className="bg-white/10 font-bold uppercase">{raffleWinner.name[0]}</AvatarFallback>
-              </Avatar>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                {data.raffle?.type === 'challenge' ? 'DESAFIADO(A)' : 'SORTEADO(A)'}
-              </span>
-              <span className="text-3xl font-black italic uppercase tracking-tighter leading-none">
-                {raffleWinner.name}
-              </span>
             </div>
           </div>
         </div>

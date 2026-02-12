@@ -94,10 +94,19 @@
             "isRaffling": { "type": "boolean" },
             "winnerId": { "type": "string", "nullable": true },
             "candidates": { "type": "array", "items": { "type": "string" } },
-            "type": { "type": "string", "enum": ["raffle", "challenge"] },
             "winnersHistory": { "type": "array", "items": { "type": "string" } }
           }
         },
+        "challenge": {
+          "type": "object",
+          "properties": {
+            "isRaffling": { "type": "boolean" },
+            "winnerId": { "type": "string", "nullable": true },
+            "candidates": { "type": "array", "items": { "type": "string" } },
+            "winnersHistory": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "activeMessageId": { "type": "string", "nullable": true },
         "piadinha": {
           "type": "object",
           "properties": {

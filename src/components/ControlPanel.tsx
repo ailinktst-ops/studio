@@ -8,7 +8,7 @@ import {
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, ImageIcon, History, Upload, UserCheck,
   Music, X, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2, Copy, Smartphone, ExternalLink, Settings
+  Play, Volume2, Copy, Smartphone, ExternalLink, Settings, Eraser
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,8 @@ export function ControlPanel() {
   const { 
     data, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
-    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge, resetRaffleHistory,
+    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
+    resetRaffleHistory, resetChallengeHistory, clearActiveMessage,
     moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
     updateAllParticipantsCategory, moderateMusic, removeMusicRequest,
     submitJoke, updateJokeImage, removeJoke, triggerPiadinha, clearPiadinha
@@ -222,8 +223,11 @@ export function ControlPanel() {
   const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => b.timestamp - a.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
   
-  const winnersHistoryIds = data.raffle?.winnersHistory || [];
-  const winnersHistory = winnersHistoryIds.map(id => approvedParticipants.find(p => p.id === id)).filter(Boolean);
+  const raffleWinnersHistoryIds = data.raffle?.winnersHistory || [];
+  const raffleWinnersHistory = raffleWinnersHistoryIds.map(id => approvedParticipants.find(p => p.id === id)).filter(Boolean);
+
+  const challengeWinnersHistoryIds = data.challenge?.winnersHistory || [];
+  const challengeWinnersHistory = challengeWinnersHistoryIds.map(id => approvedParticipants.find(p => p.id === id)).filter(Boolean);
 
   const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
 
@@ -326,14 +330,14 @@ export function ControlPanel() {
               <Sparkles className="w-4 h-4" /> Sorteio Geral
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col h-[calc(100%-3rem)] justify-center gap-3">
+          <CardContent className="flex flex-col justify-center gap-3">
              <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="w-full bg-yellow-500 hover:bg-yellow-600 h-12 rounded-xl text-md font-black uppercase italic shadow-[0_0_15px_rgba(234,179,8,0.3)]">
-                {data.raffle?.isRaffling && data.raffle.type === 'raffle' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+                {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
                 Sorteio Geral
               </Button>
-              {data.raffle?.winnerId && data.raffle.type === 'raffle' && !data.raffle?.isRaffling && (
-                <Button onClick={clearChallenge} variant="outline" className="text-yellow-500 border-yellow-500/20 text-[10px] font-bold uppercase h-10">
-                  Limpar Sorteio do Overlay
+              {data.raffle?.winnerId && !data.raffle?.isRaffling && (
+                <Button onClick={clearRaffle} variant="outline" className="text-yellow-500 border-yellow-500/20 text-[10px] font-bold uppercase h-10">
+                  <Eraser className="w-4 h-4 mr-2" /> Limpar do Overlay
                 </Button>
               )}
           </CardContent>
@@ -346,14 +350,14 @@ export function ControlPanel() {
               <Zap className="w-4 h-4" /> Desafio Rápido
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col h-[calc(100%-3rem)] justify-center gap-3">
-             <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.raffle?.isRaffling || loading} className="w-full bg-purple-600 hover:bg-purple-700 h-12 rounded-xl text-md font-black uppercase italic shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-                {data.raffle?.isRaffling && data.raffle.type === 'challenge' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
+          <CardContent className="flex flex-col justify-center gap-3">
+             <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.challenge?.isRaffling || loading} className="w-full bg-purple-600 hover:bg-purple-700 h-12 rounded-xl text-md font-black uppercase italic shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                {data.challenge?.isRaffling ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
                 Novo Desafio
               </Button>
-              {data.raffle?.winnerId && data.raffle.type === 'challenge' && !data.raffle?.isRaffling && (
+              {data.challenge?.winnerId && !data.challenge?.isRaffling && (
                 <Button onClick={clearChallenge} variant="outline" className="text-purple-500 border-purple-500/20 text-[10px] font-bold uppercase h-10">
-                  Limpar Desafio do Overlay
+                  <Eraser className="w-4 h-4 mr-2" /> Limpar do Overlay
                 </Button>
               )}
           </CardContent>
@@ -374,6 +378,30 @@ export function ControlPanel() {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
+          <Card className="bg-card/30 border-white/10">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-black uppercase italic text-primary flex items-center gap-2">
+                <Heart className="w-4 h-4" /> Correio Ativo
+              </CardTitle>
+              {data.activeMessageId && (
+                <Button onClick={clearActiveMessage} variant="ghost" size="sm" className="text-destructive text-[10px] font-bold uppercase">
+                  Limpar do Telão
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {data.activeMessageId ? (
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl">
+                   <p className="text-white font-bold italic">
+                     &ldquo;{data.messages.find(m => m.id === data.activeMessageId)?.content}&rdquo;
+                   </p>
+                </div>
+              ) : (
+                <p className="text-[10px] font-bold uppercase text-white/20 text-center italic py-4">Nenhuma mensagem no telão agora.</p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="bg-card/50 border-secondary/20">
             <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-secondary"><UserPlus className="w-5 h-5" /> Adicionar Participante</CardTitle></CardHeader>
             <CardContent>
@@ -527,13 +555,13 @@ export function ControlPanel() {
           <Card className="bg-card/30 backdrop-blur-md border-white/5">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-yellow-500">
-                <Trophy className="w-5 h-5" /> Já Sorteados ({winnersHistory.length})
+                <Trophy className="w-5 h-5" /> Já Sorteados ({raffleWinnersHistory.length})
               </CardTitle>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={resetRaffleHistory}
-                disabled={winnersHistory.length === 0}
+                disabled={raffleWinnersHistory.length === 0}
                 className="text-[10px] font-bold uppercase border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/10"
               >
                 Resetar Sorteios
@@ -541,12 +569,42 @@ export function ControlPanel() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {winnersHistory.length === 0 ? (
+                {raffleWinnersHistory.length === 0 ? (
                   <p className="text-[10px] font-bold uppercase text-white/20 italic">Ninguém sorteado ainda.</p>
                 ) : (
-                  winnersHistory.map((p: any) => (
-                    <Badge key={p.id} className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 font-black uppercase italic py-1">
-                      {p.name}
+                  raffleWinnersHistory.map((p: any) => (
+                    <Badge key={p?.id} className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 font-black uppercase italic py-1">
+                      {p?.name}
+                    </Badge>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-purple-500">
+                <Zap className="w-5 h-5" /> Já Desafiados ({challengeWinnersHistory.length})
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={resetChallengeHistory}
+                disabled={challengeWinnersHistory.length === 0}
+                className="text-[10px] font-bold uppercase border-purple-500/20 text-purple-500 hover:bg-purple-500/10"
+              >
+                Resetar Desafios
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {challengeWinnersHistory.length === 0 ? (
+                  <p className="text-[10px] font-bold uppercase text-white/20 italic">Ninguém desafiado ainda.</p>
+                ) : (
+                  challengeWinnersHistory.map((p: any) => (
+                    <Badge key={p?.id} className="bg-purple-500/20 text-purple-500 border-purple-500/30 font-black uppercase italic py-1">
+                      {p?.name}
                     </Badge>
                   ))
                 )}

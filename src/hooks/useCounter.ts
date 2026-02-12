@@ -56,8 +56,7 @@ export interface RaffleState {
   winnerId: string | null;
   candidates: string[];
   startTime: number | null;
-  type?: 'raffle' | 'challenge';
-  winnersHistory?: string[];
+  winnersHistory: string[];
 }
 
 export interface PiadinhaState {
@@ -96,6 +95,8 @@ export interface CounterState {
   customPhrases: string[];
   updatedAt: any;
   raffle?: RaffleState;
+  challenge?: RaffleState;
+  activeMessageId?: string | null;
   piadinha?: PiadinhaState;
   announcement?: AnnouncementState;
   socialAnnouncement?: SocialAnnouncementState;
@@ -127,9 +128,16 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
     winnerId: null,
     candidates: [],
     startTime: null,
-    type: 'raffle',
     winnersHistory: []
   },
+  challenge: {
+    isRaffling: false,
+    winnerId: null,
+    candidates: [],
+    startTime: null,
+    winnersHistory: []
+  },
+  activeMessageId: null,
   piadinha: {
     audioUrl: "",
     imageUrl: "",
@@ -188,6 +196,12 @@ export function useCounter() {
         ...(state.raffle || {}),
         winnersHistory: state.raffle?.winnersHistory || []
       },
+      challenge: {
+        ...DEFAULT_STATE.challenge!,
+        ...(state.challenge || {}),
+        winnersHistory: state.challenge?.winnersHistory || []
+      },
+      activeMessageId: state.activeMessageId || null,
       piadinha: {
         ...DEFAULT_STATE.piadinha!,
         ...(state.piadinha || {})
@@ -495,7 +509,9 @@ export function useCounter() {
       musicRequests: [],
       jokes: [],
       updatedAt: Timestamp.now(),
-      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle', winnersHistory: [] },
+      raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
+      challenge: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
+      activeMessageId: null,
       announcement: { message: "", isActive: false, timestamp: null },
       socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null },
       piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null }
@@ -566,14 +582,29 @@ export function useCounter() {
     const updatedMessages = data.messages.map(m => 
       m.id === id ? { ...m, status } : m
     );
-    updateDoc(counterRef, {
+    const updatePayload: any = {
       messages: updatedMessages,
       updatedAt: Timestamp.now()
-    }).catch(e => {
+    };
+    if (status === 'approved') {
+      updatePayload.activeMessageId = id;
+    }
+    updateDoc(counterRef, updatePayload).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { messages: updatedMessages }
+        requestResourceData: updatePayload
+      }));
+    });
+  };
+
+  const clearActiveMessage = () => {
+    if (!counterRef) return;
+    updateDoc(counterRef, { activeMessageId: null }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { activeMessageId: null }
       }));
     });
   };
@@ -585,12 +616,13 @@ export function useCounter() {
     );
     updateDoc(counterRef, {
       messages: updatedMessages,
+      activeMessageId: null,
       updatedAt: Timestamp.now()
     }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { messages: updatedMessages }
+        requestResourceData: { messages: updatedMessages, activeMessageId: null }
       }));
     });
   };
@@ -686,14 +718,13 @@ export function useCounter() {
         winnerId: winner.id,
         candidates: candidates,
         startTime: Date.now(),
-        type: 'raffle',
         winnersHistory: newHistory
       }
     }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'raffle', winnersHistory: newHistory } }
+        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), winnersHistory: newHistory } }
       }));
     });
     
@@ -707,7 +738,7 @@ export function useCounter() {
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
     if (approvedParticipants.length < 1) return;
 
-    let winnersHistory = data.raffle?.winnersHistory || [];
+    let winnersHistory = data.challenge?.winnersHistory || [];
     let pool = approvedParticipants.filter(p => !winnersHistory.includes(p.id));
 
     if (pool.length === 0) {
@@ -725,38 +756,44 @@ export function useCounter() {
     const candidates = animPool.sort(() => Math.random() - 0.5);
 
     updateDoc(counterRef, {
-      raffle: {
+      challenge: {
         isRaffling: true,
         winnerId: winner.id,
         candidates: candidates,
         startTime: Date.now(),
-        type: 'challenge',
         winnersHistory: newHistory
       }
     }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'challenge', winnersHistory: newHistory } }
+        requestResourceData: { challenge: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), winnersHistory: newHistory } }
       }));
     });
 
     setTimeout(() => {
-      updateDoc(counterRef, { "raffle.isRaffling": false });
+      updateDoc(counterRef, { "challenge.isRaffling": false });
     }, 5500);
+  };
+
+  const clearRaffle = () => {
+    if (!counterRef) return;
+    updateDoc(counterRef, { "raffle.winnerId": null }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { "raffle.winnerId": null }
+      }));
+    });
   };
 
   const clearChallenge = () => {
     if (!counterRef) return;
-    updateDoc(counterRef, {
-      "raffle.winnerId": null,
-      "raffle.type": 'raffle',
-      updatedAt: Timestamp.now()
-    }).catch(e => {
+    updateDoc(counterRef, { "challenge.winnerId": null }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
-        requestResourceData: { "raffle.winnerId": null, "raffle.type": 'raffle' }
+        requestResourceData: { "challenge.winnerId": null }
       }));
     });
   };
@@ -771,6 +808,20 @@ export function useCounter() {
         path: counterRef.path,
         operation: 'update',
         requestResourceData: { "raffle.winnersHistory": [] }
+      }));
+    });
+  };
+
+  const resetChallengeHistory = () => {
+    if (!counterRef) return;
+    updateDoc(counterRef, {
+      "challenge.winnersHistory": [],
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { "challenge.winnersHistory": [] }
       }));
     });
   };
@@ -843,14 +894,17 @@ export function useCounter() {
     removeParticipant,
     sendElegantMessage,
     moderateMessage,
+    clearActiveMessage,
     clearElegantMessages,
     sendMusicRequest,
     moderateMusic,
     removeMusicRequest,
     triggerRaffle,
     triggerSurpriseChallenge,
+    clearRaffle,
     clearChallenge,
     resetRaffleHistory,
+    resetChallengeHistory,
     triggerAnnouncement,
     triggerSocialAnnouncement,
     submitJoke,
