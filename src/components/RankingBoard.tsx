@@ -84,24 +84,26 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, []);
 
-  useEffect(() => {
-    if (!overlay || data.participants.length === 0) return;
+  const approvedParticipants = (data.participants || []).filter(p => p.status === 'approved');
 
-    const sortedCurrent = [...data.participants].sort((a, b) => b.count - a.count);
+  useEffect(() => {
+    if (!overlay || approvedParticipants.length === 0) return;
+
+    const sortedCurrent = [...approvedParticipants].sort((a, b) => b.count - a.count);
     const top10Current = sortedCurrent.slice(0, 10);
     const currentLantern = (top10Current.length > 3 && top10Current[top10Current.length - 1].count > 0) 
       ? top10Current[top10Current.length - 1] 
       : null;
 
     if (lastParticipantsRef.current.length === 0) {
-      lastParticipantsRef.current = data.participants;
+      lastParticipantsRef.current = approvedParticipants;
       lastLeaderIdRef.current = sortedCurrent[0]?.id || null;
       lastLanternIdRef.current = currentLantern?.id || null;
       return;
     }
 
     const prev = lastParticipantsRef.current;
-    const current = data.participants;
+    const current = approvedParticipants;
 
     const updatedUser = current.find(p => {
       const prevP = prev.find(pp => pp.id === p.id);
@@ -147,7 +149,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
 
     lastParticipantsRef.current = current;
-  }, [data.participants, overlay]);
+  }, [data.participants, overlay, approvedParticipants]);
 
   useEffect(() => {
     if (!overlay || !data.messages || data.messages.length === 0) return;
@@ -185,7 +187,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
         winnerTimeout = setTimeout(() => {
           clearInterval(interval);
-          const winner = data.participants.find(p => p.id === data.raffle?.winnerId);
+          const winner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
           if (winner) {
             setCurrentRaffleName(winner.name);
             setShowWinner(true);
@@ -207,7 +209,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       if (winnerTimeout) clearTimeout(winnerTimeout);
       stopChallengeSound();
     };
-  }, [data.raffle?.isRaffling, data.raffle?.winnerId, data.participants]);
+  }, [data.raffle?.isRaffling, data.raffle?.winnerId, approvedParticipants]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -227,7 +229,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     );
   }
 
-  const sortedParticipants = [...data.participants].sort((a, b) => b.count - a.count);
+  const sortedParticipants = [...approvedParticipants].sort((a, b) => b.count - a.count);
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   const top10 = sortedParticipants.slice(0, 10);
@@ -238,7 +240,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const approvedMessages = data.messages.filter(m => m.status === 'approved');
   const latestMessage = approvedMessages.length > 0 ? approvedMessages[approvedMessages.length - 1] : null;
 
-  const lastChallengedWinner = data.participants.find(p => p.id === data.raffle?.winnerId);
+  const lastChallengedWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
   const showPersistentChallenge = overlay && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling && lastChallengedWinner;
 
   return (

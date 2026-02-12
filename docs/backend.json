@@ -21,7 +21,8 @@
               "name": { "type": "string" },
               "count": { "type": "number" },
               "category": { "type": "string" },
-              "imageUrl": { "type": "string", "description": "Foto do participante em Base64." }
+              "imageUrl": { "type": "string", "description": "Foto do participante em Base64." },
+              "status": { "type": "string", "enum": ["pending", "approved"] }
             }
           }
         },

@@ -6,7 +6,7 @@ import { useCounter } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, Monitor, 
   Sparkles, Loader2, Zap, EyeOff,
-  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, AlertCircle
+  Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ export function ControlPanel() {
     data, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge,
-    moderateMessage, clearElegantMessages
+    moderateMessage, clearElegantMessages, moderateParticipant
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -33,7 +33,7 @@ export function ControlPanel() {
   const handleAddParticipant = (e: React.FormEvent) => {
     e.preventDefault();
     if (newParticipantName.trim()) {
-      const success = addParticipant(newParticipantName.trim(), selectedCategory);
+      const success = addParticipant(newParticipantName.trim(), selectedCategory, "", true);
       if (success) {
         setNewParticipantName("");
       } else {
@@ -92,7 +92,9 @@ export function ControlPanel() {
 
   const hasPersistentChallenge = data.raffle?.winnerId && data.raffle?.type === 'challenge' && !data.raffle?.isRaffling;
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
+  const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const hasActiveMessage = data.messages.some(m => m.status === 'approved');
+  const approvedParticipants = data.participants.filter(p => p.status === 'approved');
 
   if (isInitializing) {
     return (
@@ -108,11 +110,11 @@ export function ControlPanel() {
       <Tabs defaultValue="main" className="w-full">
         <TabsList className="bg-white/5 border border-white/10 p-1 mb-6 h-12 w-full">
           <TabsTrigger value="main" className="flex-1 font-bold uppercase text-[10px] tracking-widest">Painel Principal</TabsTrigger>
-          <TabsTrigger value="messages" className="flex-1 font-bold uppercase text-[10px] tracking-widest relative">
-            Correio Elegante
-            {pendingMessages.length > 0 && (
+          <TabsTrigger value="moderation" className="flex-1 font-bold uppercase text-[10px] tracking-widest relative">
+            Moderação
+            {(pendingMessages.length > 0 || pendingParticipants.length > 0) && (
               <span className="absolute -top-1 -right-1 bg-primary text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full animate-bounce">
-                {pendingMessages.length}
+                {pendingMessages.length + pendingParticipants.length}
               </span>
             )}
           </TabsTrigger>
@@ -120,11 +122,11 @@ export function ControlPanel() {
 
         <TabsContent value="main" className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button onClick={triggerRaffle} disabled={data.participants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
+            <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
               {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
               Sorteio Top 6
             </Button>
-            <Button onClick={triggerSurpriseChallenge} disabled={data.participants.length < 1 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-purple-500 to-blue-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
+            <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-purple-500 to-blue-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
               {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Zap className="mr-2 h-6 w-6" />}
               Desafio Surpresa
             </Button>
@@ -160,7 +162,7 @@ export function ControlPanel() {
 
           <Card className="bg-card/50 border-white/5">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-bold">Participantes</CardTitle>
+              <CardTitle className="text-lg font-bold">Ranking Geral</CardTitle>
               <div className="flex items-center gap-2">
                 <Link href="/overlay" target="_blank">
                   <Button variant="outline" size="sm" className="text-secondary border-secondary/20 hover:bg-secondary/10 bg-transparent">
@@ -176,7 +178,7 @@ export function ControlPanel() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[...data.participants].sort((a,b) => b.count - a.count).map((p) => (
+              {[...approvedParticipants].sort((a,b) => b.count - a.count).map((p) => (
                 <div key={p.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 group">
                   <div className="flex items-center gap-4">
                     <div className="relative group/img">
@@ -210,15 +212,55 @@ export function ControlPanel() {
                   </div>
                 </div>
               ))}
+              {approvedParticipants.length === 0 && (
+                <div className="text-center py-10">
+                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum participante aprovado</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="messages">
+        <TabsContent value="moderation" className="space-y-6">
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-secondary">
+                <UserCheck className="w-5 h-5" /> Perfis Pendentes ({pendingParticipants.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {pendingParticipants.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-white/20 font-bold uppercase tracking-widest text-xs">Nenhum perfil aguardando</p>
+                </div>
+              ) : (
+                pendingParticipants.map(p => (
+                  <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="w-12 h-12 border border-white/10">
+                        {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
+                        <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-bold text-white uppercase italic">{p.name}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => moderateParticipant(p.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]">
+                        <Check className="w-4 h-4 mr-1" /> Aprovar
+                      </Button>
+                      <Button onClick={() => moderateParticipant(p.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]">
+                        <Ban className="w-4 h-4 mr-1" /> Rejeitar
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="bg-card/30 backdrop-blur-md border-white/5">
             <CardHeader>
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-primary">
-                <Heart className="w-5 h-5" /> Moderação: Correio Elegante
+                <Heart className="w-5 h-5" /> Correio Elegante ({pendingMessages.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

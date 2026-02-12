@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -12,6 +13,7 @@ export interface Participant {
   count: number;
   category: string;
   imageUrl?: string;
+  status: 'pending' | 'approved';
 }
 
 export interface ElegantMessage {
@@ -110,11 +112,9 @@ export function useCounter() {
     }
   };
 
-  // Garante que a inicialização só ocorra se tivermos certeza que o documento NÃO existe
   useEffect(() => {
     async function initDoc() {
       if (!isDocLoading && !rawData && counterRef && user && !isUserLoading) {
-        // Verifica no servidor se o documento realmente não existe para evitar sobrescrever dados locais
         const snap = await getDoc(counterRef);
         if (!snap.exists()) {
           setDoc(counterRef, { ...DEFAULT_STATE, id: DEFAULT_ID }, { merge: true })
@@ -139,7 +139,7 @@ export function useCounter() {
     });
   };
 
-  const addParticipant = (name: string, category: string, imageUrl?: string): boolean => {
+  const addParticipant = (name: string, category: string, imageUrl?: string, autoApprove = false): boolean => {
     if (!counterRef || !data) return false;
     
     const normalizedName = name.trim().toLowerCase();
@@ -152,13 +152,30 @@ export function useCounter() {
       name: name.trim(),
       count: 0,
       category: category || "Cerveja",
-      imageUrl
+      imageUrl,
+      status: autoApprove ? 'approved' : 'pending'
     };
     updateDoc(counterRef, {
       participants: [...(data?.participants || []), newParticipant],
       updatedAt: Timestamp.now()
     });
     return true;
+  };
+
+  const moderateParticipant = (id: string, status: 'approved' | 'rejected') => {
+    if (!counterRef || !data) return;
+    let updatedParticipants;
+    if (status === 'rejected') {
+      updatedParticipants = data.participants.filter(p => p.id !== id);
+    } else {
+      updatedParticipants = data.participants.map(p => 
+        p.id === id ? { ...p, status: 'approved' as const } : p
+      );
+    }
+    updateDoc(counterRef, {
+      participants: updatedParticipants,
+      updatedAt: Timestamp.now()
+    });
   };
 
   const updateParticipantImage = (id: string, imageUrl: string) => {
@@ -251,8 +268,10 @@ export function useCounter() {
   };
 
   const triggerRaffle = () => {
-    if (!counterRef || !data || data.participants.length < 2) return;
-    const top6 = [...data.participants].sort((a, b) => b.count - a.count).slice(0, 6);
+    if (!counterRef || !data) return;
+    const approvedParticipants = data.participants.filter(p => p.status === 'approved');
+    if (approvedParticipants.length < 2) return;
+    const top6 = [...approvedParticipants].sort((a, b) => b.count - a.count).slice(0, 6);
     const candidates = top6.map(p => p.name);
     const winner = top6[Math.floor(Math.random() * top6.length)];
     updateDoc(counterRef, {
@@ -268,9 +287,11 @@ export function useCounter() {
   };
 
   const triggerSurpriseChallenge = () => {
-    if (!counterRef || !data || data.participants.length < 1) return;
-    const candidates = data.participants.map(p => p.name);
-    const winner = data.participants[Math.floor(Math.random() * data.participants.length)];
+    if (!counterRef || !data) return;
+    const approvedParticipants = data.participants.filter(p => p.status === 'approved');
+    if (approvedParticipants.length < 1) return;
+    const candidates = approvedParticipants.map(p => p.name);
+    const winner = approvedParticipants[Math.floor(Math.random() * approvedParticipants.length)];
     updateDoc(counterRef, {
       raffle: {
         isRaffling: true,
@@ -313,6 +334,7 @@ export function useCounter() {
     updateBrandImage: (brandImageUrl: string) => updateDocField({ brandImageUrl }),
     updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
     addParticipant,
+    moderateParticipant,
     updateParticipantImage,
     incrementCount,
     resetAll,

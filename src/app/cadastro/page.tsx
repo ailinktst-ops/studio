@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { UserPlus, Camera, Check, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { UserPlus, Camera, Check, AlertCircle, Loader2, ArrowRight, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -65,7 +65,8 @@ export default function CadastroPage() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const success = addParticipant(name.trim(), "Cerveja", imageUrl);
+    // autoApprove = false para cadastros via QR Code
+    const success = addParticipant(name.trim(), "Cerveja", imageUrl, false);
     
     if (success) {
       setStatus('success');
@@ -105,12 +106,12 @@ export default function CadastroPage() {
           <CardContent className="pt-8">
             {status === 'success' ? (
               <div className="py-10 text-center animate-in zoom-in duration-300">
-                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Check className="w-12 h-12 text-green-500" />
+                <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Clock className="w-12 h-12 text-yellow-500" />
                 </div>
-                <h3 className="text-2xl font-black italic uppercase text-white">Cadastrado!</h3>
+                <h3 className="text-2xl font-black italic uppercase text-white">Aguardando Aprovação</h3>
                 <p className="text-white/40 font-bold uppercase tracking-widest text-xs mt-2 mb-8">
-                  Seu nome já apareceu no telão. Boa sorte!
+                  Seu perfil foi enviado! Assim que o mestre da resenha aprovar, você aparecerá no telão.
                 </p>
                 <Button 
                   onClick={() => setStatus('idle')}
