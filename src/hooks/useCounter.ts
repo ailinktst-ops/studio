@@ -427,9 +427,20 @@ export function useCounter() {
 
   const moderateMusic = (id: string, status: 'approved' | 'rejected') => {
     if (!counterRef || !data) return;
-    const updatedRequests = data.musicRequests.map(m => 
+    
+    let updatedRequests = data.musicRequests.map(m => 
       m.id === id ? { ...m, status } : m
     );
+
+    // Regra FIFO: Apenas 10 músicas aprovadas. Se aprovar a 11ª, remove a mais antiga aprovada.
+    if (status === 'approved') {
+      const approvedOnes = updatedRequests.filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
+      if (approvedOnes.length > 10) {
+        const oldestId = approvedOnes[0].id;
+        updatedRequests = updatedRequests.filter(m => m.id !== oldestId);
+      }
+    }
+
     updateDoc(counterRef, {
       musicRequests: updatedRequests,
       updatedAt: Timestamp.now()

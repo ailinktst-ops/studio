@@ -89,12 +89,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const approvedParticipants = (data.participants || []).filter(p => p.status === 'approved');
 
-  // Ordenação: 1º Pontos (desc), 2º Ordem de adição (original array order)
+  // Ordenação: 1º Pontos (desc), 2º Ordem de adição (índice no array original)
   const sortedParticipants = [...approvedParticipants].sort((a, b) => {
     if (b.count !== a.count) {
       return b.count - a.count;
     }
-    // Se empatado em pontos, quem foi adicionado primeiro (index menor) fica na frente
     const indexA = approvedParticipants.findIndex(p => p.id === a.id);
     const indexB = approvedParticipants.findIndex(p => p.id === b.id);
     return indexA - indexB;
@@ -258,7 +257,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top10 = sortedParticipants.slice(0, 10);
   const lanterninha = (top10.length > 3 && top10[top10.length - 1].count > 0) ? top10[top10.length - 1] : null;
 
-  // Lista lateral esquerda: Mostra de 4 a 10, mesmo se tiverem 0 pontos
+  // Lista lateral esquerda: Mostra de 4 a 10
   const ranks4to10 = sortedParticipants.slice(3, 10);
   
   const approvedMessages = data.messages.filter(m => m.status === 'approved');
@@ -294,7 +293,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               </Avatar>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-white uppercase max-w-[80px] truncate leading-tight">{p.name}</span>
-                <span className="text-[10px] font-black text-primary leading-none mt-1">{p.count} gole</span>
+                <span className="text-[10px] font-black text-primary leading-none mt-1">{p.count} {p.category.toLowerCase()}</span>
               </div>
             </div>
           ))}
@@ -322,34 +321,28 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {/* QR Codes Overlay */}
       {overlay && (
         <>
-          {qrCorreioUrl && (
-            <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
-                <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
-                  <img src={qrCorreioUrl} alt="QR Code Correio" className="w-24 h-24" />
-                </div>
+          <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
+                <img src={qrCorreioUrl} alt="QR Code" className="w-24 h-24" />
               </div>
             </div>
-          )}
+          </div>
 
           <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
-            {qrMusicaUrl && (
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
-                <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
-                  <img src={qrMusicaUrl} alt="QR Code Música" className="w-24 h-24" />
-                </div>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
+                <img src={qrMusicaUrl} alt="QR Code" className="w-24 h-24" />
               </div>
-            )}
-            {qrCadastroUrl && (
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro Participante</span>
-                <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
-                  <img src={qrCadastroUrl} alt="QR Code Cadastro" className="w-24 h-24" />
-                </div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
+                <img src={qrCadastroUrl} alt="QR Code" className="w-24 h-24" />
               </div>
-            )}
+            </div>
           </div>
         </>
       )}
@@ -436,7 +429,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full"></div>
       </div>
 
-      {/* Ranking Top 3 (Pódio) */}
+      {/* Ranking Top 3 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
@@ -480,7 +473,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <CryingIcon className="absolute -top-2 -right-2 w-6 h-6 text-destructive animate-pulse" />
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-destructive">Lanterninha 🤡 (Top 10)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-destructive">Lanterninha 🤡</span>
               <h3 className="text-2xl font-black italic text-white uppercase">{lanterninha.name}</h3>
             </div>
           </div>
