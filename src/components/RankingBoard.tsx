@@ -318,14 +318,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* Social Announcement Popup - Minimalist on the Right Side */}
+      {/* Social Announcement Popup - Right Side Minimalist */}
       {overlay && data.socialAnnouncement?.isActive && (
         <div className="fixed right-8 top-[30%] z-[110] animate-in slide-in-from-right-full duration-700">
           <div className={cn(
-            "p-6 rounded-[2rem] shadow-2xl border-4 border-white/40 flex flex-col items-center gap-4 min-w-[200px] text-white",
-            data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]" : "bg-[#ff0000]"
+            "p-5 rounded-[2.5rem] shadow-2xl border-4 border-white/40 flex flex-col items-center gap-4 text-white w-[180px]",
+            data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-tr from-[#ffdc80] via-[#f56040] via-[#e1306c] to-[#405de6]" : "bg-[#ff0000]"
           )}>
-            <div className="bg-white/20 p-3 rounded-2xl shadow-lg animate-bounce">
+            <div className="bg-white/20 p-2.5 rounded-2xl shadow-lg animate-bounce border-2 border-white/60">
               {data.socialAnnouncement.type === 'instagram' ? (
                 <Instagram className="w-8 h-8 text-white" />
               ) : (
@@ -334,16 +334,16 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             </div>
             <div className="text-center w-full">
               <p className="text-[10px] font-black uppercase opacity-80 tracking-[0.2em] mb-1">SIGA NO {data.socialAnnouncement.type?.toUpperCase()}</p>
-              <p className="text-xl font-black italic uppercase tracking-tighter mb-4 truncate">
+              <p className="text-lg font-black italic uppercase tracking-tighter mb-4 truncate drop-shadow-sm">
                 {data.socialAnnouncement.url.includes('instagram.com') 
                   ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Social'}`
                   : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}
               </p>
-              <div className="p-3 bg-white rounded-2xl border border-black/5 shadow-inner">
+              <div className="p-2.5 bg-white rounded-2xl border border-black/5 shadow-inner">
                 <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.socialAnnouncement.url)}`} 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.socialAnnouncement.url)}`} 
                   alt="QR Social" 
-                  className="w-32 h-32 mx-auto"
+                  className="w-full aspect-square"
                 />
               </div>
             </div>
