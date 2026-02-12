@@ -6,6 +6,12 @@
       "description": "Golden trophy background for winners",
       "imageUrl": "https://picsum.photos/seed/trophy/1200/800",
       "imageHint": "golden trophy"
+    },
+    {
+      "id": "default-avatar",
+      "description": "Personagem padrão para participantes sem foto",
+      "imageUrl": "https://picsum.photos/seed/avatar-v1/200/200",
+      "imageHint": "cartoon avatar"
     }
   ]
 }

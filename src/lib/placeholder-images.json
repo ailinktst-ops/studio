@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "trophy-bg",
+      "description": "Golden trophy background for winners",
+      "imageUrl": "https://images.unsplash.com/photo-1704313097739-082bc2e8c945?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxnb2xkZW4lMjB0cm9waHl8ZW58MHx8fHwxNzcwODgwNjMyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "golden trophy"
+    },
+    {
+      "id": "default-avatar",
+      "description": "Personagem padrão para participantes sem foto",
+      "imageUrl": "https://images.unsplash.com/photo-1750535135593-3a8e5def331d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYXJ0b29uJTIwYXZhdGFyfGVufDB8fHx8MTc3MDg3NDI5OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cartoon avatar"
+    }
+  ]
 }

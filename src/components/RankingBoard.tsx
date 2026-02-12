@@ -11,6 +11,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const ICON_MAP: Record<string, any> = {
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza
@@ -24,17 +25,6 @@ const SOUND_URLS = {
   heart: 'https://assets.mixkit.co/active_storage/sfx/1360/1360-preview.mp3',
   social: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'
 };
-
-const CryingIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="12" cy="12" r="10" />
-    <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
-    <line x1="9" y1="9" x2="9.01" y2="9" />
-    <line x1="15" y1="9" x2="15.01" y2="9" />
-    <path d="M9 11v2" className="animate-pulse" />
-    <path d="M15 11v2" className="animate-pulse" />
-  </svg>
-);
 
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const { data, loading, isInitializing, clearPiadinha } = useCounter();
@@ -65,6 +55,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
+  const defaultAvatar = PlaceHolderImages.find(img => img.id === 'default-avatar')?.imageUrl || '';
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
     const audio = new Audio(SOUND_URLS[type]);
@@ -390,13 +381,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}>
             <div className="relative">
               <Avatar className="w-16 h-16 border-2 border-white/20">
-                {raffleWinner.imageUrl ? <AvatarImage src={raffleWinner.imageUrl} className="object-cover" /> : null}
+                <AvatarImage src={raffleWinner.imageUrl || defaultAvatar} className="object-cover" />
                 <AvatarFallback className="bg-white/10 font-bold uppercase">{raffleWinner.name[0]}</AvatarFallback>
               </Avatar>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                {data.raffle?.type === 'challenge' ? 'DESAFIO VENCIDO' : 'SORTEADO DA VEZ'}
+                {data.raffle?.type === 'challenge' ? 'DESAFIO VENCIDO' : 'ÚLTIMO GANHADOR!'}
               </span>
               <span className="text-3xl font-black italic uppercase tracking-tighter leading-none">
                 {raffleWinner.name}
@@ -425,7 +416,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <CardContent className="pt-12 pb-14 flex flex-col items-center space-y-8">
                 <div className="relative">
                   <Avatar className="w-32 h-32 border-4 border-white/20 shadow-2xl">
-                    {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
+                    <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
                     <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                   </Avatar>
                   {p.count > 0 && (

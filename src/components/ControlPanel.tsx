@@ -42,6 +42,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function ControlPanel() {
   const { 
@@ -66,6 +67,8 @@ export function ControlPanel() {
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const piadinhaFileRef = useRef<HTMLInputElement | null>(null);
   const adminAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const defaultAvatar = PlaceHolderImages.find(img => img.id === 'default-avatar')?.imageUrl || '';
 
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
@@ -493,7 +496,7 @@ export function ControlPanel() {
                   <div className="flex items-center gap-4">
                     <div className="relative group/img">
                       <Avatar className="w-12 h-12 border-2 border-white/10">
-                        {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
+                        <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
                         <AvatarFallback className="bg-white/5"><ImageIcon className="w-4 h-4 text-white/20" /></AvatarFallback>
                       </Avatar>
                       <button 
@@ -577,7 +580,7 @@ export function ControlPanel() {
                 <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12 border border-white/10">
-                      {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
+                      <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
                       <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
