@@ -56,7 +56,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    // Usando o ID do participante como seed para garantir avatares de personagens de filmes/animes consistentes
     return `https://picsum.photos/seed/${p.id}-movie-series-character/400/400`;
   };
 
@@ -105,9 +104,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [approvedParticipants, data.participants]);
 
   const currentLantern = useMemo(() => {
-    // Apenas participantes com pontos (count > 0)
     const activeParticipants = sortedParticipants.filter(p => p.count > 0);
-    // Deve ser a partir do 4º lugar (Top 3 fica no pódio)
     if (activeParticipants.length > 3) {
       return activeParticipants[activeParticipants.length - 1];
     }
@@ -287,7 +284,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR CODES LADO A LADO - AGORA À DIREITA */}
+      {/* QR CODES - DIREITA INFERIOR */}
       {overlay && (
         <div className="fixed right-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-col items-center gap-2">
@@ -311,7 +308,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* TOP 4-20 PANEL - CANTO ESQUERDO SUPERIOR */}
+      {/* TOP 4-20 - ESQUERDA SUPERIOR */}
       {overlay && top20.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2">
@@ -325,7 +322,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                     {p.count > 0 ? `${i + 4}º` : ""}
                   </span>
                   <Avatar className="w-6 h-6 border border-white/10">
-                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="movie character" />
+                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                     <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-bold text-white/80 uppercase truncate">{p.name}</span>
@@ -337,7 +334,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* PLAYLIST PANEL - CANTO DIREITO SUPERIOR */}
+      {/* PLAYLIST - DIREITA SUPERIOR */}
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed right-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-right-20 duration-1000 text-right">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">
@@ -382,7 +379,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* LANTERNINHA - ABAIXO DO RANKING PRINCIPAL E ACIMA DO LETREIRO */}
+      {/* LANTERNINHA - ABAIXO DO RANKING PRINCIPAL */}
       {overlay && currentLantern && (
         <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="bg-red-600/20 backdrop-blur-xl border-2 border-red-500/30 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl">
@@ -406,7 +403,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* SORTEIO ATIVO */}
+      {/* SORTEIO/DESAFIO EM ANDAMENTO */}
       {overlay && data.raffle?.isRaffling && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-10 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={cn(
@@ -431,24 +428,29 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* ÚLTIMO GANHADOR */}
+      {/* RESULTADO SORTEIO / DESAFIO (LATERAIS) */}
       {overlay && !data.raffle?.isRaffling && raffleWinner && (
-        <div className="fixed top-24 left-[50%] -translate-x-1/2 z-[60] animate-in slide-in-from-top-10 duration-500">
+        <div className={cn(
+          "fixed z-[60] animate-in duration-500",
+          data.raffle?.type === 'challenge' 
+            ? "right-8 top-1/2 -translate-y-1/2 slide-in-from-right-10" 
+            : "left-8 top-1/2 -translate-y-1/2 slide-in-from-left-10"
+        )}>
           <div className={cn(
-            "px-8 py-4 rounded-[2rem] border-4 shadow-2xl flex items-center gap-6 rotate-1",
+            "px-8 py-4 rounded-[2rem] border-4 shadow-2xl flex items-center gap-6",
             data.raffle?.type === 'challenge' 
-              ? "bg-purple-600/95 border-purple-300 text-white shadow-purple-500/20" 
-              : "bg-yellow-500/95 border-yellow-300 text-black shadow-yellow-500/20"
+              ? "bg-purple-600/95 border-purple-300 text-white shadow-purple-500/20 -rotate-1" 
+              : "bg-yellow-500/95 border-yellow-300 text-black shadow-yellow-500/20 rotate-1"
           )}>
             <div className="relative">
               <Avatar className="w-16 h-16 border-2 border-white/20">
-                <AvatarImage src={getParticipantAvatar(raffleWinner)} className="object-cover" data-ai-hint="movie character" />
+                <AvatarImage src={getParticipantAvatar(raffleWinner)} className="object-cover" />
                 <AvatarFallback className="bg-white/10 font-bold uppercase">{raffleWinner.name[0]}</AvatarFallback>
               </Avatar>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                {data.raffle?.type === 'challenge' ? 'DESAFIO VENCIDO' : 'ÚLTIMO GANHADOR!'}
+                {data.raffle?.type === 'challenge' ? 'DESAFIADO(A)' : 'SORTEADO(A)'}
               </span>
               <span className="text-3xl font-black italic uppercase tracking-tighter leading-none">
                 {raffleWinner.name}
@@ -468,7 +470,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
-      {/* PÓDIO TOP 3 HORIZONTAL - NO TOPO */}
+      {/* PÓDIO TOP 3 */}
       <div className="flex flex-row justify-center items-end gap-12 w-full max-w-6xl mt-4">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
@@ -490,7 +492,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                   "w-40 h-40 border-8 shadow-2xl",
                   actualIndex === 0 ? "border-yellow-400" : actualIndex === 1 ? "border-zinc-300" : "border-amber-700"
                 )}>
-                  <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="movie character" />
+                  <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                   <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                 </Avatar>
                 {p.count > 0 && (

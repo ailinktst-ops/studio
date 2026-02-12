@@ -319,6 +319,7 @@ export function ControlPanel() {
           </CardContent>
         </Card>
 
+        {/* Sorteio Geral */}
         <Card className="bg-yellow-500/10 border-yellow-500/20 backdrop-blur-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase italic text-yellow-500 flex items-center gap-2">
@@ -331,13 +332,14 @@ export function ControlPanel() {
                 Sorteio Geral
               </Button>
               {data.raffle?.winnerId && data.raffle.type === 'raffle' && !data.raffle?.isRaffling && (
-                <Button onClick={clearChallenge} variant="ghost" className="text-yellow-500 text-[10px] font-bold uppercase">
-                  Limpar
+                <Button onClick={clearChallenge} variant="outline" className="text-yellow-500 border-yellow-500/20 text-[10px] font-bold uppercase h-10">
+                  Limpar Sorteio do Overlay
                 </Button>
               )}
           </CardContent>
         </Card>
 
+        {/* Desafio Rápido */}
         <Card className="bg-purple-500/10 border-purple-500/20 backdrop-blur-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase italic text-purple-500 flex items-center gap-2">
@@ -350,8 +352,8 @@ export function ControlPanel() {
                 Novo Desafio
               </Button>
               {data.raffle?.winnerId && data.raffle.type === 'challenge' && !data.raffle?.isRaffling && (
-                <Button onClick={clearChallenge} variant="ghost" className="text-purple-500 text-[10px] font-bold uppercase">
-                  Limpar
+                <Button onClick={clearChallenge} variant="outline" className="text-purple-500 border-purple-500/20 text-[10px] font-bold uppercase h-10">
+                  Limpar Desafio do Overlay
                 </Button>
               )}
           </CardContent>
