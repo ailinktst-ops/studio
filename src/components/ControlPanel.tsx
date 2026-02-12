@@ -55,6 +55,7 @@ export function ControlPanel() {
   const [bulkCategory, setBulkCategory] = useState("Passa ou repassa");
   const [bulkResetPoints, setBulkResetPoints] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [isConfirmBulkOpen, setIsConfirmBulkOpen] = useState(false);
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -87,6 +88,7 @@ export function ControlPanel() {
 
   const handleBulkUpdate = () => {
     updateAllParticipantsCategory(bulkCategory, bulkResetPoints);
+    setIsConfirmBulkOpen(false);
     setIsBulkDialogOpen(false);
     toast({
       title: "Ranking Atualizado!",
@@ -222,7 +224,9 @@ export function ControlPanel() {
                 <Input placeholder="Nome" value={newParticipantName} onChange={(e) => setNewParticipantName(e.target.value)} className="flex-1 bg-black/40 border-secondary/20" />
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger className="w-32 bg-black/40 border-secondary/20"><SelectValue /></SelectTrigger>
-                  <SelectContent>{data.categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                  <SelectContent className="bg-card border-white/10">
+                    {data.categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                  </SelectContent>
                 </Select>
                 <Button type="submit" disabled={!newParticipantName.trim()} className="bg-secondary text-secondary-foreground"><Plus /></Button>
               </form>
@@ -265,7 +269,7 @@ export function ControlPanel() {
                       </div>
                     </div>
                     <DialogFooter>
-                      <AlertDialog>
+                      <AlertDialog open={isConfirmBulkOpen} onOpenChange={setIsConfirmBulkOpen}>
                         <AlertDialogTrigger asChild>
                           <Button className="w-full bg-secondary text-secondary-foreground font-black uppercase italic h-12">
                             Aplicar Mudanças

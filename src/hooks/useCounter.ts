@@ -102,7 +102,10 @@ export function useCounter() {
     ...DEFAULT_STATE,
     id: DEFAULT_ID,
     ...(rawData || {}),
-    participants: rawData?.participants || [],
+    participants: (rawData?.participants || []).map(p => ({
+      ...p,
+      category: p.category === "Gelo" ? "Passa ou repassa" : p.category
+    })),
     messages: rawData?.messages || [],
     categories: sanitizeCategories(rawData?.categories || DEFAULT_STATE.categories),
     customPhrases: (rawData?.customPhrases && rawData.customPhrases.length > 0) 
