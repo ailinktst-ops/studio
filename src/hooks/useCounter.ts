@@ -474,9 +474,9 @@ export function useCounter() {
     if (!counterRef || !data) return;
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
     if (approvedParticipants.length < 2) return;
-    const top6 = [...approvedParticipants].sort((a, b) => b.count - a.count).slice(0, 6);
-    const candidates = top6.map(p => p.name);
-    const winner = top6[Math.floor(Math.random() * top6.length)];
+    // Raffle now amongst all approved participants
+    const candidates = approvedParticipants.map(p => p.name);
+    const winner = approvedParticipants[Math.floor(Math.random() * approvedParticipants.length)];
     updateDoc(counterRef, {
       raffle: {
         isRaffling: true,
@@ -492,7 +492,7 @@ export function useCounter() {
         requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'raffle' } }
       }));
     });
-    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 8000);
+    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 6000);
   };
 
   const triggerSurpriseChallenge = () => {
@@ -516,7 +516,7 @@ export function useCounter() {
         requestResourceData: { raffle: { isRaffling: true, winnerId: winner.id, candidates, startTime: Date.now(), type: 'challenge' } }
       }));
     });
-    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 15000);
+    setTimeout(() => updateDoc(counterRef, { "raffle.isRaffling": false }), 6000);
   };
 
   const clearChallenge = () => {

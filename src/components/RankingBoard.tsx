@@ -6,7 +6,7 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart, Disc
+  Heart, Disc, Sparkles
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -223,7 +223,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         }, 5000);
       }
     } else {
-      setShowWinner(false);
+      // Don't reset everything immediately to allow "Last Winner" display
       setCurrentRaffleName("");
       stopChallengeSound();
     }
@@ -266,6 +266,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     .filter(m => m.status === 'approved')
     .sort((a, b) => a.timestamp - b.timestamp)
     .slice(-10);
+
+  const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -384,6 +386,59 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 notification.type === 'lantern' ? "bg-black text-red-500" :
                 "bg-white/20 text-white"
               )}>{notification.count}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {overlay && data.raffle?.isRaffling && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-10 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className={cn(
+            "max-w-4xl w-full p-16 rounded-[4rem] border-8 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col items-center justify-center animate-pulse",
+            data.raffle.type === 'challenge' 
+              ? "bg-purple-600 border-purple-400 text-white" 
+              : "bg-yellow-500 border-yellow-300 text-black"
+          )}>
+            <div className="flex items-center gap-6 mb-8">
+              {data.raffle.type === 'challenge' ? <Zap className="w-20 h-20" /> : <Sparkles className="w-20 h-20" />}
+              <h2 className="text-6xl font-black italic uppercase tracking-[0.2em] drop-shadow-lg">
+                {data.raffle.type === 'challenge' ? 'DESAFIO SURPRESA' : 'SORTEIO GERAL'}
+              </h2>
+              {data.raffle.type === 'challenge' ? <Zap className="w-20 h-20" /> : <Sparkles className="w-20 h-20" />}
+            </div>
+            <div className="bg-black/20 px-12 py-8 rounded-[3rem] w-full min-h-[200px] flex items-center justify-center border-4 border-white/10">
+              <span className="text-8xl font-black italic uppercase tracking-tighter animate-in slide-in-from-bottom-10">
+                {currentRaffleName || '...'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {overlay && !data.raffle?.isRaffling && raffleWinner && (
+        <div className="fixed top-8 left-[50%] -translate-x-1/2 z-[60] animate-in slide-in-from-top-10 duration-500">
+          <div className={cn(
+            "px-8 py-4 rounded-[2rem] border-4 shadow-2xl flex items-center gap-6 rotate-1",
+            data.raffle?.type === 'challenge' 
+              ? "bg-purple-600/95 border-purple-300 text-white shadow-purple-500/20" 
+              : "bg-yellow-500/95 border-yellow-300 text-black shadow-yellow-500/20"
+          )}>
+            <div className="relative">
+              <Avatar className="w-16 h-16 border-2 border-white/20">
+                {raffleWinner.imageUrl ? <AvatarImage src={raffleWinner.imageUrl} className="object-cover" /> : null}
+                <AvatarFallback className="bg-white/10 font-bold uppercase">{raffleWinner.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[8px] font-black p-1 rounded-full uppercase italic animate-bounce border border-white/20">
+                Último Ganhador!
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                {data.raffle?.type === 'challenge' ? 'DESAFIO VENCIDO' : 'SORTEADO DA VEZ'}
+              </span>
+              <span className="text-3xl font-black italic uppercase tracking-tighter leading-none">
+                {raffleWinner.name}
+              </span>
             </div>
           </div>
         </div>

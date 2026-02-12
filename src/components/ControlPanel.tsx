@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Share2, ExternalLink, Settings, Music
+  Share2, ExternalLink, Settings, Music, X
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -204,15 +204,27 @@ export function ControlPanel() {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
-              {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
-              Sorteio Top 6
-            </Button>
-            <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-purple-500 to-blue-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
-              {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Zap className="mr-2 h-6 w-6" />}
-              Desafio Surpresa
-            </Button>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
+                {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
+                Sorteio Geral
+              </Button>
+              <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-purple-500 to-blue-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
+                {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Zap className="mr-2 h-6 w-6" />}
+                Desafio Surpresa
+              </Button>
+            </div>
+            
+            {data.raffle?.winnerId && !data.raffle?.isRaffling && (
+              <Button 
+                onClick={clearChallenge} 
+                variant="outline" 
+                className="w-full h-12 border-red-500/30 bg-red-500/5 text-red-500 font-black uppercase italic hover:bg-red-500/10"
+              >
+                <X className="w-4 h-4 mr-2" /> Limpar Resultado do Sorteio
+              </Button>
+            )}
           </div>
 
           <Card className="bg-card/50 border-secondary/20">
@@ -426,7 +438,7 @@ export function ControlPanel() {
                       <span className="text-white/20 text-xs">➔</span>
                       <Badge className="bg-secondary/20 text-secondary border-none font-bold italic uppercase text-[10px]">Para: {msg.to}</Badge>
                     </div>
-                    <span className="text-white/20 text-[10px]">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                    <span className="text-white/20 text-xs">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                   </div>
                   <p className="text-white font-medium italic text-lg leading-tight">&ldquo;{msg.content}&rdquo;</p>
                   <div className="flex gap-2 pt-2">
