@@ -6,7 +6,7 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart, Disc, Sparkles, Instagram, Youtube
+  Heart, Disc, Sparkles, Instagram, Youtube, Mic
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,12 +37,13 @@ const CryingIcon = ({ className }: { className?: string }) => (
 );
 
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
-  const { data, loading, isInitializing } = useCounter();
+  const { data, loading, isInitializing, clearPiadinha } = useCounter();
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [tickerIndex, setTickerIndex] = useState(0);
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
+  const [qrPiadinhaUrl, setQrPiadinhaUrl] = useState("");
   
   const [notification, setNotification] = useState<{ 
     userName: string; 
@@ -55,7 +56,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const lastLeaderIdRef = useRef<string | null>(null);
   const lastLanternIdRef = useRef<string | null>(null);
   const lastSocialAnnouncementRef = useRef<number | null>(null);
+  const lastPiadinhaTimestampRef = useRef<number | null>(null);
   const challengeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const piadinhaAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const raffleAnimationIndexRef = useRef(0);
   const isRafflingPersistedRef = useRef(false);
@@ -82,7 +85,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let origin = window.location.origin;
-      // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations
       if (origin.includes("cloudworkstations.dev")) {
         origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
       } else if (origin.includes("localhost")) {
@@ -91,6 +93,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
       setQrMusicaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/musica')}`);
+      setQrPiadinhaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/piadinha')}`);
     }
   }, []);
 
@@ -176,6 +179,22 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [data.socialAnnouncement, overlay]);
 
   useEffect(() => {
+    if (overlay && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
+      if (piadinhaAudioRef.current) {
+        piadinhaAudioRef.current.pause();
+      }
+      const audio = new Audio(data.piadinha.audioUrl);
+      piadinhaAudioRef.current = audio;
+      audio.play().catch(() => {});
+      lastPiadinhaTimestampRef.current = data.piadinha.timestamp;
+      
+      audio.onended = () => {
+        clearPiadinha();
+      };
+    }
+  }, [data.piadinha, overlay, clearPiadinha]);
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
 
     if (data.raffle?.isRaffling) {
@@ -231,9 +250,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const top3 = sortedParticipants.slice(0, 3);
   const leader = top3[0];
   const top10 = sortedParticipants.slice(0, 10);
-  const lanterninha = (top10.length > 3 && top10[top10.length - 1].count > 0) ? top10[top10.length - 1] : null;
-
-  const ranks4to10 = sortedParticipants.slice(3, 10);
   
   const approvedMessages = data.messages.filter(m => m.status === 'approved');
   const latestMessage = approvedMessages.length > 0 ? approvedMessages[approvedMessages.length - 1] : null;
@@ -245,28 +261,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
 
-  const getSocialHandle = (url: string, type: 'instagram' | 'youtube') => {
-    if (!url) return '';
-    try {
-      const cleanUrl = url.replace(/\/$/, ""); 
-      const parts = cleanUrl.split('/');
-      let handle = parts[parts.length - 1] || parts[parts.length - 2];
-      
-      if (type === 'instagram') {
-        return handle.startsWith('@') ? handle : `@${handle}`;
-      }
-      return handle.startsWith('@') ? handle : `@${handle}`;
-    } catch (e) {
-      return 'Social';
-    }
-  };
-
   const activeSocialUrl = data.socialAnnouncement?.url || "";
   const socialQrUrl = data.socialAnnouncement?.isActive && activeSocialUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeSocialUrl)}`
     : '';
-  
-  const socialHandle = data.socialAnnouncement?.type ? getSocialHandle(activeSocialUrl, data.socialAnnouncement.type) : '';
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -277,105 +275,56 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && ranks4to10.length > 0 && (
-        <div className="fixed top-8 left-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-left-10 duration-700">
-          <div className="bg-primary/20 px-4 py-1 rounded-full border border-primary/30 flex items-center gap-2 mb-1 justify-center">
-            <Flame className="w-3 h-3 text-primary" />
-            <span className="text-[10px] font-black text-white uppercase italic tracking-widest">Em Disputa</span>
-          </div>
-          {ranks4to10.map((p, i) => (
-            <div key={p.id} className="glass px-3 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md min-w-[150px]">
-              <span className="text-[10px] font-black text-white/30 italic">{i + 4}º</span>
-              <Avatar className="w-10 h-10 border border-white/10">
-                {p.imageUrl ? <AvatarImage src={p.imageUrl} className="object-cover" /> : null}
-                <AvatarFallback className="bg-white/5 text-[10px] font-bold">{p.name[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-white uppercase max-w-[80px] truncate leading-tight">{p.name}</span>
-                <span className="text-[10px] font-black text-primary leading-none mt-1">{p.count} {p.category.toLowerCase()}</span>
+      {overlay && data.piadinha?.isActive && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
+           <div className="relative">
+              <div className="absolute inset-0 bg-orange-500 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
+              <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)] animate-bounce" style={{ animationDuration: '2s' }}>
+                <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-orange-500 bg-black flex items-center justify-center scale-up-down">
+                  {data.piadinha.imageUrl ? (
+                    <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Piadinha" />
+                  ) : (
+                    <Mic className="w-32 h-32 text-orange-500" />
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {overlay && approvedMusic.length > 0 && (
-        <div className="fixed top-8 right-8 flex flex-col gap-2 z-[70] animate-in slide-in-from-right-10 duration-700">
-          <div className="bg-blue-500/20 px-4 py-1 rounded-full border border-blue-500/30 flex items-center gap-2 mb-1 justify-center">
-            <Music className="w-3 h-3 text-blue-400" />
-            <span className="text-[10px] font-black text-blue-300 uppercase italic tracking-widest">Playlist da Vez</span>
-          </div>
-          {approvedMusic.map((m) => (
-            <div key={m.id} className="glass px-4 py-2 rounded-2xl flex items-center gap-3 border-white/5 shadow-lg backdrop-blur-md animate-in slide-in-from-right-5">
-              <Disc className="w-5 h-5 text-blue-500 animate-spin" style={{ animationDuration: '3s' }} />
-              <div className="flex flex-col">
-                <span className="text-[11px] font-black text-white uppercase italic truncate max-w-[180px] leading-tight">{m.artist} - {m.song}</span>
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-8 py-2 rounded-full font-black uppercase italic shadow-lg animate-pulse">
+                OUÇA A PIADINHA!
               </div>
-            </div>
-          ))}
+           </div>
         </div>
       )}
 
       {overlay && (
-        <>
-          <div className="fixed left-8 bottom-32 z-[80] animate-in slide-in-from-left-10 duration-700">
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
-              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
-                <img src={qrCorreioUrl} alt="QR Code" className="w-24 h-24" />
-              </div>
+        <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Piadinha</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-orange-500/20">
+              <img src={qrPiadinhaUrl} alt="QR Piadinha" className="w-24 h-24" />
             </div>
           </div>
-
-          <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
-              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
-                <img src={qrMusicaUrl} alt="QR Code" className="w-24 h-24" />
-              </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
+              <img src={qrCadastroUrl} alt="QR Cadastro" className="w-24 h-24" />
             </div>
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
-              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
-                <img src={qrCadastroUrl} alt="QR Code" className="w-24 h-24" />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {overlay && latestMessage && (
-        <div className="fixed left-8 top-[50%] -translate-y-1/2 z-[80] animate-in slide-in-from-left-10 duration-500">
-          <div className="bg-pink-600/90 backdrop-blur-xl border-4 border-pink-400 p-6 rounded-[2.5rem] shadow-[0_0_50px_rgba(219,39,119,0.5)] flex flex-col items-center text-center max-w-[240px] rotate-[-2deg]">
-            <div className="bg-white/20 p-2 rounded-full mb-3">
-              <Heart className="w-8 h-8 text-pink-100 fill-pink-100" />
-            </div>
-            <div className="space-y-1 mb-3">
-              <span className="text-[10px] font-black uppercase text-pink-100 block">De: {latestMessage.from}</span>
-              <span className="text-[10px] font-black uppercase text-pink-100 block">Para: {latestMessage.to}</span>
-            </div>
-            <p className="text-xl font-black italic text-white uppercase drop-shadow-md leading-tight">
-              &ldquo;{latestMessage.content}&rdquo;
-            </p>
           </div>
         </div>
       )}
 
-      {overlay && data.socialAnnouncement?.isActive && (
-        <div className="fixed right-8 top-[40%] -translate-y-1/2 z-[100] animate-in slide-in-from-right-20 duration-500">
-          <div className={cn(
-            "p-8 rounded-[3rem] shadow-[0_0_60px_rgba(0,0,0,0.5)] border-4 backdrop-blur-2xl flex flex-col items-center text-center min-w-[280px] max-w-[320px] rotate-1 animate-float",
-            data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 border-pink-400" : "bg-red-600 border-red-400"
-          )}>
-            <div className="bg-white/20 p-4 rounded-full mb-4 shadow-inner">
-              {data.socialAnnouncement.type === 'instagram' ? <Instagram className="w-12 h-12 text-white" /> : <Youtube className="w-12 h-12 text-white" />}
+      {overlay && (
+        <div className="fixed left-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-left-10 duration-700">
+           <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
+              <img src={qrCorreioUrl} alt="QR Correio" className="w-24 h-24" />
             </div>
-            <h3 className="text-xl font-black italic text-white uppercase tracking-tighter mb-1 drop-shadow-md">Siga nas Redes Sociais!</h3>
-            <span className="text-2xl font-black italic text-white/90 uppercase tracking-tighter mb-4 block drop-shadow-lg">{socialHandle}</span>
-            <div className="p-3 bg-white rounded-3xl shadow-2xl border-4 border-white/20">
-              <img src={socialQrUrl} alt="QR Social" className="w-48 h-48" />
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
+            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
+              <img src={qrMusicaUrl} alt="QR Música" className="w-24 h-24" />
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/70">Aponte a câmera</p>
           </div>
         </div>
       )}
@@ -395,8 +344,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">
                   {notification.type === 'lantern' ? "Tá Devendo" : "Bebeu"}
                 </span>
-                {notification.type === 'leader' && <Trophy className="w-8 h-8 mt-2" />}
-                {notification.type === 'lantern' && <CryingIcon className="w-8 h-8 mt-2" />}
               </div>
               <span className={cn(
                 "text-8xl font-black italic uppercase tracking-tighter drop-shadow-md px-8 py-4 rounded-[2rem]", 
@@ -446,9 +393,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 {raffleWinner.imageUrl ? <AvatarImage src={raffleWinner.imageUrl} className="object-cover" /> : null}
                 <AvatarFallback className="bg-white/10 font-bold uppercase">{raffleWinner.name[0]}</AvatarFallback>
               </Avatar>
-              <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[8px] font-black p-1 rounded-full uppercase italic animate-bounce border border-white/20">
-                Último Ganhador!
-              </div>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black uppercase tracking-widest opacity-70">
@@ -462,19 +406,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && data.announcement?.isActive && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-10 animate-in fade-in zoom-in duration-500 bg-red-950/40 backdrop-blur-sm">
-          <div className="max-w-5xl w-full bg-red-600 border-4 border-yellow-400 p-12 rounded-[3rem] shadow-[0_0_150px_rgba(220,38,38,0.8)] text-center transform -rotate-1 animate-bounce">
-            <div className="flex items-center justify-center gap-6 mb-8">
-              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse" />
-              <h2 className="text-7xl font-black italic text-white uppercase tracking-[0.2em] drop-shadow-lg">ATENÇÃO</h2>
-              <Megaphone className="w-20 h-20 text-yellow-400 animate-pulse scale-x-[-1]" />
-            </div>
-            <p className="text-6xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl leading-tight">{data.announcement.message}</p>
-          </div>
-        </div>
-      )}
-
       <div className="text-center space-y-4 mb-8">
         <div className="flex items-center justify-center gap-4 mb-2">
           <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-primary/20")}>
@@ -483,7 +414,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
         </div>
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
-        <div className="h-2 w-48 bg-gradient-to-r from-primary via-secondary to-primary mx-auto rounded-full"></div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
@@ -499,12 +429,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                     <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                   </Avatar>
                   {p.count > 0 && (
-                    <>
-                      <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary z-30">{actualIndex + 1}º</div>
-                      <div className="absolute -top-4 -left-4 z-30">
-                        {actualIndex === 0 ? <Trophy className="w-12 h-12 text-yellow-400 animate-bounce" /> : <Medal className={cn("w-10 h-10", actualIndex === 1 ? "text-zinc-300" : "text-amber-700")} />}
-                      </div>
-                    </>
+                    <div className="absolute -bottom-3 -right-3 bg-background border-2 border-primary rounded-full w-10 h-10 flex items-center justify-center font-black italic text-primary z-30">{actualIndex + 1}º</div>
                   )}
                 </div>
                 <h2 className="text-4xl font-black italic text-white uppercase truncate px-4">{p.name}</h2>
@@ -517,25 +442,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           );
         })}
       </div>
-
-      {lanterninha && (
-        <div className="w-full max-w-md bg-destructive/10 border-2 border-destructive/20 rounded-3xl p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Avatar className="w-16 h-16 border-2 border-destructive/40 shadow-xl">
-                {lanterninha.imageUrl ? <AvatarImage src={lanterninha.imageUrl} className="object-cover" /> : null}
-                <AvatarFallback className="bg-destructive/10"><CryingIcon className="w-8 h-8 text-destructive" /></AvatarFallback>
-              </Avatar>
-              <CryingIcon className="absolute -top-2 -right-2 w-6 h-6 text-destructive animate-pulse" />
-            </div>
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-destructive">Lanterninha 🤡</span>
-              <h3 className="text-2xl font-black italic text-white uppercase">{lanterninha.name}</h3>
-            </div>
-          </div>
-          <span className="text-3xl font-black text-destructive">{lanterninha.count}</span>
-        </div>
-      )}
 
       {overlay && (
         <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4">
@@ -555,6 +461,16 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        @keyframes scale-up-down {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.15); }
+        }
+        .scale-up-down {
+          animation: scale-up-down 1.5s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }

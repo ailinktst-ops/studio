@@ -5,7 +5,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Counter",
       "type": "object",
-      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio, mensagens de correio elegante, pedidos de música e redes sociais.",
+      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio, mensagens de correio elegante, pedidos de música, redes sociais e piadinhas.",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string", "description": "Título do evento." },
@@ -74,6 +74,15 @@
             "candidates": { "type": "array", "items": { "type": "string" } },
             "type": { "type": "string", "enum": ["raffle", "challenge"] },
             "winnersHistory": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "piadinha": {
+          "type": "object",
+          "properties": {
+            "audioUrl": { "type": "string" },
+            "imageUrl": { "type": "string" },
+            "isActive": { "type": "boolean" },
+            "timestamp": { "type": "number" }
           }
         },
         "announcement": {

@@ -48,6 +48,13 @@ export interface RaffleState {
   winnersHistory?: string[];
 }
 
+export interface PiadinhaState {
+  audioUrl?: string;
+  imageUrl?: string;
+  isActive: boolean;
+  timestamp: number | null;
+}
+
 export interface AnnouncementState {
   message: string;
   isActive: boolean;
@@ -75,6 +82,7 @@ export interface CounterState {
   customPhrases: string[];
   updatedAt: any;
   raffle?: RaffleState;
+  piadinha?: PiadinhaState;
   announcement?: AnnouncementState;
   socialAnnouncement?: SocialAnnouncementState;
 }
@@ -105,6 +113,12 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
     startTime: null,
     type: 'raffle',
     winnersHistory: []
+  },
+  piadinha: {
+    audioUrl: "",
+    imageUrl: "",
+    isActive: false,
+    timestamp: null
   },
   announcement: {
     message: "",
@@ -147,7 +161,7 @@ export function useCounter() {
         category: sanitize(p.category)
       })).sort((a, b) => {
         if (b.count !== a.count) return b.count - a.count;
-        return 0; // The hook caller will handle arrival order by original index
+        return 0;
       }),
       messages: state.messages || [],
       musicRequests: state.musicRequests || [],
@@ -158,6 +172,10 @@ export function useCounter() {
         ...DEFAULT_STATE.raffle!,
         ...(state.raffle || {}),
         winnersHistory: state.raffle?.winnersHistory || []
+      },
+      piadinha: {
+        ...DEFAULT_STATE.piadinha!,
+        ...(state.piadinha || {})
       },
       announcement: {
         ...DEFAULT_STATE.announcement!,
@@ -343,7 +361,8 @@ export function useCounter() {
       updatedAt: Timestamp.now(),
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, type: 'raffle', winnersHistory: [] },
       announcement: { message: "", isActive: false, timestamp: null },
-      socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null }
+      socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null },
+      piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null }
     };
     updateDoc(counterRef, resetData).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -519,7 +538,6 @@ export function useCounter() {
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
     
-    // Generate pool for animation: use all approved participants and triple them
     let animPool: string[] = [];
     for(let j = 0; j < 10; j++) {
       animPool = [...animPool, ...approvedParticipants.map(p => p.name)];
@@ -564,7 +582,6 @@ export function useCounter() {
     const winner = pool[Math.floor(Math.random() * pool.length)];
     const newHistory = [...winnersHistory, winner.id];
     
-    // Generate pool for animation: use all approved participants and triple them
     let animPool: string[] = [];
     for(let j = 0; j < 10; j++) {
       animPool = [...animPool, ...approvedParticipants.map(p => p.name)];
@@ -663,6 +680,35 @@ export function useCounter() {
     updateDocField({ socialLinks });
   };
 
+  const updatePiadinhaAudio = (audioUrl: string) => {
+    updateDocField({ "piadinha.audioUrl": audioUrl });
+  };
+
+  const updatePiadinhaImage = (imageUrl: string) => {
+    updateDocField({ "piadinha.imageUrl": imageUrl });
+  };
+
+  const triggerPiadinha = () => {
+    if (!counterRef || !data.piadinha?.audioUrl) return;
+    updateDoc(counterRef, {
+      "piadinha.isActive": true,
+      "piadinha.timestamp": Date.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { "piadinha.isActive": true, "piadinha.timestamp": Date.now() }
+      }));
+    });
+    // The overlay will play the audio and the admin can reset if needed, 
+    // but we automatically hide it after a reasonable time or manually.
+    setTimeout(() => updateDoc(counterRef, { "piadinha.isActive": false }), 30000);
+  };
+
+  const clearPiadinha = () => {
+    updateDocField({ "piadinha.isActive": false });
+  };
+
   return {
     data,
     loading: isLoading,
@@ -692,6 +738,10 @@ export function useCounter() {
     clearChallenge,
     resetRaffleHistory,
     triggerAnnouncement,
-    triggerSocialAnnouncement
+    triggerSocialAnnouncement,
+    updatePiadinhaAudio,
+    updatePiadinhaImage,
+    triggerPiadinha,
+    clearPiadinha
   };
 }

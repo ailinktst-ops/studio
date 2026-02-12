@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap, EyeOff,
   Heart, Check, Ban, ImageIcon, History, HeartOff, Upload, UserCheck,
-  Share2, ExternalLink, Settings, Music, X, Trophy
+  Share2, ExternalLink, Settings, Music, X, Trophy, Mic, Image as ImageIconLucide
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,8 @@ export function ControlPanel() {
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearChallenge, resetRaffleHistory,
     moderateMessage, clearElegantMessages, moderateParticipant, updateParticipantCategory,
-    updateAllParticipantsCategory, moderateMusic, removeMusicRequest
+    updateAllParticipantsCategory, moderateMusic, removeMusicRequest,
+    updatePiadinhaImage, triggerPiadinha, clearPiadinha
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -57,13 +58,13 @@ export function ControlPanel() {
   const [isConfirmBulkOpen, setIsConfirmBulkOpen] = useState(false);
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const piadinhaFileRef = useRef<HTMLInputElement | null>(null);
 
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
     
     let origin = window.location.origin;
     
-    // Forçar a porta 9000 que é a funcional no ambiente Cloud Workstations
     if (origin.includes("cloudworkstations.dev")) {
       origin = origin.replace(/https?:\/\/\d+-/, (match) => match.replace(/\d+/, '9000'));
     } else if (origin.includes("localhost")) {
@@ -153,6 +154,13 @@ export function ControlPanel() {
     }
   };
 
+  const handlePiadinhaImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageCompression(file, (url) => updatePiadinhaImage(url), 800);
+    }
+  };
+
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
@@ -181,7 +189,7 @@ export function ControlPanel() {
             <Share2 className="w-3 h-3" /> Compartilhar Evento
           </span>
         </div>
-        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/cadastro', 'Cadastro')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-secondary hover:text-white transition-all">
             <UserPlus className="w-4 h-4 mr-2" /> Cadastro
           </Button>
@@ -191,6 +199,9 @@ export function ControlPanel() {
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/musica', 'Pedir Música')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
             <Music className="w-4 h-4 mr-2" /> Música
           </Button>
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/piadinha', 'Piadinha')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all">
+            <Mic className="w-4 h-4 mr-2" /> Piadinha
+          </Button>
           <Link href="/overlay" target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
               <ExternalLink className="w-4 h-4 mr-2" /> Telão
@@ -198,6 +209,77 @@ export function ControlPanel() {
           </Link>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="bg-orange-500/10 border-orange-500/20 backdrop-blur-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase italic text-orange-500 flex items-center gap-2">
+              <Mic className="w-4 h-4" /> Piadinha do Dia
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="relative group">
+                <Avatar className="w-16 h-16 border-2 border-orange-500/30">
+                  {data.piadinha?.imageUrl ? <AvatarImage src={data.piadinha.imageUrl} className="object-cover" /> : null}
+                  <AvatarFallback className="bg-black/20"><ImageIconLucide className="w-6 h-6 text-orange-500/40" /></AvatarFallback>
+                </Avatar>
+                <button 
+                  onClick={() => piadinhaFileRef.current?.click()}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-full transition-opacity"
+                >
+                  <Upload className="w-4 h-4 text-white" />
+                </button>
+                <input 
+                  type="file" accept="image/*" className="hidden" 
+                  ref={piadinhaFileRef}
+                  onChange={handlePiadinhaImageUpload} 
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Status do Áudio:</p>
+                <Badge className={cn("mt-1 font-black uppercase italic", data.piadinha?.audioUrl ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500")}>
+                  {data.piadinha?.audioUrl ? "Áudio Pronto" : "Sem Áudio"}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button 
+                onClick={triggerPiadinha} 
+                disabled={!data.piadinha?.audioUrl || data.piadinha?.isActive}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black uppercase italic shadow-[0_0_15px_rgba(249,115,22,0.3)] h-12"
+              >
+                {data.piadinha?.isActive ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Mic className="w-5 h-5 mr-2" />}
+                Lançar Piadinha!
+              </Button>
+              {data.piadinha?.isActive && (
+                <Button variant="ghost" size="sm" onClick={clearPiadinha} className="text-orange-500 text-[10px] font-bold uppercase hover:bg-orange-500/10">
+                  Parar Piadinha
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-purple-500/10 border-purple-500/20 backdrop-blur-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase italic text-purple-500 flex items-center gap-2">
+              <Zap className="w-4 h-4" /> Desafio Rápido
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col h-[calc(100%-3rem)] justify-center gap-3">
+             <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.raffle?.isRaffling || loading} className="w-full bg-purple-600 hover:bg-purple-700 h-12 rounded-xl text-md font-black uppercase italic shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                {data.raffle?.isRaffling && data.raffle.type === 'challenge' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
+                Novo Desafio
+              </Button>
+              {data.raffle?.winnerId && data.raffle.type === 'challenge' && (
+                <Button onClick={clearChallenge} variant="ghost" className="text-purple-500 text-[10px] font-bold uppercase">
+                  Limpar
+                </Button>
+              )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Tabs defaultValue="main" className="w-full">
         <TabsList className="bg-white/5 border border-white/10 p-1 mb-6 h-12 w-full">
@@ -213,19 +295,13 @@ export function ControlPanel() {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
-                {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
-                Sorteio Geral
-              </Button>
-              <Button onClick={triggerSurpriseChallenge} disabled={approvedParticipants.length < 1 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-purple-500 to-blue-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
-                {data.raffle?.isRaffling ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Zap className="mr-2 h-6 w-6" />}
-                Desafio Surpresa
-              </Button>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
+            <Button onClick={triggerRaffle} disabled={approvedParticipants.length < 2 || data.raffle?.isRaffling || loading} className="bg-gradient-to-r from-yellow-500 to-red-500 h-16 rounded-2xl text-lg font-black uppercase italic shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse disabled:opacity-50 disabled:animate-none">
+              {data.raffle?.isRaffling && data.raffle.type === 'raffle' ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Sparkles className="mr-2 h-6 w-6" />}
+              Sorteio Geral de Brindes
+            </Button>
             
-            {data.raffle?.winnerId && !data.raffle?.isRaffling && (
+            {data.raffle?.winnerId && data.raffle.type === 'raffle' && !data.raffle?.isRaffling && (
               <Button 
                 onClick={clearChallenge} 
                 variant="outline" 
