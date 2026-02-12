@@ -289,12 +289,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && (
         <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Piadinha</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-orange-500/20">
-              <img src={qrPiadinhaUrl} alt="QR Piadinha" className="w-24 h-24" />
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
             <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
               <img src={qrCadastroUrl} alt="QR Cadastro" className="w-24 h-24" />
