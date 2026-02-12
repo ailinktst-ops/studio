@@ -6,7 +6,7 @@ import { useCounter, Participant } from '@/hooks/useCounter';
 import { 
   Trophy, Medal, Star, Flame, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap, Megaphone,
-  Heart, Disc, Sparkles, Instagram, Youtube, Mic
+  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,7 +33,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
-  const [qrPiadinhaUrl, setQrPiadinhaUrl] = useState("");
   
   const [notification, setNotification] = useState<{ 
     userName: string; 
@@ -84,7 +83,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
       setQrMusicaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/musica')}`);
-      setQrPiadinhaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/piadinha')}`);
     }
   }, []);
 
@@ -239,23 +237,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }
 
   const top3 = sortedParticipants.slice(0, 3);
-  const leader = top3[0];
-  const top10 = sortedParticipants.slice(0, 10);
+  const top10 = sortedParticipants.slice(3, 10);
+  const leader = sortedParticipants[0];
   
-  const approvedMessages = data.messages.filter(m => m.status === 'approved');
-  const latestMessage = approvedMessages.length > 0 ? approvedMessages[approvedMessages.length - 1] : null;
-
   const approvedMusic = (data.musicRequests || [])
     .filter(m => m.status === 'approved')
-    .sort((a, b) => a.timestamp - b.timestamp)
-    .slice(-10);
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 5);
 
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
-
-  const activeSocialUrl = data.socialAnnouncement?.url || "";
-  const socialQrUrl = data.socialAnnouncement?.isActive && activeSocialUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeSocialUrl)}`
-    : '';
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen justify-center p-12 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -266,6 +256,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* PIADINHA OVERLAY */}
       {overlay && data.piadinha?.isActive && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
@@ -286,34 +277,80 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* QR CODES LATERAIS */}
       {overlay && (
-        <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
-              <img src={qrCadastroUrl} alt="QR Cadastro" className="w-24 h-24" />
+        <>
+          <div className="fixed right-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-700">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20">
+                <img src={qrCadastroUrl} alt="QR" className="w-24 h-24" />
+              </div>
+            </div>
+          </div>
+
+          <div className="fixed left-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-left-10 duration-700">
+             <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
+                <img src={qrCorreioUrl} alt="QR" className="w-24 h-24" />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
+                <img src={qrMusicaUrl} alt="QR" className="w-24 h-24" />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* PLAYLIST PANEL */}
+      {overlay && approvedMusic.length > 0 && (
+        <div className="fixed left-8 top-32 z-[70] w-64 space-y-4 animate-in slide-in-from-left-20 duration-1000">
+          <div className="bg-blue-600/90 backdrop-blur-xl p-4 rounded-3xl border border-white/20 shadow-2xl rotate-[-2deg]">
+            <h3 className="text-white font-black italic uppercase text-xs tracking-[0.2em] mb-4 flex items-center gap-2">
+              <Disc className="w-4 h-4 animate-spin" /> Próximas Músicas
+            </h3>
+            <div className="space-y-3">
+              {approvedMusic.map((m, i) => (
+                <div key={m.id} className="bg-black/40 p-3 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 100}ms` }}>
+                  <p className="text-[10px] font-black uppercase text-blue-400 tracking-wider truncate">{m.artist}</p>
+                  <p className="text-xs font-bold text-white uppercase italic truncate">{m.song}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {overlay && (
-        <div className="fixed left-8 bottom-32 z-[80] flex flex-col gap-4 animate-in slide-in-from-left-10 duration-700">
-           <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio Elegante</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-primary/20">
-              <img src={qrCorreioUrl} alt="QR Correio" className="w-24 h-24" />
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Música</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20">
-              <img src={qrMusicaUrl} alt="QR Música" className="w-24 h-24" />
+      {/* TOP 4-10 PANEL */}
+      {overlay && top10.length > 0 && (
+        <div className="fixed right-8 top-32 z-[70] w-64 space-y-4 animate-in slide-in-from-right-20 duration-1000">
+          <div className="bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl rotate-[2deg]">
+            <h3 className="text-white/60 font-black italic uppercase text-xs tracking-[0.2em] mb-4 flex items-center gap-2">
+              <ListOrdered className="w-4 h-4" /> Classificação
+            </h3>
+            <div className="space-y-2">
+              {top10.map((p, i) => (
+                <div key={p.id} className="flex items-center justify-between bg-white/5 p-2 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <span className="text-[10px] font-black text-white/40">{i + 4}º</span>
+                    <Avatar className="w-6 h-6 border border-white/10">
+                      <AvatarImage src={p.imageUrl || defaultAvatar} className="object-cover" />
+                    </Avatar>
+                    <span className="text-xs font-bold text-white uppercase truncate">{p.name}</span>
+                  </div>
+                  <span className="text-xs font-black text-primary">{p.count}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
+      {/* NOTIFICAÇÕES (LÍDER, PONTO, LANTERNA) */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
           <div className={cn(
@@ -341,6 +378,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* SORTEIO ATIVO */}
       {overlay && data.raffle?.isRaffling && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-10 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={cn(
@@ -365,6 +403,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* ÚLTIMO GANHADOR */}
       {overlay && !data.raffle?.isRaffling && raffleWinner && (
         <div className="fixed top-8 left-[50%] -translate-x-1/2 z-[60] animate-in slide-in-from-top-10 duration-500">
           <div className={cn(
@@ -401,6 +440,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
+      {/* PÓDIO TOP 3 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full items-end max-w-5xl mb-12">
         {[1, 0, 2].map((actualIndex) => {
           const p = top3[actualIndex];
@@ -428,6 +468,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         })}
       </div>
 
+      {/* TICKER INFERIOR */}
       {overlay && (
         <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4">
           <div className="bg-black/60 backdrop-blur-2xl px-12 py-4 rounded-full border border-white/10 flex items-center shadow-2xl min-w-[500px] justify-center overflow-hidden">
