@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -65,15 +64,15 @@ export function ControlPanel() {
 
   const openCadastroWindow = () => {
     const url = formatUrlWithCorrectPort('/cadastro-qr');
-    const width = 450;
-    const height = 650;
+    const width = 260;
+    const height = 360;
     const left = (window.screen.width / 2) - (width / 2);
     const top = (window.screen.height / 2) - (height / 2);
     
     window.open(
       url, 
       'CadastroQR', 
-      `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,resizable=yes`
+      `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,location=no,resizable=no,scrollbars=no`
     );
   };
 
