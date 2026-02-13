@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -62,7 +61,8 @@ export function ControlPanel() {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}-movie-anime-character/200/200`;
+    // Semente específica para rostos de personagens variados
+    return `https://picsum.photos/seed/${p.id}-movie-series-character-face-portrait/200/200`;
   };
 
   const openCadastroWindow = () => {

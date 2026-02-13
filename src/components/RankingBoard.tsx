@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -69,7 +68,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
     const seed = p.id || "guest";
-    return `https://picsum.photos/seed/${seed}-character-pop-culture/400/400`;
+    // Semente focada em rostos de personagens da cultura pop para diversidade
+    return `https://picsum.photos/seed/${seed}-character-movie-anime-portrait-face/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {

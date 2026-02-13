@@ -19,8 +19,8 @@ export default function CadastroPage() {
   const getPreviewAvatar = () => {
     if (imageUrl) return imageUrl;
     const seed = name.trim() || "guest";
-    // Avatares de personagens de filmes/series/animes conforme regra definida
-    return `https://picsum.photos/seed/${seed}-character-movie-anime/200/200`;
+    // Avatares de personagens de filmes/series/animes para maior diversidade
+    return `https://picsum.photos/seed/${seed}-movie-character-face-anime-portrait/200/200`;
   };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 400) => {
@@ -130,7 +130,7 @@ export default function CadastroPage() {
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative group">
                     <Avatar className="w-32 h-32 border-4 border-white/10 shadow-xl">
-                      <AvatarImage src={getPreviewAvatar()} className="object-cover" data-ai-hint="movie character" />
+                      <AvatarImage src={getPreviewAvatar()} className="object-cover" data-ai-hint="character portrait" />
                       <AvatarFallback className="bg-white/5 font-black uppercase text-4xl">
                         {name[0] || "?"}
                       </AvatarFallback>
