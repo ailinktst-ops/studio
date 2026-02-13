@@ -2,36 +2,11 @@
 
 import { useCounter } from "@/hooks/useCounter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { Loader2 } from "lucide-react";
 
 export default function RankingMinimalPage() {
   const { data, isInitializing } = useCounter();
-
-  useEffect(() => {
-    // Força transparência absoluta no nível mais profundo do DOM
-    const html = document.documentElement;
-    const body = document.body;
-    
-    const applyTransparency = () => {
-      html.style.setProperty('background', 'transparent', 'important');
-      html.style.setProperty('background-color', 'transparent', 'important');
-      html.style.setProperty('background-image', 'none', 'important');
-      
-      body.style.setProperty('background', 'transparent', 'important');
-      body.style.setProperty('background-color', 'transparent', 'important');
-      body.style.setProperty('background-image', 'none', 'important');
-    };
-
-    applyTransparency();
-    
-    // Alguns navegadores resetam o estilo durante o render, então aplicamos no próximo frame também
-    const timeout = setTimeout(applyTransparency, 100);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
 
   const sortedParticipants = useMemo(() => {
     return [...(data.participants || [])]
@@ -46,18 +21,24 @@ export default function RankingMinimalPage() {
 
   if (isInitializing) {
     return (
-      <div className="p-4 bg-transparent">
-        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-transparent p-4 flex flex-col gap-2 w-64 select-none overflow-hidden">
+    <div className="min-h-screen p-4 flex flex-col gap-3 w-full max-w-[320px] select-none overflow-hidden">
+      <div className="mb-2">
+        <h2 className="text-[10px] font-black uppercase text-white/40 tracking-[0.4em] italic">
+          Ranking <span className="text-primary">Elite</span>
+        </h2>
+      </div>
+      
       {sortedParticipants.map((p, i) => (
         <div 
           key={p.id} 
-          className="flex items-center gap-3 bg-black/85 backdrop-blur-2xl p-2.5 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-500 shadow-[0_8px_32px_rgba(0,0,0,0.5)]" 
+          className="flex items-center gap-3 bg-white/5 backdrop-blur-xl p-3 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-500 shadow-xl" 
           style={{ animationDelay: `${i * 100}ms` }}
         >
           <div className="relative">
@@ -72,11 +53,11 @@ export default function RankingMinimalPage() {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-black italic uppercase text-[11px] truncate tracking-tighter leading-none mb-1">
+            <p className="text-white font-black italic uppercase text-[12px] truncate tracking-tighter leading-none mb-1">
               {p.name}
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="text-primary font-black text-lg leading-none drop-shadow-md">
+              <span className="text-primary font-black text-xl leading-none drop-shadow-md">
                 {p.count}
               </span>
               <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest truncate">
@@ -88,8 +69,10 @@ export default function RankingMinimalPage() {
       ))}
       
       {sortedParticipants.length === 0 && (
-        <div className="bg-black/40 backdrop-blur-md p-4 rounded-xl border border-white/5 text-center">
-          <p className="text-[10px] font-black text-white/20 uppercase italic">Aguardando Ranking...</p>
+        <div className="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/5 text-center">
+          <p className="text-[10px] font-black text-white/20 uppercase italic tracking-widest">
+            Aguardando Ranking...
+          </p>
         </div>
       )}
     </div>
