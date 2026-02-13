@@ -1,13 +1,14 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useCounter, Participant, AdminUser } from '@/hooks/useCounter';
+import { useCounter, Participant, MusicRequest } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
-  Music, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User, ListOrdered, Send, X, GripHorizontal
+  Music, Mic, 
+  ExternalLink, Eraser, Volume2, Smartphone, Copy, X, GripHorizontal
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,6 @@ import {
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export function ControlPanel() {
@@ -43,8 +43,11 @@ export function ControlPanel() {
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Gole");
+  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const initializedAlertsRef = useRef(false);
 
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
@@ -133,6 +136,43 @@ export function ControlPanel() {
   
   const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
 
+  // Real-time Alerts Logic
+  useEffect(() => {
+    if (isInitializing) return;
+
+    // Initialize seen IDs so we only alert for NEW items
+    if (!initializedAlertsRef.current) {
+      pendingParticipants.forEach(p => seenIdsRef.current.add(p.id));
+      pendingMusic.forEach(m => seenIdsRef.current.add(m.id));
+      initializedAlertsRef.current = true;
+      return;
+    }
+
+    const newItems: any[] = [];
+    
+    pendingParticipants.forEach(p => {
+      if (!seenIdsRef.current.has(p.id)) {
+        newItems.push({ ...p, alertType: 'participant' });
+        seenIdsRef.current.add(p.id);
+      }
+    });
+
+    pendingMusic.forEach(m => {
+      if (!seenIdsRef.current.has(m.id)) {
+        newItems.push({ ...m, alertType: 'music' });
+        seenIdsRef.current.add(m.id);
+      }
+    });
+
+    if (newItems.length > 0) {
+      setActiveAlerts(prev => [...prev, ...newItems]);
+    }
+  }, [pendingParticipants, pendingMusic, isInitializing]);
+
+  const removeAlert = (id: string) => {
+    setActiveAlerts(prev => prev.filter(a => a.id !== id));
+  };
+
   const handleApproveMusic = (id: string) => {
     if (approvedMusic.length >= 10) {
       toast({
@@ -143,6 +183,7 @@ export function ControlPanel() {
       return;
     }
     moderateMusic(id, 'approved');
+    removeAlert(id);
   };
 
   if (isInitializing) {
@@ -156,6 +197,77 @@ export function ControlPanel() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-10 relative">
+      
+      {/* Real-time Notification Popups */}
+      <div className="fixed top-4 right-4 z-[300] flex flex-col gap-3 w-[320px]">
+        {activeAlerts.map((alert) => (
+          <Card key={alert.id} className="bg-card/95 backdrop-blur-xl border-primary/20 shadow-2xl animate-in slide-in-from-right-10 duration-500 overflow-hidden">
+            <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-white/5 bg-white/5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : <Music className="w-3 h-3" />}
+                {alert.alertType === 'participant' ? 'Novo Participante' : 'Novo Pedido de Música'}
+              </span>
+              <Button variant="ghost" size="icon" onClick={() => removeAlert(alert.id)} className="h-6 w-6 text-white/20 hover:text-white">
+                <X className="w-4 h-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center gap-4">
+                {alert.alertType === 'participant' ? (
+                  <Avatar className="w-12 h-12 border-2 border-primary/20">
+                    <AvatarImage src={getParticipantAvatar(alert)} className="object-cover" />
+                    <AvatarFallback className="bg-white/5 font-bold">{alert.name[0]}</AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/20">
+                    <Music className="w-6 h-6 text-blue-500" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  {alert.alertType === 'participant' ? (
+                    <p className="text-white font-black italic uppercase truncate">{alert.name}</p>
+                  ) : (
+                    <>
+                      <p className="text-white font-black italic uppercase text-xs truncate">{alert.artist}</p>
+                      <p className="text-white/40 font-bold uppercase text-[9px] truncate">{alert.song}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    if (alert.alertType === 'participant') {
+                      moderateParticipant(alert.id, 'approved');
+                      removeAlert(alert.id);
+                    } else {
+                      handleApproveMusic(alert.id);
+                    }
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700 h-9 font-black uppercase italic text-[10px]"
+                >
+                  <Check className="w-3 h-3 mr-1" /> Aceitar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (alert.alertType === 'participant') {
+                      moderateParticipant(alert.id, 'rejected');
+                    } else {
+                      moderateMusic(alert.id, 'rejected');
+                    }
+                    removeAlert(alert.id);
+                  }}
+                  variant="outline"
+                  className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 h-9 font-black uppercase italic text-[10px]"
+                >
+                  <Ban className="w-3 h-3 mr-1" /> Negar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       <Card className="bg-white/5 border-white/10 backdrop-blur-md overflow-hidden">
         <div className="px-6 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
@@ -457,3 +569,4 @@ export function ControlPanel() {
     </div>
   );
 }
+
