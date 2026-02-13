@@ -19,8 +19,8 @@ export default function CadastroPage() {
   const getPreviewAvatar = () => {
     if (imageUrl) return imageUrl;
     const seed = name.trim() || "guest";
-    // Avatares de personagens de filmes/series/animes para maior diversidade
-    return `https://picsum.photos/seed/${seed}-movie-character-face-anime-portrait/200/200`;
+    // Semente focada exclusivamente em rostos de personagens para evitar paisagens
+    return `https://picsum.photos/seed/${seed}-character-human-face-portrait-anime-movie/200/200`;
   };
 
   const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 400) => {

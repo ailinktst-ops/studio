@@ -61,8 +61,8 @@ export function ControlPanel() {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    // Semente específica para rostos de personagens variados
-    return `https://picsum.photos/seed/${p.id}-movie-series-character-face-portrait/200/200`;
+    // Semente específica para rostos de personagens variados, evitando paisagens
+    return `https://picsum.photos/seed/${p.id}-character-movie-anime-drawing-portrait/200/200`;
   };
 
   const openCadastroWindow = () => {
@@ -215,7 +215,7 @@ export function ControlPanel() {
               <div className="flex items-center gap-4">
                 {alert.alertType === 'participant' ? (
                   <Avatar className="w-12 h-12 border-2 border-primary/20">
-                    <AvatarImage src={getParticipantAvatar(alert)} className="object-cover" />
+                    <AvatarImage src={getParticipantAvatar(alert)} className="object-cover" data-ai-hint="character portrait" />
                     <AvatarFallback className="bg-white/5 font-bold">{alert.name[0]}</AvatarFallback>
                   </Avatar>
                 ) : (
@@ -448,7 +448,7 @@ export function ControlPanel() {
                   <div className="flex items-center gap-4">
                     <div className="relative group/img">
                       <Avatar className="w-12 h-12 border-2 border-white/10">
-                        <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                        <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
                         <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                       </Avatar>
                       <button onClick={() => participantFilesRef.current[p.id]?.click()} className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center rounded-full transition-opacity"><Upload className="w-4 h-4 text-white" /></button>
@@ -484,7 +484,7 @@ export function ControlPanel() {
               {pendingParticipants.map(p => (
                 <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <Avatar className="w-12 h-12 border border-white/10"><AvatarImage src={getParticipantAvatar(p)} className="object-cover" /><AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback></Avatar>
+                    <Avatar className="w-12 h-12 border border-white/10"><AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" /><AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback></Avatar>
                     <span className="font-bold text-white uppercase italic">{p.name}</span>
                   </div>
                   <div className="flex gap-2">

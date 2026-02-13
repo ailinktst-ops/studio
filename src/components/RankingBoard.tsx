@@ -68,8 +68,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
     const seed = p.id || "guest";
-    // Semente focada em rostos de personagens da cultura pop para diversidade
-    return `https://picsum.photos/seed/${seed}-character-movie-anime-portrait-face/400/400`;
+    // Semente focada em rostos de personagens da cultura pop para diversidade e evitar paisagens
+    return `https://picsum.photos/seed/${seed}-character-movie-drawing-anime-portrait-face/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -435,7 +435,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 <div className="flex items-center gap-3 overflow-hidden">
                   <span className="text-[10px] font-black text-white/20 w-4">{p.count > 0 ? `${i + 4}º` : ""}</span>
                   <Avatar className="w-6 h-6 border border-white/10">
-                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
                     <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-bold text-white/80 uppercase truncate">{p.name}</span>
@@ -512,7 +512,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           <div className="bg-red-600/20 backdrop-blur-xl border-2 border-red-500/30 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl">
             <div className="relative">
               <Avatar className="w-12 h-12 border-2 border-red-500 shadow-lg">
-                <AvatarImage src={getParticipantAvatar(currentLantern)} className="object-cover" />
+                <AvatarImage src={getParticipantAvatar(currentLantern)} className="object-cover" data-ai-hint="character portrait" />
                 <AvatarFallback className="bg-white/5 font-bold uppercase">{currentLantern.name[0]}</AvatarFallback>
               </Avatar>
               <div className="absolute -top-2 -right-2 bg-red-600 p-1 rounded-full shadow-lg animate-bounce"><AlertCircle className="w-3 h-3 text-white" /></div>
@@ -547,7 +547,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div className="relative mb-6">
                 <div className={cn("absolute inset-0 rounded-full blur-2xl opacity-20 animate-pulse", actualIndex === 0 ? "bg-yellow-400" : actualIndex === 1 ? "bg-zinc-400" : "bg-amber-800")}></div>
                 <Avatar className={cn("w-40 h-40 border-8 shadow-2xl", actualIndex === 0 ? "border-yellow-400" : actualIndex === 1 ? "border-zinc-300" : "border-amber-700")}>
-                  <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                  <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
                   <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                 </Avatar>
                 {p.count > 0 && (

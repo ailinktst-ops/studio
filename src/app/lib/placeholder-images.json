@@ -9,7 +9,7 @@
     {
       "id": "default-avatar",
       "description": "Personagem padrão para participantes sem foto",
-      "imageUrl": "https://picsum.photos/seed/avatar-movie-character-portrait/200/200",
+      "imageUrl": "https://picsum.photos/seed/avatar-character-movie-anime-portrait-face/200/200",
       "imageHint": "character portrait"
     }
   ]
