@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useCounter, Participant } from '@/hooks/useCounter';
+import { useCounter, Participant, AdminUser } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Music, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User, ListOrdered, Send
+  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User, ListOrdered, Send, X, GripHorizontal
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,12 @@ export function ControlPanel() {
   const [selectedCategory, setSelectedCategory] = useState("Gole");
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
   
+  // Estado para a janela flutuante arrastável do Cadastro
+  const [showCadastroWindow, setShowCadastroWindow] = useState(false);
+  const [cadastroPos, setCadastroPos] = useState({ x: 100, y: 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const formatUrlWithCorrectPort = (path: string) => {
@@ -81,6 +87,35 @@ export function ControlPanel() {
       piadinha: generateQr('/piadinha')
     });
   }, []);
+
+  // Lógica de arraste da janela
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      setCadastroPos({
+        x: e.clientX - dragOffset.current.x,
+        y: e.clientY - dragOffset.current.y
+      });
+    };
+    const handleMouseUp = () => setIsDragging(false);
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const startDragging = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragOffset.current = {
+      x: e.clientX - cadastroPos.x,
+      y: e.clientY - cadastroPos.y
+    };
+  };
 
   const copyToClipboard = (path: string, label: string) => {
     const url = formatUrlWithCorrectPort(path);
@@ -161,7 +196,7 @@ export function ControlPanel() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-10">
+    <div className="space-y-6 max-w-2xl mx-auto pb-10 relative">
       <Card className="bg-white/5 border-white/10 backdrop-blur-md overflow-hidden">
         <div className="px-6 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
@@ -169,30 +204,16 @@ export function ControlPanel() {
           </span>
         </div>
         <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {/* Único botão que mantém o Popup/Janela Flutuante com QR Code */}
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-secondary hover:text-white">
-                <UserPlus className="w-4 h-4 mr-2" /> Cadastro
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
-              <DialogHeader className="mb-4">
-                <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">QR CODE CADASTRO</DialogTitle>
-                <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">Aponte a câmera para acessar</DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col items-center gap-8">
-                <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-                  <img src={qrUrls['cadastro']} alt="QR Cadastro" className="w-48 h-48" />
-                </div>
-                <Button className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl" onClick={() => copyToClipboard('/cadastro', 'Cadastro')}>
-                  <Copy className="w-4 h-4 mr-2" /> Copiar Link
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowCadastroWindow(true)}
+            className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-secondary hover:text-white"
+          >
+            <UserPlus className="w-4 h-4 mr-2" /> Cadastro
+          </Button>
 
-          {/* Os demais botões agora realizam apenas a cópia direta sem Popup de QR Code */}
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-correio hover:text-white">
             <Heart className="w-4 h-4 mr-2" /> Correio
           </Button>
@@ -212,6 +233,47 @@ export function ControlPanel() {
           </Link>
         </CardContent>
       </Card>
+
+      {showCadastroWindow && (
+        <div 
+          style={{ left: cadastroPos.x, top: cadastroPos.y }}
+          className="fixed z-[999] w-[300px] bg-card/95 border border-white/10 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200"
+        >
+          <div 
+            onMouseDown={startDragging}
+            className="h-12 bg-white/5 flex items-center justify-between px-4 cursor-grab active:cursor-grabbing border-b border-white/5"
+          >
+            <GripHorizontal className="w-4 h-4 text-white/20" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Mover Janela</span>
+            <button 
+              onClick={() => setShowCadastroWindow(false)}
+              className="p-1 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X className="w-4 h-4 text-white/40" />
+            </button>
+          </div>
+          
+          <div className="p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <h4 className="font-black italic uppercase text-white tracking-tighter text-xl">QR CADASTRO</h4>
+              <p className="text-[8px] font-bold uppercase text-white/40 tracking-widest leading-none">Aponte a câmera para participar</p>
+            </div>
+            
+            <div className="flex justify-center">
+              <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                <img src={qrUrls['cadastro']} alt="QR Cadastro" className="w-40 h-40" />
+              </div>
+            </div>
+            
+            <Button 
+              className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-[10px] h-12 rounded-xl"
+              onClick={() => copyToClipboard('/cadastro', 'Cadastro')}
+            >
+              <Copy className="w-4 h-4 mr-2" /> Copiar Link
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="bg-yellow-500/10 border-yellow-500/20 backdrop-blur-md">
