@@ -8,7 +8,7 @@ import {
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Music, Trophy, Mic, Image as ImageIconLucide,
-  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User, ListOrdered
+  Play, Volume2, Copy, Smartphone, ExternalLink, Eraser, User, ListOrdered, Send
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,8 @@ export function ControlPanel() {
     addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
-    moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory
+    moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
+    triggerPiadinha, removeJoke
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -161,7 +162,7 @@ export function ControlPanel() {
   const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
   
-  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
+  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length + (data.jokes?.length || 0);
 
   const handleApproveMusic = (id: string) => {
     if (approvedMusic.length >= 10) {
@@ -391,6 +392,35 @@ export function ControlPanel() {
                     <Button onClick={() => moderateParticipant(p.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
                     <Button onClick={() => moderateParticipant(p.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
                   </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-orange-500"><Mic className="w-5 h-5" /> Memes Enviados ({data.jokes?.length || 0})</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {(data.jokes || []).map((joke) => (
+                <div key={joke.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 border border-white/10 rounded-lg">
+                        <AvatarImage src={joke.imageUrl || ""} className="object-cover" />
+                        <AvatarFallback className="bg-white/5"><Mic className="w-4 h-4 text-orange-500/40" /></AvatarFallback>
+                      </Avatar>
+                      <span className="text-[10px] font-black uppercase text-white/40">Meme {joke.id.slice(0, 4)}</span>
+                   </div>
+                   <div className="flex gap-2">
+                      <audio id={`audio-${joke.id}`} src={joke.audioUrl} className="hidden" />
+                      <Button variant="outline" size="icon" onClick={() => (document.getElementById(`audio-${joke.id}`) as HTMLAudioElement).play()} className="h-9 w-9 bg-white/5 border-white/10 hover:bg-orange-500/20">
+                         <Volume2 className="w-4 h-4 text-orange-500" />
+                      </Button>
+                      <Button onClick={() => triggerPiadinha(joke)} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-bold uppercase text-[10px]">
+                         <Send className="w-4 h-4 mr-1" /> Enviar
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeJoke(joke.id)} className="h-9 w-9 text-white/20 hover:text-destructive">
+                         <Trash2 className="w-4 h-4" />
+                      </Button>
+                   </div>
                 </div>
               ))}
             </CardContent>

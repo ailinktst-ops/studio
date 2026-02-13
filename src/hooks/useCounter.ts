@@ -351,6 +351,21 @@ export function useCounter() {
     });
   };
 
+  const removeJoke = (id: string) => {
+    if (!counterRef || !data) return;
+    const updatedJokes = data.jokes.filter(j => j.id !== id);
+    updateDoc(counterRef, {
+      jokes: updatedJokes,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { jokes: updatedJokes }
+      }));
+    });
+  };
+
   const triggerPiadinha = (joke: Joke) => {
     if (!counterRef || !joke.audioUrl) return;
     updateDoc(counterRef, {
@@ -828,6 +843,7 @@ export function useCounter() {
     triggerAnnouncement,
     triggerSocialAnnouncement,
     submitJoke,
+    removeJoke,
     triggerPiadinha,
     clearPiadinha
   };
