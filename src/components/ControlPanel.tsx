@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -162,7 +161,7 @@ export function ControlPanel() {
   const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
   
-  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length + (data.jokes?.length || 0);
+  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
 
   const handleApproveMusic = (id: string) => {
     if (approvedMusic.length >= 10) {
