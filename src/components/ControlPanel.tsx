@@ -201,7 +201,7 @@ export function ControlPanel() {
       {/* Real-time Notification Popups */}
       <div className="fixed top-4 right-4 z-[300] flex flex-col gap-3 w-[320px]">
         {activeAlerts.map((alert) => (
-          <Card key={alert.id} className="bg-card/95 backdrop-blur-xl border-primary/20 shadow-2xl animate-in slide-in-from-right-10 duration-500 overflow-hidden">
+          <Card key={alert.id} className="bg-card/95 backdrop-blur-xl border-2 border-primary/50 shadow-2xl animate-in slide-in-from-right-10 duration-500 overflow-hidden">
             <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-white/5 bg-white/5">
               <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                 {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : <Music className="w-3 h-3" />}
