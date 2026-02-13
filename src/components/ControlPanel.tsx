@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -27,14 +28,6 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -51,14 +44,7 @@ export function ControlPanel() {
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Gole");
-  const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
   
-  // Estado para a janela flutuante arrastável do Cadastro
-  const [showCadastroWindow, setShowCadastroWindow] = useState(false);
-  const [cadastroPos, setCadastroPos] = useState({ x: 100, y: 100 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const formatUrlWithCorrectPort = (path: string) => {
@@ -77,44 +63,18 @@ export function ControlPanel() {
     return `https://picsum.photos/seed/${p.id}-movie-anime-character/200/200`;
   };
 
-  useEffect(() => {
-    const origin = formatUrlWithCorrectPort('');
-    const generateQr = (path: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(origin + path)}`;
-    setQrUrls({
-      cadastro: generateQr('/cadastro'),
-      correio: generateQr('/correio'),
-      musica: generateQr('/musica'),
-      piadinha: generateQr('/piadinha')
-    });
-  }, []);
-
-  // Lógica de arraste da janela
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      setCadastroPos({
-        x: e.clientX - dragOffset.current.x,
-        y: e.clientY - dragOffset.current.y
-      });
-    };
-    const handleMouseUp = () => setIsDragging(false);
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
-
-  const startDragging = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    dragOffset.current = {
-      x: e.clientX - cadastroPos.x,
-      y: e.clientY - cadastroPos.y
-    };
+  const openCadastroWindow = () => {
+    const url = formatUrlWithCorrectPort('/cadastro-qr');
+    const width = 450;
+    const height = 650;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    
+    window.open(
+      url, 
+      'CadastroQR', 
+      `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,resizable=yes`
+    );
   };
 
   const copyToClipboard = (path: string, label: string) => {
@@ -208,10 +168,10 @@ export function ControlPanel() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => setShowCadastroWindow(true)}
+            onClick={openCadastroWindow}
             className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-secondary hover:text-white"
           >
-            <UserPlus className="w-4 h-4 mr-2" /> Cadastro
+            <UserPlus className="w-4 h-4 mr-2" /> Janela Cadastro
           </Button>
 
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-correio hover:text-white">
@@ -233,47 +193,6 @@ export function ControlPanel() {
           </Link>
         </CardContent>
       </Card>
-
-      {showCadastroWindow && (
-        <div 
-          style={{ left: cadastroPos.x, top: cadastroPos.y }}
-          className="fixed z-[999] w-[300px] bg-card/95 border border-white/10 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200"
-        >
-          <div 
-            onMouseDown={startDragging}
-            className="h-12 bg-white/5 flex items-center justify-between px-4 cursor-grab active:cursor-grabbing border-b border-white/5"
-          >
-            <GripHorizontal className="w-4 h-4 text-white/20" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Mover Janela</span>
-            <button 
-              onClick={() => setShowCadastroWindow(false)}
-              className="p-1 hover:bg-white/10 rounded-full transition-colors"
-            >
-              <X className="w-4 h-4 text-white/40" />
-            </button>
-          </div>
-          
-          <div className="p-8 space-y-6">
-            <div className="text-center space-y-2">
-              <h4 className="font-black italic uppercase text-white tracking-tighter text-xl">QR CADASTRO</h4>
-              <p className="text-[8px] font-bold uppercase text-white/40 tracking-widest leading-none">Aponte a câmera para participar</p>
-            </div>
-            
-            <div className="flex justify-center">
-              <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_30px_rgba(255,255,255,0.05)]">
-                <img src={qrUrls['cadastro']} alt="QR Cadastro" className="w-40 h-40" />
-              </div>
-            </div>
-            
-            <Button 
-              className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-[10px] h-12 rounded-xl"
-              onClick={() => copyToClipboard('/cadastro', 'Cadastro')}
-            >
-              <Copy className="w-4 h-4 mr-2" /> Copiar Link
-            </Button>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="bg-yellow-500/10 border-yellow-500/20 backdrop-blur-md">
