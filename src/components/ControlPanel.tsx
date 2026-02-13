@@ -7,7 +7,7 @@ import {
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
-  Music, Mic, 
+  Music, Mic, Send,
   ExternalLink, Eraser, Volume2, Smartphone, Copy, X, GripHorizontal
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -569,4 +569,3 @@ export function ControlPanel() {
     </div>
   );
 }
-
