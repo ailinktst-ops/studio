@@ -8,13 +8,26 @@ import { Loader2 } from "lucide-react";
 export default function RankingMinimalPage() {
   const { data, isInitializing } = useCounter();
 
-  // Forçar fundo transparente para overlays
+  // Forçar fundo totalmente transparente apenas para esta página
   useEffect(() => {
-    document.body.style.backgroundImage = 'none';
-    document.body.style.backgroundColor = 'transparent';
+    const html = document.documentElement;
+    const body = document.body;
+    
+    // Salva os estilos originais para restaurar se necessário (embora esta janela costume ser fechada)
+    const originalHtmlBg = html.style.background;
+    const originalBodyBg = body.style.background;
+    const originalBodyBgImage = body.style.backgroundImage;
+
+    // Aplica transparência total com prioridade
+    html.style.setProperty('background', 'transparent', 'important');
+    body.style.setProperty('background', 'transparent', 'important');
+    body.style.setProperty('background-image', 'none', 'important');
+    body.style.setProperty('background-color', 'transparent', 'important');
+
     return () => {
-      document.body.style.backgroundImage = '';
-      document.body.style.backgroundColor = '';
+      html.style.background = originalHtmlBg;
+      body.style.background = originalBodyBg;
+      body.style.backgroundImage = originalBodyBgImage;
     };
   }, []);
 
@@ -32,18 +45,18 @@ export default function RankingMinimalPage() {
 
   if (isInitializing) {
     return (
-      <div className="p-4">
+      <div className="p-4 bg-transparent">
         <Loader2 className="w-6 h-6 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-transparent p-4 flex flex-col gap-2 w-64 select-none">
+    <div className="min-h-screen bg-transparent p-4 flex flex-col gap-2 w-64 select-none overflow-hidden">
       {sortedParticipants.map((p, i) => (
         <div 
           key={p.id} 
-          className="flex items-center gap-3 bg-black/60 backdrop-blur-xl p-2 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-500 shadow-2xl" 
+          className="flex items-center gap-3 bg-black/80 backdrop-blur-xl p-2 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-500 shadow-2xl" 
           style={{ animationDelay: `${i * 100}ms` }}
         >
           <div className="relative">
