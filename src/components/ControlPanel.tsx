@@ -171,7 +171,7 @@ export function ControlPanel() {
             onClick={openCadastroWindow}
             className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-secondary hover:text-white"
           >
-            <UserPlus className="w-4 h-4 mr-2" /> Janela Cadastro
+            <UserPlus className="w-4 h-4 mr-2" /> Cadastro
           </Button>
 
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-correio hover:text-white">
