@@ -131,30 +131,6 @@ export function ControlPanel() {
     if (file) handleImageCompression(file, (url) => updateParticipantImage(id, url), 400);
   };
 
-  const ShareButton = ({ path, label, icon: Icon, colorClass, qrKey }: { path: string, label: string, icon: any, colorClass: string, qrKey: string }) => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all", colorClass)}>
-          <Icon className="w-4 h-4 mr-2" /> {label}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
-        <DialogHeader className="mb-4">
-          <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">QR CODE {label}</DialogTitle>
-          <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">Aponte a câmera para acessar</DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col items-center gap-8">
-          <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-            <img src={qrUrls[qrKey]} alt={`QR ${label}`} className="w-48 h-48" />
-          </div>
-          <Button className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl" onClick={() => copyToClipboard(path, label)}>
-            <Copy className="w-4 h-4 mr-2" /> Copiar Link
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
@@ -193,10 +169,42 @@ export function ControlPanel() {
           </span>
         </div>
         <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <ShareButton path="/cadastro" label="Cadastro" icon={UserPlus} colorClass="hover:bg-secondary hover:text-white" qrKey="cadastro" />
-          <ShareButton path="/correio" label="Correio" icon={Heart} colorClass="hover:bg-correio hover:text-white" qrKey="correio" />
-          <ShareButton path="/musica" label="Música" icon={Music} colorClass="hover:bg-blue-600 hover:text-white" qrKey="musica" />
-          <ShareButton path="/piadinha" label="Memes" icon={Mic} colorClass="hover:bg-orange-500 hover:text-white" qrKey="piadinha" />
+          {/* Único botão que mantém o Popup/Janela Flutuante com QR Code */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-secondary hover:text-white">
+                <UserPlus className="w-4 h-4 mr-2" /> Cadastro
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
+              <DialogHeader className="mb-4">
+                <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">QR CODE CADASTRO</DialogTitle>
+                <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">Aponte a câmera para acessar</DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-8">
+                <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                  <img src={qrUrls['cadastro']} alt="QR Cadastro" className="w-48 h-48" />
+                </div>
+                <Button className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl" onClick={() => copyToClipboard('/cadastro', 'Cadastro')}>
+                  <Copy className="w-4 h-4 mr-2" /> Copiar Link
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Os demais botões agora realizam apenas a cópia direta sem Popup de QR Code */}
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-correio hover:text-white">
+            <Heart className="w-4 h-4 mr-2" /> Correio
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/musica', 'Música')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-blue-600 hover:text-white">
+            <Music className="w-4 h-4 mr-2" /> Música
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/piadinha', 'Memes')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white">
+            <Mic className="w-4 h-4 mr-2" /> Memes
+          </Button>
+
           <Link href={formatUrlWithCorrectPort('/overlay')} target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
               <ExternalLink className="w-4 h-4 mr-2" /> Telão
