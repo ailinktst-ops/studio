@@ -8,26 +8,28 @@ import { Loader2 } from "lucide-react";
 export default function RankingMinimalPage() {
   const { data, isInitializing } = useCounter();
 
-  // Forçar fundo totalmente transparente apenas para esta página
   useEffect(() => {
+    // Força transparência absoluta no nível mais profundo do DOM
     const html = document.documentElement;
     const body = document.body;
     
-    // Salva os estilos originais para restaurar se necessário (embora esta janela costume ser fechada)
-    const originalHtmlBg = html.style.background;
-    const originalBodyBg = body.style.background;
-    const originalBodyBgImage = body.style.backgroundImage;
+    const applyTransparency = () => {
+      html.style.setProperty('background', 'transparent', 'important');
+      html.style.setProperty('background-color', 'transparent', 'important');
+      html.style.setProperty('background-image', 'none', 'important');
+      
+      body.style.setProperty('background', 'transparent', 'important');
+      body.style.setProperty('background-color', 'transparent', 'important');
+      body.style.setProperty('background-image', 'none', 'important');
+    };
 
-    // Aplica transparência total com prioridade
-    html.style.setProperty('background', 'transparent', 'important');
-    body.style.setProperty('background', 'transparent', 'important');
-    body.style.setProperty('background-image', 'none', 'important');
-    body.style.setProperty('background-color', 'transparent', 'important');
+    applyTransparency();
+    
+    // Alguns navegadores resetam o estilo durante o render, então aplicamos no próximo frame também
+    const timeout = setTimeout(applyTransparency, 100);
 
     return () => {
-      html.style.background = originalHtmlBg;
-      body.style.background = originalBodyBg;
-      body.style.backgroundImage = originalBodyBgImage;
+      clearTimeout(timeout);
     };
   }, []);
 
@@ -39,7 +41,6 @@ export default function RankingMinimalPage() {
 
   const getParticipantAvatar = (p: any) => {
     if (p.imageUrl) return p.imageUrl;
-    // Semente consistente para personagens variados
     return `https://picsum.photos/seed/${p.id}-character-movie-drawing-anime-portrait-face/200/200`;
   };
 
@@ -56,7 +57,7 @@ export default function RankingMinimalPage() {
       {sortedParticipants.map((p, i) => (
         <div 
           key={p.id} 
-          className="flex items-center gap-3 bg-black/80 backdrop-blur-xl p-2 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-500 shadow-2xl" 
+          className="flex items-center gap-3 bg-black/85 backdrop-blur-2xl p-2.5 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-500 shadow-[0_8px_32px_rgba(0,0,0,0.5)]" 
           style={{ animationDelay: `${i * 100}ms` }}
         >
           <div className="relative">
@@ -85,6 +86,12 @@ export default function RankingMinimalPage() {
           </div>
         </div>
       ))}
+      
+      {sortedParticipants.length === 0 && (
+        <div className="bg-black/40 backdrop-blur-md p-4 rounded-xl border border-white/5 text-center">
+          <p className="text-[10px] font-black text-white/20 uppercase italic">Aguardando Ranking...</p>
+        </div>
+      )}
     </div>
   );
 }
