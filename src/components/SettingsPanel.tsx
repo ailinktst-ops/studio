@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -6,7 +5,8 @@ import { useCounter, SocialLink, AdminUser } from '@/hooks/useCounter';
 import { 
   Plus, Settings2, X, Upload, Megaphone,
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza,
-  Instagram, Youtube, Share2, Trash2, ShieldAlert, QrCode, Copy, Edit, Lock, User
+  Instagram, Youtube, Share2, Trash2, ShieldAlert, QrCode, Copy, Edit, Lock, User,
+  ListOrdered
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -171,6 +171,15 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
     });
   };
 
+  const openRankingMinimal = () => {
+    const url = formatUrlWithCorrectPort('/ranking-minimal');
+    const width = 320;
+    const height = 800;
+    const left = 50;
+    const top = 50;
+    window.open(url, 'RankingMinimal', `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,location=no,resizable=yes,scrollbars=yes`);
+  };
+
   const startEditingAdmin = (admin: AdminUser) => {
     setEditingAdmin(admin);
     setEditUsername(admin.username);
@@ -304,14 +313,26 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase text-white/40">Título do Ranking</label>
-              <Input 
-                placeholder="Ex: Resenha Épica" 
-                value={data.title} 
-                onChange={(e) => updateTitle(e.target.value)}
-                className="bg-black/20 border-white/10"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-white/40">Título do Ranking</label>
+                <Input 
+                  placeholder="Ex: Resenha Épica" 
+                  value={data.title} 
+                  onChange={(e) => updateTitle(e.target.value)}
+                  className="bg-black/20 border-white/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase text-white/40">Modo Overlay Minimalista</label>
+                <Button 
+                  variant="outline" 
+                  onClick={openRankingMinimal}
+                  className="w-full h-10 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
+                >
+                  <ListOrdered className="w-4 h-4 mr-2" /> Ranking Minimal
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
