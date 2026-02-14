@@ -71,7 +71,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
     const seed = p.id || "guest";
-    return `https://picsum.photos/seed/${seed}-character-movie-drawing-anime-portrait-face/400/400`;
+    return `https://picsum.photos/seed/${seed}-character-human-face-portrait-anime-movie/400/400`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -288,8 +288,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return () => clearInterval(interval);
   }, [overlay, data.customPhrases]);
 
-  // Logic for side list auto-rotation if it overflows
-  const ITEMS_PER_WINDOW = 12; 
+  const ITEMS_PER_WINDOW = 30; 
   const sideList = useMemo(() => sortedParticipants.slice(3), [sortedParticipants]);
   
   useEffect(() => {
@@ -460,7 +459,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && visibleSideList.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
-          <div className="space-y-0.5 max-h-[70vh] overflow-hidden pr-2">
+          <div className="space-y-0.5 max-h-[90vh] overflow-hidden pr-2">
             {visibleSideList.map((p, i) => (
               <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="flex items-center gap-3 overflow-hidden">

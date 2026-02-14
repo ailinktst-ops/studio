@@ -7,7 +7,7 @@ import {
   Plus, Settings2, X, Upload, Megaphone,
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza,
   Instagram, Youtube, Share2, Trash2, ShieldAlert, QrCode, Copy, Edit, Lock, User,
-  ListOrdered, Eye, EyeOff
+  ListOrdered, Eye, EyeOff, UserPlus
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const { 
     data, updateTitle, updateBrand, updatePhrases, updateBrandImage, 
     triggerAnnouncement, updateSocialLinks, triggerSocialAnnouncement,
-    removeAdmin, updateAdmin
+    removeAdmin, updateAdmin, addAdmin
   } = useCounter();
 
   const [newPhrase, setNewPhrase] = useState("");
@@ -40,6 +40,10 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const [qrAdminUrl, setQrAdminUrl] = useState("");
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   
+  // Direct Add Admin State
+  const [directAdminUser, setDirectAdminUser] = useState("");
+  const [directAdminPass, setDirectAdminPass] = useState("");
+
   // Edit Admin State
   const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
   const [editUsername, setEditUsername] = useState("");
@@ -206,6 +210,21 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
     });
   };
 
+  const handleDirectAddAdmin = () => {
+    if (!directAdminUser.trim() || !directAdminPass.trim()) return;
+    const success = addAdmin({
+      username: directAdminUser.trim(),
+      password: directAdminPass.trim()
+    });
+    if (success) {
+      setDirectAdminUser("");
+      setDirectAdminPass("");
+      toast({ title: "Admin Criado!", description: `${directAdminUser} agora é gestor.` });
+    } else {
+      toast({ variant: "destructive", title: "Erro", description: "Username já existe." });
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {isMaster && (
@@ -216,17 +235,17 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
                 <span className="text-xs font-black uppercase tracking-widest text-white">Master Control (Link Only)</span>
              </div>
           </div>
-          <CardContent className="p-6 flex flex-col items-center gap-6">
+          <CardContent className="p-6 space-y-8">
              <div className="w-full space-y-4">
                 <p className="text-[10px] font-bold uppercase text-white/40 text-center tracking-widest leading-relaxed">
                   Gerencie os acessos administrativos da plataforma.
                 </p>
                 
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <Dialog>
                       <DialogTrigger asChild>
-                        <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase italic h-14 w-full rounded-2xl shadow-lg">
-                          <QrCode className="w-5 h-5 mr-2" /> Gerar Convite Novo Admin
+                        <Button className="bg-primary/20 hover:bg-primary/30 border border-primary/20 text-white font-black uppercase italic h-14 rounded-2xl">
+                          <QrCode className="w-5 h-5 mr-2" /> Gerar Convite QR
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
@@ -245,6 +264,33 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
                             <Copy className="w-4 h-4 mr-2" /> Copiar Link Secreto
                           </Button>
                         </div>
+                      </DialogContent>
+                   </Dialog>
+
+                   <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase italic h-14 rounded-2xl shadow-lg">
+                          <UserPlus className="w-5 h-5 mr-2" /> Cadastro Direto
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                        <DialogHeader>
+                           <DialogTitle className="text-white font-black italic uppercase">Novo Gestor</DialogTitle>
+                           <DialogDescription className="text-white/40 font-bold uppercase text-[10px]">Crie uma conta de administrador manualmente</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-white/40">Username:</Label>
+                            <Input placeholder="Ex: Cupula" value={directAdminUser} onChange={(e) => setDirectAdminUser(e.target.value)} className="bg-black/40 border-white/10 h-12" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-white/40">Senha:</Label>
+                            <Input type="password" placeholder="Sua senha" value={directAdminPass} onChange={(e) => setDirectAdminPass(e.target.value)} className="bg-black/40 border-white/10 h-12" />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button onClick={handleDirectAddAdmin} className="w-full bg-primary text-white font-black uppercase italic h-12">Criar Acesso Agora</Button>
+                        </DialogFooter>
                       </DialogContent>
                    </Dialog>
                 </div>
