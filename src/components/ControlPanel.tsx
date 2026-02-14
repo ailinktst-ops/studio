@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useCounter, Participant, MusicRequest, Joke } from '@/hooks/useCounter';
+import { useCounter, Participant, MusicRequest, Joke, AdminUser } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
@@ -525,6 +525,46 @@ export function ControlPanel() {
           </Card>
 
           <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-500"><Music className="w-5 h-5" /> Pedidos de Música ({pendingMusic.length})</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {pendingMusic.map(req => (
+                <div key={req.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <span className="block text-white font-black italic uppercase text-xs">{req.artist}</span>
+                    <span className="block text-white/40 font-bold uppercase text-[10px] tracking-widest">{req.song}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleApproveMusic(req.id)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
+                    <Button onClick={() => moderateMusic(req.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-correio"><Heart className="w-5 h-5" /> Correio Elegante ({pendingMessages.length})</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {pendingMessages.map(msg => (
+                <div key={msg.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-correio/20 text-correio border-none font-bold italic uppercase text-[10px]">De: {msg.from}</Badge>
+                      <span className="text-white/20 text-xs">➔</span>
+                      <Badge className="bg-secondary/20 text-secondary border-none font-bold italic uppercase text-[10px]">Para: {msg.to}</Badge>
+                    </div>
+                  </div>
+                  <p className="text-white font-medium italic text-lg">&ldquo;{msg.content}&rdquo;</p>
+                  <div className="flex gap-2">
+                    <Button onClick={() => moderateMessage(msg.id, 'approved')} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px] tracking-widest"><Check className="w-4 h-4 mr-2" /> Aprovar</Button>
+                    <Button onClick={() => moderateMessage(msg.id, 'rejected')} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest"><Ban className="w-4 h-4 mr-2" /> Rejeitar</Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
             <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-orange-500"><Mic className="w-5 h-5" /> Memes Enviados ({data.jokes?.length || 0})</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {(data.jokes || []).map((joke) => (
@@ -573,46 +613,6 @@ export function ControlPanel() {
                          <Trash2 className="w-4 h-4" />
                       </Button>
                    </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/30 backdrop-blur-md border-white/5">
-            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-500"><Music className="w-5 h-5" /> Pedidos de Música ({pendingMusic.length})</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {pendingMusic.map(req => (
-                <div key={req.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <span className="block text-white font-black italic uppercase text-xs">{req.artist}</span>
-                    <span className="block text-white/40 font-bold uppercase text-[10px] tracking-widest">{req.song}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleApproveMusic(req.id)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
-                    <Button onClick={() => moderateMusic(req.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/30 backdrop-blur-md border-white/5">
-            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-correio"><Heart className="w-5 h-5" /> Correio Elegante ({pendingMessages.length})</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {pendingMessages.map(msg => (
-                <div key={msg.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-correio/20 text-correio border-none font-bold italic uppercase text-[10px]">De: {msg.from}</Badge>
-                      <span className="text-white/20 text-xs">➔</span>
-                      <Badge className="bg-secondary/20 text-secondary border-none font-bold italic uppercase text-[10px]">Para: {msg.to}</Badge>
-                    </div>
-                  </div>
-                  <p className="text-white font-medium italic text-lg">&ldquo;{msg.content}&rdquo;</p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => moderateMessage(msg.id, 'approved')} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px] tracking-widest"><Check className="w-4 h-4 mr-2" /> Aprovar</Button>
-                    <Button onClick={() => moderateMessage(msg.id, 'rejected')} variant="outline" className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest"><Ban className="w-4 h-4 mr-2" /> Rejeitar</Button>
-                  </div>
                 </div>
               ))}
             </CardContent>
