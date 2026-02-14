@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -8,7 +7,7 @@ import {
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Music, Mic, Send,
-  ExternalLink, Eraser, Volume2, Smartphone, Copy, X, GripHorizontal, Edit
+  ExternalLink, Eraser, Volume2, Smartphone, Copy, X, GripHorizontal, Edit, QrCode
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -496,6 +495,30 @@ export function ControlPanel() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10">
+                          <QrCode className="w-6 h-6 text-white/40" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-card border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
+                        <DialogHeader className="mb-4">
+                          <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">NOVA FOTO</DialogTitle>
+                          <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">{p.name}</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center gap-8">
+                          <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                            <img 
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formatUrlWithCorrectPort(`/update-photo/${p.id}`))}`} 
+                              alt="QR Nova Foto" 
+                              className="w-48 h-48" 
+                            />
+                          </div>
+                          <p className="text-center text-[9px] font-bold text-white/20 uppercase tracking-widest">Aponte a câmera para atualizar a foto deste perfil</p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
                     <Button size="lg" onClick={() => incrementCount(p.id)} className="bg-secondary hover:bg-secondary/90 w-16 h-14 text-2xl font-black rounded-2xl"><Plus className="w-8 h-8" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => removeParticipant(p.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></Button>
                   </div>
