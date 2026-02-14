@@ -40,6 +40,10 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const [qrAdminUrl, setQrAdminUrl] = useState("");
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   
+  // Perfil Próprio
+  const [myNewPassword, setMyNewPassword] = useState("");
+  const [isChangingOwnPass, setIsChangingOwnPass] = useState(false);
+
   // Direct Add Admin State
   const [directAdminUser, setDirectAdminUser] = useState("");
   const [directAdminPass, setDirectAdminPass] = useState("");
@@ -53,6 +57,7 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isMaster = loggedUser === "Link";
+  const currentAdmin = data.admins.find(a => a.username === loggedUser);
 
   const formatUrlWithCorrectPort = (path: string) => {
     if (typeof window === 'undefined') return path;
@@ -77,6 +82,14 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
       ...prev,
       [username]: !prev[username]
     }));
+  };
+
+  const handleUpdateOwnPassword = () => {
+    if (!myNewPassword.trim() || !currentAdmin) return;
+    updateAdmin(currentAdmin.username, { ...currentAdmin, password: myNewPassword.trim() });
+    setMyNewPassword("");
+    setIsChangingOwnPass(false);
+    toast({ title: "Senha Alterada!", description: "Sua nova senha de acesso foi salva com sucesso." });
   };
 
   const handleAddPhrase = () => {
@@ -227,6 +240,55 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {/* Opção para o Admin Logado Alterar sua Senha */}
+      {currentAdmin && (
+        <Card className="bg-card/30 backdrop-blur-md border-white/5 animate-in fade-in slide-in-from-top-2 duration-500">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-white/60 font-bold uppercase tracking-widest text-xs">
+                <div className="bg-primary/20 p-2 rounded-lg">
+                  <Lock className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <span className="opacity-40">Minha Conta:</span>
+                  <span className="text-white ml-2 italic">{currentAdmin.username}</span>
+                </div>
+              </div>
+              <Dialog open={isChangingOwnPass} onOpenChange={setIsChangingOwnPass}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest bg-white/5 border-white/10 hover:bg-white/10 text-white">
+                    Alterar Minha Senha
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-white uppercase font-black italic">Alterar Senha</DialogTitle>
+                    <DialogDescription className="text-white/40 font-bold">Defina uma nova senha para o seu acesso administrativo.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-white/40">Nova Senha:</Label>
+                      <Input 
+                        type="password" 
+                        value={myNewPassword} 
+                        onChange={(e) => setMyNewPassword(e.target.value)} 
+                        className="bg-black/40 border-white/10 h-12 text-lg font-bold"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleUpdateOwnPassword} disabled={!myNewPassword.trim()} className="w-full bg-primary text-white font-black uppercase italic h-12">
+                      Salvar Nova Senha
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {isMaster && (
         <Card className="bg-primary/10 border-primary/20 backdrop-blur-md overflow-hidden animate-in slide-in-from-top-4 duration-500">
           <div className="px-6 py-4 bg-primary/20 flex items-center justify-between">
@@ -312,7 +374,7 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
                                      <div className="flex items-center gap-2">
                                        <span className="text-[10px] font-bold text-white/20 uppercase">Senha:</span>
                                        <span className="text-[10px] font-mono text-primary font-black">
-                                         {showPasswords[admin.username] ? admin.password : "••••••••"}
+                                         {showPasswords[admin.username] || isMaster ? admin.password : "••••••••"}
                                        </span>
                                        <button onClick={() => togglePasswordVisibility(admin.username)} className="text-white/20 hover:text-white transition-colors">
                                          {showPasswords[admin.username] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
