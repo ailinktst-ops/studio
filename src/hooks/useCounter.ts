@@ -181,7 +181,7 @@ export function useCounter() {
       id: DEFAULT_ID,
       ...state,
       categories: VALID_CATEGORIES,
-      admins: state.admins || DEFAULT_STATE.admins,
+      admins: (state.admins && state.admins.length > 0) ? state.admins : DEFAULT_STATE.admins,
       socialLinks: state.socialLinks || [],
       participants: (state.participants || []).map(p => ({
         ...p,

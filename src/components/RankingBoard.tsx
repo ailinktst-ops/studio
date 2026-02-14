@@ -31,6 +31,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [currentChallengeName, setCurrentChallengeName] = useState("");
   const [tickerIndex, setTickerIndex] = useState(0);
   const [rotatingIndex, setRotatingIndex] = useState(0);
+  const [sideListOffset, setSideListOffset] = useState(0);
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
@@ -287,6 +288,29 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return () => clearInterval(interval);
   }, [overlay, data.customPhrases]);
 
+  // Logic for side list auto-rotation if it overflows
+  const ITEMS_PER_WINDOW = 12; 
+  const sideList = useMemo(() => sortedParticipants.slice(3), [sortedParticipants]);
+  
+  useEffect(() => {
+    if (!overlay || sideList.length <= ITEMS_PER_WINDOW) {
+      setSideListOffset(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setSideListOffset(prev => {
+        const next = prev + ITEMS_PER_WINDOW;
+        return next >= sideList.length ? 0 : next;
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [overlay, sideList.length]);
+
+  const visibleSideList = useMemo(() => {
+    if (!overlay) return sideList;
+    return sideList.slice(sideListOffset, sideListOffset + ITEMS_PER_WINDOW);
+  }, [overlay, sideList, sideListOffset]);
+
   if (isInitializing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
@@ -297,7 +321,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }
 
   const top3 = sortedParticipants.slice(0, 3);
-  const sideList = sortedParticipants.slice(3);
   const leader = sortedParticipants[0];
   const activeMessage = data.messages.find(m => m.id === data.activeMessageId);
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
@@ -434,14 +457,16 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && sideList.length > 0 && (
+      {overlay && visibleSideList.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
-          <div className="space-y-0.5 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-            {sideList.map((p, i) => (
-              <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary">
+          <div className="space-y-0.5 max-h-[70vh] overflow-hidden pr-2">
+            {visibleSideList.map((p, i) => (
+              <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-[10px] font-black text-white/20 w-4">{p.count > 0 ? `${i + 4}º` : ""}</span>
+                  <span className="text-[10px] font-black text-white/20 w-8">
+                    {sideListOffset + i + 4}º
+                  </span>
                   <Avatar className="w-6 h-6 border border-white/10">
                     <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
                     <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
