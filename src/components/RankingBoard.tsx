@@ -289,7 +289,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [overlay, data.customPhrases]);
 
   const ITEMS_PER_WINDOW = 30; 
-  const sideList = useMemo(() => sortedParticipants.slice(3), [sortedParticipants]);
+  const sideList = useMemo(() => {
+    if (!hasPoints) return sortedParticipants;
+    return sortedParticipants.slice(3);
+  }, [sortedParticipants, hasPoints]);
   
   useEffect(() => {
     if (!overlay || sideList.length <= ITEMS_PER_WINDOW) {
@@ -464,7 +467,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="flex items-center gap-3 overflow-hidden">
                   <span className="text-[10px] font-black text-white/20 w-8">
-                    {sideListOffset + i + 4}º
+                    {sortedParticipants.indexOf(p) + 1}º
                   </span>
                   <Avatar className="w-6 h-6 border border-white/10">
                     <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
