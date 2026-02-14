@@ -61,8 +61,7 @@ export function ControlPanel() {
 
   const getParticipantAvatar = (p: Participant) => {
     if (p.imageUrl) return p.imageUrl;
-    // Semente específica para rostos de personagens variados, evitando paisagens
-    return `https://picsum.photos/seed/${p.id}-character-movie-anime-drawing-portrait/200/200`;
+    return `https://picsum.photos/seed/${p.id}-character-human-face-portrait-anime-movie/200/200`;
   };
 
   const openCadastroWindow = () => {
@@ -136,11 +135,9 @@ export function ControlPanel() {
   
   const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
 
-  // Real-time Alerts Logic
   useEffect(() => {
     if (isInitializing) return;
 
-    // Initialize seen IDs so we only alert for NEW items
     if (!initializedAlertsRef.current) {
       pendingParticipants.forEach(p => seenIdsRef.current.add(p.id));
       pendingMusic.forEach(m => seenIdsRef.current.add(m.id));
@@ -198,7 +195,6 @@ export function ControlPanel() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-10 relative">
       
-      {/* Real-time Notification Popups */}
       <div className="fixed top-4 right-4 z-[300] flex flex-col gap-3 w-[320px]">
         {activeAlerts.map((alert) => (
           <Card key={alert.id} className="bg-card/95 backdrop-blur-xl border-2 border-primary/50 shadow-2xl animate-in slide-in-from-right-10 duration-500 overflow-hidden">
@@ -293,7 +289,12 @@ export function ControlPanel() {
             <Music className="w-4 h-4 mr-2" /> Música
           </Button>
 
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/piadinha', 'Memes')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => window.open(formatUrlWithCorrectPort('/piadinha'), '_blank')} 
+            className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white"
+          >
             <Mic className="w-4 h-4 mr-2" /> Memes
           </Button>
 
