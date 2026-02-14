@@ -1,13 +1,14 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useCounter, Participant, MusicRequest } from '@/hooks/useCounter';
+import { useCounter, Participant, MusicRequest, Joke } from '@/hooks/useCounter';
 import { 
   Plus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Music, Mic, Send,
-  ExternalLink, Eraser, Volume2, Smartphone, Copy, X, GripHorizontal
+  ExternalLink, Eraser, Volume2, Smartphone, Copy, X, GripHorizontal, Edit
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,15 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
@@ -37,13 +47,17 @@ export function ControlPanel() {
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
     moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
-    triggerPiadinha, removeJoke
+    triggerPiadinha, removeJoke, updateJokeName
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Gole");
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   
+  // Joke Editing State
+  const [editingJokeId, setEditingJokeId] = useState<string | null>(null);
+  const [editingJokeName, setEditingJokeName] = useState("");
+
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const seenIdsRef = useRef<Set<string>>(new Set());
   const initializedAlertsRef = useRef(false);
@@ -181,6 +195,19 @@ export function ControlPanel() {
     }
     moderateMusic(id, 'approved');
     removeAlert(id);
+  };
+
+  const startEditingJoke = (joke: Joke) => {
+    setEditingJokeId(joke.id);
+    setEditingJokeName(joke.name);
+  };
+
+  const handleSaveJokeName = () => {
+    if (editingJokeId && editingJokeName.trim()) {
+      updateJokeName(editingJokeId, editingJokeName.trim());
+      setEditingJokeId(null);
+      toast({ title: "Nome Atualizado", description: "O nome do meme foi alterado com sucesso." });
+    }
   };
 
   if (isInitializing) {
@@ -507,13 +534,38 @@ export function ControlPanel() {
                         <AvatarImage src={joke.imageUrl || ""} className="object-cover" />
                         <AvatarFallback className="bg-white/5"><Mic className="w-4 h-4 text-orange-500/40" /></AvatarFallback>
                       </Avatar>
-                      <span className="text-[10px] font-black uppercase text-white/40">Meme {joke.id.slice(0, 4)}</span>
+                      <span className="text-sm font-black italic uppercase text-white/80">{joke.name}</span>
                    </div>
                    <div className="flex gap-2">
                       <audio id={`audio-${joke.id}`} src={joke.audioUrl} className="hidden" />
                       <Button variant="outline" size="icon" onClick={() => (document.getElementById(`audio-${joke.id}`) as HTMLAudioElement).play()} className="h-9 w-9 bg-white/5 border-white/10 hover:bg-orange-500/20">
                          <Volume2 className="w-4 h-4 text-orange-500" />
                       </Button>
+                      
+                      <Dialog open={editingJokeId === joke.id} onOpenChange={(open) => !open && setEditingJokeId(null)}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="icon" onClick={() => startEditingJoke(joke)} className="h-9 w-9 bg-white/5 border-white/10 hover:bg-white/10">
+                            <Edit className="w-4 h-4 text-white/40" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-white font-black italic uppercase">Renomear Meme</DialogTitle>
+                            <DialogDescription className="text-white/40 font-bold text-xs">Dê um novo nome para este meme na lista.</DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <Input 
+                              value={editingJokeName} 
+                              onChange={(e) => setEditingJokeName(e.target.value)} 
+                              className="bg-black/40 border-white/10 h-12 font-bold"
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={handleSaveJokeName} className="w-full bg-orange-500 text-white font-black uppercase italic h-12">Salvar Nome</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
                       <Button onClick={() => triggerPiadinha(joke)} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-bold uppercase text-[10px]">
                          <Send className="w-4 h-4 mr-1" /> Enviar
                       </Button>

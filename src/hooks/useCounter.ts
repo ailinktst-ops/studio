@@ -46,6 +46,7 @@ export interface SocialLink {
 
 export interface Joke {
   id: string;
+  name: string;
   audioUrl: string;
   imageUrl?: string;
   timestamp: number;
@@ -189,7 +190,10 @@ export function useCounter() {
       })),
       messages: state.messages || [],
       musicRequests: state.musicRequests || [],
-      jokes: state.jokes || [],
+      jokes: (state.jokes || []).map(j => ({
+        ...j,
+        name: j.name || `Meme ${j.id?.slice(0, 4) || '??'}`
+      })),
       customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
         ? state.customPhrases 
         : DEFAULT_STATE.customPhrases,
@@ -333,10 +337,11 @@ export function useCounter() {
     return true;
   };
 
-  const submitJoke = (audioUrl: string, imageUrl?: string) => {
+  const submitJoke = (audioUrl: string, name: string, imageUrl?: string) => {
     if (!counterRef || !data) return;
     const newJoke: Joke = {
       id: Math.random().toString(36).substring(2, 11),
+      name: name || `Meme ${Date.now().toString().slice(-4)}`,
       audioUrl,
       imageUrl,
       timestamp: Date.now()
@@ -349,6 +354,21 @@ export function useCounter() {
         path: counterRef.path,
         operation: 'update',
         requestResourceData: { jokes: [...(data.jokes || []), newJoke] }
+      }));
+    });
+  };
+
+  const updateJokeName = (id: string, name: string) => {
+    if (!counterRef || !data) return;
+    const updatedJokes = data.jokes.map(j => j.id === id ? { ...j, name } : j);
+    updateDoc(counterRef, {
+      jokes: updatedJokes,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { jokes: updatedJokes }
       }));
     });
   };
@@ -845,6 +865,7 @@ export function useCounter() {
     triggerAnnouncement,
     triggerSocialAnnouncement,
     submitJoke,
+    updateJokeName,
     removeJoke,
     triggerPiadinha,
     clearPiadinha

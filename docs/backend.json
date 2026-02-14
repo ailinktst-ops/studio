@@ -80,6 +80,7 @@
             "type": "object",
             "properties": {
               "id": { "type": "string" },
+              "name": { "type": "string" },
               "audioUrl": { "type": "string" },
               "imageUrl": { "type": "string" },
               "timestamp": { "type": "number" }

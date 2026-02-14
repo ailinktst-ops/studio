@@ -6,12 +6,14 @@ import { useCounter } from '@/hooks/useCounter';
 import { Mic, Square, Send, Loader2, Play, Trash2, Volume2, Image as ImageIcon, Camera, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 export default function MemesPage() {
   const { data, submitJoke, isInitializing } = useCounter();
   const [isRecording, setIsRecording] = useState(false);
+  const [memeName, setMemeName] = useState("");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -110,11 +112,12 @@ export default function MemesPage() {
       reader.readAsDataURL(audioBlob);
       reader.onloadend = () => {
         const base64Audio = reader.result as string;
-        submitJoke(base64Audio, imageUrl || undefined);
+        submitJoke(base64Audio, memeName.trim(), imageUrl || undefined);
         setIsUploading(false);
         setAudioBlob(null);
         setAudioUrl(null);
         setImageUrl(null);
+        setMemeName("");
         toast({
           title: "Meme Enviado!",
           description: "Seu meme entrou na fila do administrador.",
@@ -162,7 +165,16 @@ export default function MemesPage() {
         <Card className="bg-card/30 backdrop-blur-xl border-white/10 shadow-2xl overflow-hidden">
           <CardContent className="pt-8 flex flex-col items-center gap-6">
             
-            {/* Image Upload Section */}
+            <div className="w-full space-y-2">
+              <label className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em] block text-center">Nome do Meme:</label>
+              <Input 
+                placeholder="Ex: Risada do João" 
+                value={memeName}
+                onChange={(e) => setMemeName(e.target.value)}
+                className="bg-black/40 border-white/10 h-12 text-center font-bold"
+              />
+            </div>
+
             <div className="w-full space-y-2">
               <label className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em] block text-center">Foto do Meme:</label>
               <div className="relative group mx-auto w-40 h-40">
