@@ -290,9 +290,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
   const ITEMS_PER_WINDOW = 30; 
   const sideList = useMemo(() => {
-    if (!hasPoints) return sortedParticipants;
+    if (!hasPoints) return approvedParticipants;
     return sortedParticipants.slice(3);
-  }, [sortedParticipants, hasPoints]);
+  }, [sortedParticipants, approvedParticipants, hasPoints]);
   
   useEffect(() => {
     if (!overlay || sideList.length <= ITEMS_PER_WINDOW) {
@@ -443,19 +443,24 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       )}
 
       {overlay && (
-        <div className="fixed right-8 bottom-32 z-[80] flex flex-row gap-6 animate-in slide-in-from-right-10 duration-700">
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20"><img src={qrCadastroUrl} alt="QR" className="w-24 h-24" /></div>
+        <div className="fixed right-8 bottom-32 z-[80] flex flex-col items-end gap-3 animate-in slide-in-from-right-10 duration-700">
+          <div className="flex flex-row gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Cadastro</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-secondary/20"><img src={qrCadastroUrl} alt="QR" className="w-24 h-24" /></div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-correio/20"><img src={qrCorreioUrl} alt="QR" className="w-24 h-24" /></div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Música</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20"><img src={qrMusicaUrl} alt="QR" className="w-24 h-24" /></div>
+            </div>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Correio</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-correio/20"><img src={qrCorreioUrl} alt="QR" className="w-24 h-24" /></div>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Música</span>
-            <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20"><img src={qrMusicaUrl} alt="QR" className="w-24 h-24" /></div>
-          </div>
+          <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mr-4">
+            Rank interativo - Desenvolvido por Link.
+          </p>
         </div>
       )}
 
