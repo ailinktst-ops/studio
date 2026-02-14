@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -6,7 +7,7 @@ import {
   Plus, Settings2, X, Upload, Megaphone,
   Beer, Wine, CupSoda, GlassWater, Trophy, Star, Flame, Music, Pizza,
   Instagram, Youtube, Share2, Trash2, ShieldAlert, QrCode, Copy, Edit, Lock, User,
-  ListOrdered
+  ListOrdered, Eye, EyeOff
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const [newSocialType, setNewSocialType] = useState<'instagram' | 'youtube'>('instagram');
   const [newSocialUrl, setNewSocialUrl] = useState("");
   const [qrAdminUrl, setQrAdminUrl] = useState("");
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   
   // Edit Admin State
   const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
@@ -65,6 +67,13 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
       setQrAdminUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`);
     }
   }, [isMaster]);
+
+  const togglePasswordVisibility = (username: string) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [username]: !prev[username]
+    }));
+  };
 
   const handleAddPhrase = () => {
     if (newPhrase.trim()) {
@@ -254,7 +263,15 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
                                   </div>
                                   <div className="flex flex-col">
                                      <span className="text-sm font-black italic uppercase text-white">{admin.username}</span>
-                                     <span className="text-[10px] font-bold text-white/20 uppercase">Acesso Padrão</span>
+                                     <div className="flex items-center gap-2">
+                                       <span className="text-[10px] font-bold text-white/20 uppercase">Senha:</span>
+                                       <span className="text-[10px] font-mono text-primary font-black">
+                                         {showPasswords[admin.username] ? admin.password : "••••••••"}
+                                       </span>
+                                       <button onClick={() => togglePasswordVisibility(admin.username)} className="text-white/20 hover:text-white transition-colors">
+                                         {showPasswords[admin.username] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                       </button>
+                                     </div>
                                   </div>
                                </div>
                                <div className="flex items-center gap-2">

@@ -297,7 +297,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }
 
   const top3 = sortedParticipants.slice(0, 3);
-  const top20 = sortedParticipants.slice(3, 20);
+  const sideList = sortedParticipants.slice(3);
   const leader = sortedParticipants[0];
   const activeMessage = data.messages.find(m => m.id === data.activeMessageId);
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
@@ -434,11 +434,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && top20.length > 0 && (
+      {overlay && sideList.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
-          <div className="space-y-0.5 max-h-[70vh] overflow-hidden">
-            {top20.map((p, i) => (
+          <div className="space-y-0.5 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+            {sideList.map((p, i) => (
               <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <span className="text-[10px] font-black text-white/20 w-4">{p.count > 0 ? `${i + 4}º` : ""}</span>

@@ -110,7 +110,9 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   brandName: "RankUp Counter",
   brandIcon: "Beer",
   brandImageUrl: "",
-  admins: [],
+  admins: [
+    { username: "Cupula", password: "b1250" }
+  ],
   socialLinks: [],
   participants: [],
   messages: [],
@@ -179,7 +181,7 @@ export function useCounter() {
       id: DEFAULT_ID,
       ...state,
       categories: VALID_CATEGORIES,
-      admins: state.admins || [],
+      admins: state.admins || DEFAULT_STATE.admins,
       socialLinks: state.socialLinks || [],
       participants: (state.participants || []).map(p => ({
         ...p,
