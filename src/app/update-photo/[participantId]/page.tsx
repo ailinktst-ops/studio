@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, use, useRef, useEffect } from 'react';
+import { useState, use, useRef } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Camera, Check, Loader2, User, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Camera, Check, Loader2, User, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
-export default function UpdatePhotoPage({ params }: { params: Promise<{ participantId: string }> }) {
+interface PageProps {
+  params: Promise<{ participantId: string }>;
+}
+
+export default function UpdatePhotoPage({ params }: PageProps) {
   const { participantId } = use(params);
-  const { data, updateParticipantImage, isInitializing } = useCounter();
+  const { data, updateParticipantImage, isInitializing, loading } = useCounter();
   const [imageUrl, setImageUrl] = useState("");
   const [status, setStatus] = useState<'idle' | 'success' | 'uploading'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,10 +56,6 @@ export default function UpdatePhotoPage({ params }: { params: Promise<{ particip
       };
       img.src = event.target?.result as string;
     };
-    reader.onerror = () => {
-      setStatus('idle');
-      toast({ variant: "destructive", title: "Erro", description: "Falha ao ler o arquivo." });
-    };
     reader.readAsDataURL(file);
   };
 
@@ -79,7 +79,7 @@ export default function UpdatePhotoPage({ params }: { params: Promise<{ particip
     fileInputRef.current?.click();
   };
 
-  if (isInitializing) {
+  if (isInitializing || (loading && !participant)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
