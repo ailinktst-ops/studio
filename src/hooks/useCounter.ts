@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -244,7 +244,7 @@ export function useCounter() {
     initDoc();
   }, [isDocLoading, rawData, counterRef, user, isUserLoading]);
 
-  const updateDocField = (fields: Partial<CounterState>) => {
+  const updateDocField = useCallback((fields: Partial<CounterState>) => {
     if (!counterRef || !user || !data) return;
     updateDoc(counterRef, { 
       ...fields,
@@ -256,7 +256,14 @@ export function useCounter() {
         requestResourceData: fields
       }));
     });
-  };
+  }, [counterRef, user, data]);
+
+  const updateTitle = useCallback((title: string) => updateDocField({ title }), [updateDocField]);
+  const updateBrand = useCallback((brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }), [updateDocField]);
+  const updateBrandImage = useCallback((brandImageUrl: string) => updateDocField({ brandImageUrl }), [updateDocField]);
+  const updatePhrases = useCallback((customPhrases: string[]) => updateDocField({ customPhrases }), [updateDocField]);
+  const updateSocialLinks = useCallback((socialLinks: SocialLink[]) => updateDocField({ socialLinks }), [updateDocField]);
+  const clearPiadinha = useCallback(() => updateDocField({ "piadinha.isActive": false }), [updateDocField]);
 
   const addAdmin = (admin: AdminUser) => {
     if (!counterRef || !data) return;
@@ -404,7 +411,7 @@ export function useCounter() {
         requestResourceData: { piadinha: { audioUrl: joke.audioUrl, imageUrl: joke.imageUrl || "", isActive: true, timestamp: Date.now() } }
       }));
     });
-    setTimeout(() => updateDoc(counterRef, { "piadinha.isActive": false }), 30000);
+    setTimeout(() => updateDoc(counterRef, { "piadinha.isActive": false }), 60000);
   };
 
   const moderateParticipant = (id: string, status: 'approved' | 'rejected', category?: string) => {
@@ -822,22 +829,14 @@ export function useCounter() {
     setTimeout(() => updateDoc(counterRef, { "socialAnnouncement.isActive": false }), 10000);
   };
 
-  const updateSocialLinks = (socialLinks: SocialLink[]) => {
-    updateDocField({ socialLinks });
-  };
-
-  const clearPiadinha = () => {
-    updateDocField({ "piadinha.isActive": false });
-  };
-
   return {
     data,
     loading: isLoading,
     isInitializing: isDocLoading && !rawData,
-    updateTitle: (title: string) => updateDocField({ title }),
-    updateBrand: (brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }),
-    updateBrandImage: (brandImageUrl: string) => updateDocField({ brandImageUrl }),
-    updatePhrases: (customPhrases: string[]) => updateDocField({ customPhrases }),
+    updateTitle,
+    updateBrand,
+    updateBrandImage,
+    updatePhrases,
     updateSocialLinks,
     addAdmin,
     updateAdmin,

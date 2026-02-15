@@ -7,7 +7,7 @@ import {
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
   Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, AlertCircle,
-  Megaphone, QrCode
+  Megaphone, QrCode, Volume2
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
@@ -35,6 +35,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
+  const [isAudioStarted, setIsAudioStarted] = useState(false);
   
   const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [challengePhase, setChallengePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
@@ -75,6 +76,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
+    if (!isAudioStarted) return;
     const audio = new Audio(SOUND_URLS[type]);
     if (type === 'challenge') {
       audio.loop = true;
@@ -175,7 +177,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       setTimeout(() => setNotification(null), 3500);
     }
     lastParticipantsRef.current = current;
-  }, [approvedParticipants, overlay, sortedParticipants, currentLantern]);
+  }, [approvedParticipants, overlay, sortedParticipants, currentLantern, isAudioStarted]);
 
   useEffect(() => {
     if (overlay && data.activeMessageId && data.activeMessageId !== lastMessageIdRef.current) {
@@ -186,7 +188,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     } else if (!data.activeMessageId) {
       setCorreioPhase('hidden');
     }
-  }, [data.activeMessageId, overlay]);
+  }, [data.activeMessageId, overlay, isAudioStarted]);
 
   useEffect(() => {
     if (overlay && data.raffle?.winnerId && data.raffle.winnerId !== lastRaffleIdRef.current) {
@@ -213,25 +215,38 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       playSound('social');
       lastSocialAnnouncementRef.current = data.socialAnnouncement.timestamp;
     }
-  }, [data.socialAnnouncement, overlay]);
+  }, [data.socialAnnouncement, overlay, isAudioStarted]);
 
   useEffect(() => {
     if (overlay && data.announcement?.isActive && data.announcement.timestamp !== lastAnnouncementTimestampRef.current) {
       playSound('announcement');
       lastAnnouncementTimestampRef.current = data.announcement.timestamp;
     }
-  }, [data.announcement, overlay]);
+  }, [data.announcement, overlay, isAudioStarted]);
 
   useEffect(() => {
-    if (overlay && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
-      if (piadinhaAudioRef.current) piadinhaAudioRef.current.pause();
+    if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
+      if (piadinhaAudioRef.current) {
+        piadinhaAudioRef.current.pause();
+        piadinhaAudioRef.current = null;
+      }
+      
       const audio = new Audio(data.piadinha.audioUrl);
       piadinhaAudioRef.current = audio;
-      audio.play().catch(() => {});
       lastPiadinhaTimestampRef.current = data.piadinha.timestamp;
-      audio.onended = () => clearPiadinha();
+
+      audio.play().catch((err) => {
+        console.warn("Meme audio failed:", err);
+        // If play is blocked, we still want to clear the state eventually
+        setTimeout(() => clearPiadinha(), 5000);
+      });
+
+      audio.onended = () => {
+        clearPiadinha();
+        piadinhaAudioRef.current = null;
+      };
     }
-  }, [data.piadinha, overlay, clearPiadinha]);
+  }, [data.piadinha, overlay, clearPiadinha, isAudioStarted]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -277,7 +292,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       if (winner) setCurrentChallengeName(winner.name);
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [data.challenge?.isRaffling, data.challenge?.candidates, approvedParticipants, data.challenge?.winnerId]);
+  }, [data.challenge?.isRaffling, data.challenge?.candidates, approvedParticipants, data.challenge?.winnerId, isAudioStarted]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -349,6 +364,17 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
+      {overlay && !isAudioStarted && (
+        <div 
+          className="fixed inset-0 z-[500] bg-black/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-500"
+          onClick={() => setIsAudioStarted(true)}
+        >
+          <Volume2 className="w-24 h-24 text-primary animate-pulse mb-6" />
+          <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Clique para Ativar o Áudio</h2>
+          <p className="text-white/40 font-bold uppercase text-xs mt-4 tracking-[0.3em]">O telão precisa de permissão para tocar notificações</p>
+        </div>
+      )}
+
       {overlay && brandImageUrl && (
         <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
           <img src={brandImageUrl} alt="Watermark" className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]" />
