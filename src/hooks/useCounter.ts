@@ -493,6 +493,23 @@ export function useCounter() {
     });
   };
 
+  const decrementCount = (id: string) => {
+    if (!counterRef || !data) return;
+    const updatedParticipants = data.participants.map(p => 
+      p.id === id ? { ...p, count: Math.max(0, p.count - 1) } : p
+    );
+    updateDoc(counterRef, {
+      participants: updatedParticipants,
+      updatedAt: Timestamp.now()
+    }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: counterRef.path,
+        operation: 'update',
+        requestResourceData: { participants: updatedParticipants }
+      }));
+    });
+  };
+
   const resetAll = () => {
     if (!counterRef) return;
     const resetData = {
@@ -846,6 +863,7 @@ export function useCounter() {
     updateParticipantCategory,
     updateParticipantImage,
     incrementCount,
+    decrementCount,
     resetAll,
     resetOnlyPoints,
     removeParticipant,

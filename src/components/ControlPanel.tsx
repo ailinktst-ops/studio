@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
 import { useCounter, Participant, Joke, AdminUser } from '@/hooks/useCounter';
 import { 
-  Plus, RotateCcw, UserPlus, Trash2, 
+  Plus, Minus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Music, Mic, Send,
@@ -42,7 +43,7 @@ import Link from 'next/link';
 export function ControlPanel() {
   const { 
     data, loading, isInitializing, 
-    addParticipant, updateParticipantImage, incrementCount, resetAll, resetOnlyPoints,
+    addParticipant, updateParticipantImage, incrementCount, decrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
     moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
@@ -462,7 +463,10 @@ export function ControlPanel() {
                         </div>
                       </DialogContent>
                     </Dialog>
-                    <Button size="lg" onClick={() => incrementCount(p.id)} className="bg-secondary hover:bg-secondary/90 w-16 h-14 text-2xl font-black rounded-2xl"><Plus className="w-8 h-8" /></Button>
+                    <div className="flex items-center gap-1">
+                      <Button size="lg" onClick={() => decrementCount(p.id)} className="bg-destructive/20 hover:bg-destructive/30 text-destructive w-12 h-14 text-2xl font-black rounded-2xl border border-destructive/20"><Minus className="w-6 h-6" /></Button>
+                      <Button size="lg" onClick={() => incrementCount(p.id)} className="bg-secondary hover:bg-secondary/90 w-16 h-14 text-2xl font-black rounded-2xl"><Plus className="w-8 h-8" /></Button>
+                    </div>
                     <Button variant="ghost" size="icon" onClick={() => removeParticipant(p.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </div>
