@@ -350,8 +350,8 @@ export function useCounter() {
       imageUrl: imageUrl || "",
       timestamp: Timestamp.now().toMillis()
     };
-    // Limite drasticamente reduzido para 5 memes ultra-comprimidos para garantir que o documento não estoure 1MB
-    const updatedJokes = [...data.jokes, newJoke].slice(-5);
+    // LIMITE CRÍTICO: Reduzido para 3 memes para garantir que o documento não estoure 1MB
+    const updatedJokes = [...data.jokes, newJoke].slice(-3);
     updateDocField({
       jokes: updatedJokes
     });
@@ -527,7 +527,7 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
-    const updatedMessages = [...(data?.messages || []), newMessage].slice(-15);
+    const updatedMessages = [...(data?.messages || []), newMessage].slice(-10);
     updateDocField({
       messages: updatedMessages
     });
@@ -561,7 +561,7 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
-    const updatedRequests = [...(data?.pointRequests || []), newRequest].slice(-10);
+    const updatedRequests = [...(data?.pointRequests || []), newRequest].slice(-5);
     updateDocField({
       pointRequests: updatedRequests
     });

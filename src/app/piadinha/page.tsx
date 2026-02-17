@@ -34,7 +34,7 @@ export default function MemesPage() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Compressão agressiva: audioBitsPerSecond em 16000 (16kbps) para ocupar o mínimo de espaço
+      // Compressão ULTRA agressiva: 16kbps para economizar espaço crítico no Firestore
       const mediaRecorder = new MediaRecorder(stream, { audioBitsPerSecond: 16000 });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -55,13 +55,13 @@ export default function MemesPage() {
       mediaRecorder.start();
       setIsRecording(true);
 
-      // Trava de segurança: Máximo 8 segundos por meme
+      // Limite estrito de 8 segundos para evitar estouro de 1MB
       recordingTimeoutRef.current = setTimeout(() => {
         if (mediaRecorder.state === 'recording') {
           stopRecording();
           toast({
-            title: "Limite atingido",
-            description: "Memes são limitados a 8 segundos para garantir performance.",
+            title: "Tempo limite",
+            description: "Memes limitados a 8 segundos para estabilidade do sistema.",
           });
         }
       }, 8000);
@@ -71,7 +71,7 @@ export default function MemesPage() {
       toast({
         variant: "destructive",
         title: "Erro no Microfone",
-        description: "Não foi possível acessar o microfone do seu dispositivo.",
+        description: "Não foi possível acessar o microfone.",
       });
     }
   };
@@ -84,7 +84,7 @@ export default function MemesPage() {
     }
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 180) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 120) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -110,8 +110,8 @@ export default function MemesPage() {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          // Qualidade baixíssima (0.3) e tamanho reduzido (180px) para economizar cada byte
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.3);
+          // Qualidade EXTREMAMENTE baixa (0.2) e tamanho reduzido (120px)
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.2);
           callback(optimizedDataUrl);
         }
       };
@@ -144,7 +144,7 @@ export default function MemesPage() {
         setMemeName("");
         toast({
           title: "Meme Enviado!",
-          description: "Seu meme entrou na fila do administrador.",
+          description: "Seu meme já está disponível para o mestre.",
         });
       };
     } catch (err) {
@@ -153,7 +153,7 @@ export default function MemesPage() {
       toast({
         variant: "destructive",
         title: "Erro no Envio",
-        description: "Não foi possível enviar o áudio.",
+        description: "Tente novamente.",
       });
     }
   };
@@ -182,7 +182,7 @@ export default function MemesPage() {
             Memes <span className="text-orange-500">Ao Vivo!</span>
           </h1>
           <p className="text-white/40 font-bold uppercase tracking-widest text-xs">
-            {data.brandName} • Crie seu meme agora!
+            {data.brandName} • Crie seu meme
           </p>
         </div>
 
@@ -269,7 +269,7 @@ export default function MemesPage() {
                       <><Mic className="w-6 h-6 mr-2" /> Gravar Áudio</>
                     )}
                   </Button>
-                  {isRecording && <p className="text-[10px] text-red-500 font-bold animate-pulse">GRAVANDO (MÁX 8S)...</p>}
+                  {isRecording && <p className="text-[10px] text-red-500 font-bold animate-pulse uppercase">Gravando (máx 8s)...</p>}
                 </div>
               ) : (
                 <div className="w-full space-y-6">
@@ -309,7 +309,7 @@ export default function MemesPage() {
                     {isUploading ? (
                       <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Enviando...</>
                     ) : (
-                      <><Send className="w-6 h-6 mr-2" /> Enviar Meme Completo</>
+                      <><Send className="w-6 h-6 mr-2" /> Enviar Meme</>
                     )}
                   </Button>
                 </div>
