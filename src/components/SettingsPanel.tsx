@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -146,7 +145,7 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
     }
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 300) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -174,7 +173,8 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          // Otimização para Logo da Marca: 300px e qualidade 0.6
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
           callback(optimizedDataUrl);
         }
       };
@@ -190,7 +190,7 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
         alert("A imagem é muito grande. Escolha uma imagem de até 2MB.");
         return;
       }
-      handleImageCompression(file, (url) => updateBrandImage(url), 800);
+      handleImageCompression(file, (url) => updateBrandImage(url), 300);
     }
   };
 

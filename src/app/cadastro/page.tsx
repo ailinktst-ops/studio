@@ -23,7 +23,7 @@ export default function CadastroPage() {
     return `https://picsum.photos/seed/${seed}-character-human-face-portrait-anime-movie/200/200`;
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 400) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 200) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -51,7 +51,8 @@ export default function CadastroPage() {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          // Qualidade reduzida para 0.5 para otimizar espaço em Base64
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
           callback(optimizedDataUrl);
         }
       };

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef } from 'react';
@@ -61,7 +60,7 @@ export default function MemesPage() {
     }
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 300) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -87,7 +86,8 @@ export default function MemesPage() {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          // Otimização para memes: 300px e qualidade 0.5
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
           callback(optimizedDataUrl);
         }
       };

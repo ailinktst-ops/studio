@@ -22,7 +22,7 @@ export default function UpdatePhotoPage({ params }: PageProps) {
 
   const participant = data.participants.find(p => p.id === participantId);
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 250) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -50,7 +50,8 @@ export default function UpdatePhotoPage({ params }: PageProps) {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.6);
+          // Redução para 250px e qualidade 0.5 para economizar espaço
+          const compressed = canvas.toDataURL('image/jpeg', 0.5);
           callback(compressed);
         }
       };

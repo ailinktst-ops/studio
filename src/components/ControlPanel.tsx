@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -106,7 +105,7 @@ export function ControlPanel() {
     }
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 600) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 200) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -126,7 +125,8 @@ export function ControlPanel() {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          callback(canvas.toDataURL('image/jpeg', 0.7));
+          // Otimização para 200px e qualidade 0.5
+          callback(canvas.toDataURL('image/jpeg', 0.5));
         }
       };
       img.src = event.target?.result as string;
@@ -136,7 +136,7 @@ export function ControlPanel() {
 
   const handleParticipantImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleImageCompression(file, (url) => updateParticipantImage(id, url), 400);
+    if (file) handleImageCompression(file, (url) => updateParticipantImage(id, url), 200);
   };
 
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
@@ -482,25 +482,6 @@ export function ControlPanel() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Dialog>
-                      <DialogTrigger asChild><Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10"><QrCode className="w-6 h-6 text-white/40" /></Button></DialogTrigger>
-                      <DialogContent className="bg-card border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
-                        <DialogHeader className="mb-4">
-                          <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">NOVA FOTO</DialogTitle>
-                          <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">{p.name}</DialogDescription>
-                        </DialogHeader>
-                        <div className="flex flex-col items-center gap-8">
-                          <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-                            <img 
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formatUrlWithCorrectPort(`/update-photo/${p.id}`))}`} 
-                              alt="QR Nova Foto" 
-                              className="w-48 h-48" 
-                            />
-                          </div>
-                          <p className="text-center text-[9px] font-bold text-white/20 uppercase tracking-widest">Aponte a câmera para atualizar a foto deste perfil</p>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
                     <div className="flex items-center gap-1">
                       <Button size="lg" onClick={() => decrementCount(p.id)} className="bg-destructive/20 hover:bg-destructive/30 text-destructive w-12 h-14 text-2xl font-black rounded-2xl border border-destructive/20"><Minus className="w-6 h-6" /></Button>
                       
