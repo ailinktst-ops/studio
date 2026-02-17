@@ -13,7 +13,6 @@ service cloud.firestore {
       allow write, create, update, delete: if request.auth != null;
       
       // Regras explícitas para a sub-coleção de memes (jokes)
-      // Essencial para resolver o erro de permissão ao listar memes
       match /jokes/{jokeId} {
         allow read, get, list: if true;
         allow write, create, update, delete: if request.auth != null;

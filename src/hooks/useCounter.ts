@@ -60,7 +60,7 @@ export interface RaffleState {
 }
 
 export interface PiadinhaState {
-  jokeId?: string; 
+  audioUrl?: string; 
   imageUrl?: string;
   isActive: boolean;
   timestamp: number | null;
@@ -246,11 +246,10 @@ export function useCounter() {
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
     if (!counterRef || !user) return;
     
-    // USADO SETDOC COM MERGE PARA RESOLVER DEFINITIVAMENTE ERROS DE PERMISSÃO EM ATUALIZAÇÕES
-    setDoc(counterRef, { 
+    updateDoc(counterRef, { 
       ...fields,
       updatedAt: Timestamp.now() 
-    }, { merge: true }).catch(e => {
+    }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
@@ -270,7 +269,7 @@ export function useCounter() {
       piadinha: { 
         isActive: false, 
         timestamp: Date.now(),
-        jokeId: ""
+        audioUrl: ""
       } 
     });
   }, [updateDocField]);
@@ -368,11 +367,9 @@ export function useCounter() {
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
-    // REMANEJAMENTO IDEAL: Sincroniza apenas o ID. 
-    // NUNCA enviamos o audioUrl (Base64) no documento principal para evitar o limite de 1MB e erro de permissão.
     updateDocField({
       piadinha: {
-        jokeId: joke.id,
+        audioUrl: joke.audioUrl,
         imageUrl: joke.imageUrl || "",
         isActive: true,
         timestamp: Date.now()
@@ -385,7 +382,7 @@ export function useCounter() {
         piadinha: { 
           isActive: false, 
           timestamp: Date.now(),
-          jokeId: ""
+          audioUrl: ""
         } 
       });
     }, 60000);
@@ -463,7 +460,7 @@ export function useCounter() {
       activeMessageId: null,
       announcement: { message: "", isActive: false, timestamp: null },
       socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null },
-      piadinha: { jokeId: "", imageUrl: "", isActive: false, timestamp: null }
+      piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null }
     };
     updateDocField(resetData);
   };
