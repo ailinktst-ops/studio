@@ -350,8 +350,8 @@ export function useCounter() {
       imageUrl: imageUrl || "",
       timestamp: Timestamp.now().toMillis()
     };
-    // Limite reduzido para 6 memes para evitar estouro de documento (1MB)
-    const updatedJokes = [...data.jokes, newJoke].slice(-6);
+    // Limite drasticamente reduzido para 5 memes ultra-comprimidos para garantir que o documento não estoure 1MB
+    const updatedJokes = [...data.jokes, newJoke].slice(-5);
     updateDocField({
       jokes: updatedJokes
     });

@@ -34,7 +34,8 @@ export default function MemesPage() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      // Compressão agressiva: audioBitsPerSecond em 16000 (16kbps) para ocupar o mínimo de espaço
+      const mediaRecorder = new MediaRecorder(stream, { audioBitsPerSecond: 16000 });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -54,7 +55,7 @@ export default function MemesPage() {
       mediaRecorder.start();
       setIsRecording(true);
 
-      // Trava de segurança: Máximo 8 segundos por meme para economizar espaço no banco
+      // Trava de segurança: Máximo 8 segundos por meme
       recordingTimeoutRef.current = setTimeout(() => {
         if (mediaRecorder.state === 'recording') {
           stopRecording();
@@ -83,7 +84,7 @@ export default function MemesPage() {
     }
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 250) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 180) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -109,8 +110,8 @@ export default function MemesPage() {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          // Qualidade reduzida para 0.4 para garantir que o documento não estoure 1MB
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.4);
+          // Qualidade baixíssima (0.3) e tamanho reduzido (180px) para economizar cada byte
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.3);
           callback(optimizedDataUrl);
         }
       };
