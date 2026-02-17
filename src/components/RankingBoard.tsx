@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useCounter, Participant, Joke } from '@/hooks/useCounter';
-import { useDoc, useMemoFirebase, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useCounter, Participant } from '@/hooks/useCounter';
+import { useFirestore } from '@/firebase';
 import { 
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
-  Heart, Disc, Sparkles, Instagram, Youtube, Mic, ListOrdered, AlertCircle,
-  Megaphone, QrCode, Volume2
+  Heart, Disc, Instagram, Youtube, Mic, ListOrdered, AlertCircle,
+  Megaphone, Volume2
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
@@ -27,8 +26,7 @@ const SOUND_URLS = {
 };
 
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
-  const firestore = useFirestore();
-  const { data, loading, isInitializing, clearPiadinha } = useCounter();
+  const { data, isInitializing, clearPiadinha } = useCounter();
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [currentChallengeName, setCurrentChallengeName] = useState("");
   const [tickerIndex, setTickerIndex] = useState(0);
@@ -226,7 +224,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.announcement, overlay, isAudioStarted]);
 
-  // Listener Definitivo para o Áudio do Meme
+  // Listener Definitivo para o Áudio do Meme (Restaurado para o modelo original)
   useEffect(() => {
     if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
       // Para qualquer áudio anterior

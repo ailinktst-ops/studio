@@ -246,10 +246,10 @@ export function useCounter() {
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
     if (!counterRef || !user) return;
     
-    updateDoc(counterRef, { 
+    setDoc(counterRef, { 
       ...fields,
       updatedAt: Timestamp.now() 
-    }).catch(e => {
+    }, { merge: true }).catch(e => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
@@ -367,6 +367,7 @@ export function useCounter() {
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
+    // Restauração para o comportamento original: sincroniza o audioUrl diretamente no estado
     updateDocField({
       piadinha: {
         audioUrl: joke.audioUrl,

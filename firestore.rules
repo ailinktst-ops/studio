@@ -12,20 +12,15 @@ service cloud.firestore {
       // Permite escrita apenas para usuários autenticados (via AuthInitializer)
       allow write, create, update, delete: if request.auth != null;
       
-      // Regras explícitas para a sub-coleção de memes (jokes)
-      match /jokes/{jokeId} {
-        allow read, get, list: if true;
-        allow write, create, update, delete: if request.auth != null;
-      }
-
-      // Garante que qualquer outra sub-coleção futura também siga o padrão
+      // Regra definitiva para garantir que todas as sub-coleções (como 'jokes')
+      // herdem as permissões de leitura pública e escrita autenticada.
       match /{allSubcollections=**} {
         allow read, get, list: if true;
         allow write, create, update, delete: if request.auth != null;
       }
     }
     
-    // Fallback de segurança global
+    // Fallback de segurança global para outros caminhos
     match /{path=**} {
       allow read, get, list: if true;
       allow write: if request.auth != null;
