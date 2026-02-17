@@ -261,7 +261,7 @@ export function ControlPanel() {
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-correio hover:text-white">
             <Heart className="w-4 h-4 mr-2" /> Correio
           </Button>
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/piadinha', 'Memes')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white">
+          <Button variant="outline" size="sm" onClick={() => window.open(formatUrlWithCorrectPort('/piadinha'), '_blank')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white">
             <Mic className="w-4 h-4 mr-2" /> Memes
           </Button>
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/pedir-ponto', 'Pedir Ponto')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-green-600 hover:text-white">
