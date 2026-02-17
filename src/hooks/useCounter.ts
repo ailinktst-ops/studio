@@ -79,6 +79,12 @@ export interface SocialAnnouncementState {
   timestamp: number | null;
 }
 
+export interface LastWinnerState {
+  name: string;
+  count: number;
+  imageUrl?: string;
+}
+
 export interface CounterState {
   id: string;
   title: string;
@@ -100,6 +106,7 @@ export interface CounterState {
   piadinha?: PiadinhaState;
   announcement?: AnnouncementState;
   socialAnnouncement?: SocialAnnouncementState;
+  lastWinner?: LastWinnerState | null;
 }
 
 const DEFAULT_ID = "current";
@@ -154,7 +161,8 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
     url: "",
     isActive: false,
     timestamp: null
-  }
+  },
+  lastWinner: null
 };
 
 export function useCounter() {
@@ -214,7 +222,8 @@ export function useCounter() {
       socialAnnouncement: {
         ...DEFAULT_STATE.socialAnnouncement!,
         ...(state.socialAnnouncement || {})
-      }
+      },
+      lastWinner: state.lastWinner || null
     } as CounterState;
   };
 
@@ -454,16 +463,29 @@ export function useCounter() {
       activeMessageId: null,
       announcement: { message: "", isActive: false, timestamp: null },
       socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null },
-      piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null }
+      piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null },
+      lastWinner: null
     };
     updateDocField(resetData);
   };
 
   const resetOnlyPoints = () => {
     if (!counterRef || !data) return;
+    
+    // Find current leader before resetting
+    const approvedParticipants = data.participants.filter(p => p.status === 'approved');
+    const sorted = [...approvedParticipants].sort((a, b) => b.count - a.count);
+    const leader = sorted[0] && sorted[0].count > 0 ? sorted[0] : null;
+
     const resetParticipants = data.participants.map(p => ({ ...p, count: 0 }));
+    
     updateDocField({
-      participants: resetParticipants
+      participants: resetParticipants,
+      lastWinner: leader ? {
+        name: leader.name,
+        count: leader.count,
+        imageUrl: leader.imageUrl || ""
+      } : null
     });
   };
 

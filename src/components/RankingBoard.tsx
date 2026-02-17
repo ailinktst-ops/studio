@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -536,6 +535,24 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 <p className="text-xs font-bold text-white/80 uppercase italic truncate">{m.song}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {overlay && data.lastWinner && (
+        <div className="fixed right-8 top-[45%] z-[70] w-72 animate-in slide-in-from-right-20 duration-1000 text-right">
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">
+            Campeão Rodada Anterior <Trophy className="w-3 h-3 text-yellow-500" />
+          </h3>
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center justify-end gap-4">
+            <div className="text-right">
+              <p className="text-xs font-black text-white italic uppercase truncate">{data.lastWinner.name}</p>
+              <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">{data.lastWinner.count} Pontos</p>
+            </div>
+            <Avatar className="w-12 h-12 border-2 border-yellow-500 shadow-lg">
+              <AvatarImage src={data.lastWinner.imageUrl || `https://picsum.photos/seed/${data.lastWinner.name}/200/200`} className="object-cover" />
+              <AvatarFallback className="bg-white/5 font-bold uppercase">{data.lastWinner.name[0]}</AvatarFallback>
+            </Avatar>
           </div>
         </div>
       )}
