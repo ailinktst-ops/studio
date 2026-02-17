@@ -158,7 +158,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     } else {
       const timer = setTimeout(() => {
         if (highlightIndex < sortedParticipants.length - 1) {
-          setHighlightIndex(prev => prev + highlightIndex < sortedParticipants.length - 1 ? 1 : 0);
           setHighlightIndex(prev => prev + 1);
         } else {
           setViewMode('PODIUM');
@@ -607,12 +606,28 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      <div className="text-center space-y-4 mb-6">
+      {/* Cabeçalho da Marca no Overlay */}
+      {overlay && (
+        <div className="flex flex-col items-center gap-4 mt-8 mb-4 animate-in fade-in slide-in-from-top-10 duration-1000">
+          {brandImageUrl ? (
+            <img src={brandImageUrl} className="w-32 h-32 object-cover rounded-3xl border-4 border-white/10 shadow-2xl rotate-3" alt="Logo" />
+          ) : (
+            <div className="bg-primary p-6 rounded-3xl shadow-2xl rotate-3">
+              <CustomIcon className="w-16 h-16 text-white" />
+            </div>
+          )}
+          <h2 className="text-3xl font-black italic uppercase tracking-[0.3em] text-secondary drop-shadow-md">
+            {data.brandName}
+          </h2>
+        </div>
+      )}
+
+      <div className={cn("text-center space-y-4", overlay ? "mb-12 mt-4" : "mb-6")}>
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
       {!hasPoints ? (
-        <div className="flex justify-center items-center w-full max-w-6xl mt-4 min-h-[400px]">
+        <div className="flex justify-center items-center w-full max-w-6xl mt-12 min-h-[400px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
                <Avatar className="w-80 h-80 border-[12px] border-primary shadow-[0_0_50px_rgba(168,85,247,0.5)] mb-8">
