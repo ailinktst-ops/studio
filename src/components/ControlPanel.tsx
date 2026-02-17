@@ -56,6 +56,9 @@ export function ControlPanel() {
   const [editingCountId, setEditingCountId] = useState<string | null>(null);
   const [newCountValue, setNewCountValue] = useState<number>(0);
 
+  const [editingJokeId, setEditingJokeId] = useState<string | null>(null);
+  const [newJokeName, setNewJokeName] = useState("");
+
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const seenIdsRef = useRef<Set<string>>(new Set());
   const initializedAlertsRef = useRef(false);
@@ -312,6 +315,7 @@ export function ControlPanel() {
       <Tabs defaultValue="main" className="w-full">
         <TabsList className="bg-white/5 border border-white/10 p-1 mb-6 h-12 w-full">
           <TabsTrigger value="main" className="flex-1 font-bold uppercase text-[10px] tracking-widest">Painel Principal</TabsTrigger>
+          <TabsTrigger value="memes" className="flex-1 font-bold uppercase text-[10px] tracking-widest">Memes</TabsTrigger>
           <TabsTrigger value="moderation" className="flex-1 font-bold uppercase text-[10px] tracking-widest relative">
             Moderação
             {totalPending > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full animate-bounce">{totalPending}</span>}
@@ -395,6 +399,75 @@ export function ControlPanel() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="memes" className="space-y-6">
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                <Volume2 className="w-4 h-4" /> Banco de Memes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {data.jokes.length === 0 ? (
+                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4 col-span-full">Nenhum meme cadastrado.</p>
+              ) : (
+                data.jokes.map((joke) => (
+                  <div key={joke.id} className="bg-white/5 border border-white/5 p-4 rounded-2xl flex flex-col gap-4 group">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-12 h-12 rounded-xl border border-white/10">
+                        <AvatarImage src={joke.imageUrl || ""} className="object-cover" />
+                        <AvatarFallback className="bg-orange-500/20 text-orange-500"><Mic className="w-5 h-5" /></AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-white font-black italic uppercase truncate text-xs">{joke.name}</p>
+                          <button onClick={() => {
+                            setEditingJokeId(joke.id);
+                            setNewJokeName(joke.name);
+                          }} className="text-white/20 hover:text-white transition-colors">
+                            <Edit className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <p className="text-[8px] text-white/20 uppercase font-bold">Meme Enviado</p>
+                      </div>
+                    </div>
+
+                    {editingJokeId === joke.id && (
+                      <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
+                        <Input 
+                          value={newJokeName}
+                          onChange={(e) => setNewJokeName(e.target.value)}
+                          className="h-8 text-[10px] bg-black/40 border-white/10"
+                          placeholder="Novo nome..."
+                        />
+                        <Button size="sm" onClick={() => {
+                          updateJokeName(joke.id, newJokeName);
+                          setEditingJokeId(null);
+                        }} className="bg-green-600 h-8 px-2"><Check className="w-3 h-3" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingJokeId(null)} className="h-8 px-2 text-white/40"><X className="w-3 h-3" /></Button>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button onClick={() => triggerPiadinha(joke)} className="flex-1 bg-orange-500 hover:bg-orange-600 h-10 font-black uppercase italic text-[10px]">
+                        <Send className="w-3 h-3 mr-1" /> Telão
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => {
+                        const audio = new Audio(joke.audioUrl);
+                        audio.play();
+                      }} className="h-10 w-10 border-white/10 hover:bg-white/5">
+                        <Volume2 className="w-4 h-4 text-orange-500" />
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => removeJoke(joke.id)} className="h-10 w-10 border-destructive/20 text-destructive hover:bg-destructive/10">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="moderation" className="space-y-6">
           <Card className="bg-white/5 border-white/10">
             <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
@@ -409,7 +482,7 @@ export function ControlPanel() {
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10 border border-white/10">
                         <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
-                        <AvatarFallback className="font-bold">{p.name[0]}</AvatarFallback>
+                        <AvatarFallback className="font-bold">{p.name?.[0]}</AvatarFallback>
                       </Avatar>
                       <span className="font-bold text-white uppercase italic">{p.name}</span>
                     </div>
