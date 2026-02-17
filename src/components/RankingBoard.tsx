@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -172,7 +171,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     if (!overlay || approvedParticipants.length === 0 || hasPoints) return;
     const interval = setInterval(() => {
       setRotatingIndex(prev => (prev + 1) % approvedParticipants.length);
-    }, 4000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [overlay, approvedParticipants.length, hasPoints]);
 
@@ -426,7 +425,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* ALERTAS DE ANÚNCIO (MEGAPHONE) */}
       {overlay && data.announcement?.isActive && (
         <div className="fixed inset-0 z-[220] flex items-center justify-center p-10 bg-red-600/90 backdrop-blur-2xl animate-in fade-in duration-300">
            <div className="flex flex-col items-center gap-12 text-center animate-bounce">
@@ -438,7 +436,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* ALERTA SOCIAL (INSTAGRAM/YOUTUBE) */}
       {overlay && data.socialAnnouncement?.isActive && (
         <div className="fixed right-8 top-[30%] z-[110] animate-in slide-in-from-right-full duration-700">
           <div className={cn(
@@ -461,7 +458,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* ALERTA DE MEMES (PIADINHA) */}
       {overlay && data.piadinha?.isActive && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
@@ -478,7 +474,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* ALERTA DE CORREIO ELEGANTE */}
       {overlay && activeMessage && correioPhase !== 'hidden' && (
         <div className={cn(
           "transition-all duration-1000 ease-in-out",
@@ -502,7 +497,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* SORTEIO GERAL */}
       {overlay && (data.raffle?.isRaffling || raffleWinner) && rafflePhase !== 'hidden' && (
         <div className={cn(
           "transition-all duration-1000 ease-in-out",
@@ -526,7 +520,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* NOVO DESAFIO */}
       {overlay && (data.challenge?.isRaffling || challengeWinner) && challengePhase !== 'hidden' && (
         <div className={cn(
           "transition-all duration-1000 ease-in-out",
@@ -550,7 +543,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* QR CODES DE SERVIÇO */}
       {overlay && (
         <div className="fixed right-8 bottom-32 z-[80] flex flex-col items-end gap-3 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-row gap-6">
@@ -570,7 +562,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* LISTA LATERAL DE CLASSIFICAÇÃO */}
       {overlay && visibleSideList.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
@@ -592,7 +583,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* CABEÇALHO DO OVERLAY (LOGO + MARCA) */}
       {overlay && (
         <div className="flex flex-col items-center gap-4 mt-[-10px] mb-2 animate-in fade-in slide-in-from-top-10 duration-1000">
           {brandImageUrl ? (
@@ -608,12 +598,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* TÍTULO PRINCIPAL */}
       <div className={cn("text-center space-y-4", overlay ? "mb-4 mt-0" : "mb-6")}>
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-5xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
-      {/* ÁREA CENTRAL DE PARTICIPANTES / PÓDIO */}
       {!hasPoints ? (
         <div className="flex justify-center items-center w-full max-w-6xl mt-8 min-h-[350px]">
           {approvedParticipants.length > 0 ? (
@@ -685,7 +673,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* NOTIFICAÇÃO FLUTUANTE (NOVO PONTO / LÍDER / LANTERNINHA) */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-6 animate-in fade-in zoom-in duration-300">
           <div className={cn(
@@ -712,7 +699,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {/* LETREIRO DE FRASES (ROXO) */}
       {overlay && (
         <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4">
           <div className="bg-black/60 backdrop-blur-2xl px-12 py-4 rounded-full border border-white/10 flex items-center shadow-2xl min-w-[500px] justify-center overflow-hidden">

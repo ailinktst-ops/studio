@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -114,7 +113,7 @@ export function ControlPanel() {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const maxSize = 200;
+          const maxSize = 250;
           let width = img.width;
           let height = img.height;
           if (width > height) {
@@ -200,6 +199,19 @@ export function ControlPanel() {
     }
     moderateMusic(id, 'approved');
     removeAlert(id);
+  };
+
+  const startEditingCount = (id: string, count: number) => {
+    setEditingCountId(id);
+    setNewCountValue(count);
+  };
+
+  const handleUpdateCount = () => {
+    if (editingCountId !== null) {
+      updateParticipantCount(editingCountId, newCountValue);
+      setEditingCountId(null);
+      toast({ title: "Pontos Atualizados", description: `Novo valor: ${newCountValue}` });
+    }
   };
 
   if (isInitializing) {
@@ -360,8 +372,6 @@ export function ControlPanel() {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          {/* ... resto do conteúdo omitido por brevidade mas deve ser mantido igual ... */}
-          {/* Manter as seções de Correio Ativo, Playlist e Ranking Geral */}
           <Card className="bg-card/30 border-correio/20">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-black uppercase italic text-correio flex items-center gap-2"><Heart className="w-4 h-4" /> Correio Ativo</CardTitle>
@@ -406,7 +416,25 @@ export function ControlPanel() {
                     </div>
                     <div>
                       <span className="font-black text-xl text-white italic uppercase">{p.name}</span>
-                      <p className="text-sm font-bold text-secondary">{p.count} {p.category.toLowerCase()}</p>
+                      <div className="flex items-center gap-2">
+                        {editingCountId === p.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input 
+                              type="number" 
+                              value={newCountValue} 
+                              onChange={(e) => setNewCountValue(parseInt(e.target.value) || 0)}
+                              className="w-16 h-6 p-1 text-xs"
+                              autoFocus
+                              onBlur={handleUpdateCount}
+                              onKeyDown={(e) => e.key === 'Enter' && handleUpdateCount()}
+                            />
+                          </div>
+                        ) : (
+                          <p onClick={() => startEditingCount(p.id, p.count)} className="text-sm font-bold text-secondary cursor-pointer hover:text-white transition-colors">
+                            {p.count} {p.category.toLowerCase()}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -419,7 +447,107 @@ export function ControlPanel() {
             </CardContent>
           </Card>
         </TabsContent>
-        {/* ... Restante das tabs ... */}
+
+        <TabsContent value="moderation" className="space-y-6">
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-primary">Participantes Pendentes</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              {pendingParticipants.length === 0 ? (
+                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4">Nenhum cadastro aguardando.</p>
+              ) : (
+                pendingParticipants.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 border border-white/10">
+                        <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
+                        <AvatarFallback className="font-bold">{p.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-bold text-white uppercase italic">{p.name}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => moderateParticipant(p.id, 'approved')} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic"><Check className="w-3 h-3 mr-1" /> Aprovar</Button>
+                      <Button onClick={() => moderateParticipant(p.id, 'rejected')} variant="destructive" className="h-8 text-[10px] font-black uppercase italic"><Ban className="w-3 h-3 mr-1" /> Recusar</Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-correio">Correio Elegante</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              {pendingMessages.length === 0 ? (
+                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4">Nenhum recado pendente.</p>
+              ) : (
+                pendingMessages.map((m) => (
+                  <div key={m.id} className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-3">
+                    <p className="text-[10px] font-black uppercase text-white/40">De: <span className="text-white">{m.from}</span> • Para: <span className="text-white">{m.to}</span></p>
+                    <p className="text-sm italic font-bold">&ldquo;{m.content}&rdquo;</p>
+                    <div className="flex gap-2 pt-2">
+                      <Button onClick={() => moderateMessage(m.id, 'approved')} className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic">Aprovar & Mostrar</Button>
+                      <Button onClick={() => moderateMessage(m.id, 'rejected')} variant="outline" className="flex-1 border-white/10 h-8 text-[10px] font-black uppercase italic">Ignorar</Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-blue-500">Pedidos de Música</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              {pendingMusic.length === 0 ? (
+                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4">Nenhum pedido novo.</p>
+              ) : (
+                pendingMusic.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black uppercase italic text-white truncate">{m.artist}</p>
+                      <p className="text-[10px] font-bold text-white/40 truncate">{m.song}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => handleApproveMusic(m.id)} size="icon" className="bg-green-600 hover:bg-green-700 h-8 w-8"><Check className="w-4 h-4" /></Button>
+                      <Button onClick={() => moderateMusic(m.id, 'rejected')} size="icon" variant="destructive" className="h-8 w-8"><Ban className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-orange-500">Solicitações de Pontos</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              {pendingPoints.length === 0 ? (
+                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4">Nenhuma solicitação ativa.</p>
+              ) : (
+                pendingPoints.map((pt) => (
+                  <div key={pt.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-orange-500/20 p-2 rounded-lg">
+                        <Beer className="w-4 h-4 text-orange-500" />
+                      </div>
+                      <span className="text-xs font-black uppercase italic text-white">{pt.participantName}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => moderatePointRequest(pt.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic"><Plus className="w-3 h-3 mr-1" /> Adicionar</Button>
+                      <Button onClick={() => moderatePointRequest(pt.id, 'rejected')} size="sm" variant="destructive" className="h-8 text-[10px] font-black uppercase italic"><X className="w-3 h-3" /></Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
