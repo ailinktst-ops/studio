@@ -7,7 +7,7 @@ import {
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Mic, Send,
-  ExternalLink, Eraser, Volume2, Smartphone, X, Edit, QrCode, Beer
+  ExternalLink, Eraser, Volume2, Smartphone, X, Edit, QrCode, Beer, Copy
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -392,6 +392,39 @@ export function ControlPanel() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-primary">
+                          <QrCode className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-card/95 border-white/10 backdrop-blur-2xl max-w-[320px] rounded-[2rem] p-8">
+                        <DialogHeader className="mb-4">
+                          <DialogTitle className="text-center font-black italic uppercase text-white tracking-tighter text-2xl">TROCAR FOTO</DialogTitle>
+                          <DialogDescription className="text-center text-[10px] font-bold uppercase text-white/40 tracking-widest">{p.name}</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center gap-8">
+                          <div className="p-4 bg-white rounded-[2rem] shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                            <img 
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formatUrlWithCorrectPort(`/update-photo/${p.id}`))}`} 
+                              alt="QR Update Photo" 
+                              className="w-48 h-48" 
+                            />
+                          </div>
+                          <Button 
+                            className="w-full bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs h-12 rounded-xl"
+                            onClick={() => {
+                              const url = formatUrlWithCorrectPort(`/update-photo/${p.id}`);
+                              navigator.clipboard.writeText(url).then(() => {
+                                toast({ title: "Link Copiado!", description: "Link para trocar foto foi copiado." });
+                              });
+                            }}
+                          >
+                            <Copy className="w-4 h-4 mr-2" /> Copiar Link
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <Button size="lg" onClick={() => decrementCount(p.id)} className="bg-destructive/20 text-destructive w-12 h-14 rounded-2xl"><Minus className="w-6 h-6" /></Button>
                     <Button size="lg" onClick={() => incrementCount(p.id)} className="bg-secondary hover:bg-secondary/90 w-16 h-14 rounded-2xl"><Plus className="w-8 h-8" /></Button>
                     <button onClick={() => removeParticipant(p.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity ml-2"><Trash2 className="w-4 h-4" /></button>
