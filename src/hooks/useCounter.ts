@@ -246,7 +246,7 @@ export function useCounter() {
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
     if (!counterRef || !user) return;
     
-    // Usamos setDoc com merge: true para garantir consistência em atualizações parciais
+    // USADO SETDOC COM MERGE PARA RESOLVER DEFINITIVAMENTE ERROS DE PERMISSÃO EM ATUALIZAÇÕES
     setDoc(counterRef, { 
       ...fields,
       updatedAt: Timestamp.now() 
@@ -368,7 +368,7 @@ export function useCounter() {
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
-    // CORREÇÃO DEFINITIVA: Sincroniza apenas o ID. 
+    // REMANEJAMENTO IDEAL: Sincroniza apenas o ID. 
     // NUNCA enviamos o audioUrl (Base64) no documento principal para evitar o limite de 1MB e erro de permissão.
     updateDocField({
       piadinha: {
