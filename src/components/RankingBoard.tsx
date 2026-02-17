@@ -153,7 +153,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       const timer = setTimeout(() => {
         setViewMode('INDIVIDUAL');
         setHighlightIndex(0);
-      }, 15000);
+      }, 25000); // Podium dura 25 segundos
       return () => clearTimeout(timer);
     } else {
       const timer = setTimeout(() => {
@@ -163,7 +163,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           setViewMode('PODIUM');
           setHighlightIndex(-1);
         }
-      }, 5000);
+      }, 2000); // Cada participante no ciclo individual dura 2 segundos
       return () => clearTimeout(timer);
     }
   }, [overlay, hasPoints, viewMode, highlightIndex, sortedParticipants.length]);
@@ -598,7 +598,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
             challengePhase === 'center' ? "bg-purple-500 border-white scale-150" : "bg-purple-600/95 border-purple-300 text-white -rotate-1 scale-100"
           )}>
-            <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-white/5">
+            <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
               </span>

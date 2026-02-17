@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -12,3 +13,4 @@ service cloud.firestore {
     }
   }
 }
+// Atualização forçada das regras para garantir propagação correta de permissões anônimas.

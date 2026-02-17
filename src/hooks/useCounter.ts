@@ -271,7 +271,10 @@ export function useCounter() {
   }, [isDocLoading, rawData, counterRef, user, isUserLoading]);
 
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
-    if (!counterRef || !user) return;
+    // Verificação robusta de autenticação antes de tentar gravar no Firestore
+    if (!counterRef || !user || isUserLoading) {
+      return;
+    }
     
     setDoc(counterRef, { 
       ...fields,
@@ -283,7 +286,7 @@ export function useCounter() {
         requestResourceData: fields
       } satisfies SecurityRuleContext));
     });
-  }, [counterRef, user]);
+  }, [counterRef, user, isUserLoading]);
 
   const updateTitle = useCallback((title: string) => updateDocField({ title }), [updateDocField]);
   const updateBrand = useCallback((brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }), [updateDocField]);
