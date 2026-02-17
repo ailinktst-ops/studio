@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -47,6 +48,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     count: number; 
     type: 'point' | 'leader' | 'lantern';
     title?: string;
+    imageUrl?: string;
   } | null>(null);
   
   const lastParticipantsRef = useRef<Participant[]>([]);
@@ -162,21 +164,40 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       const prevP = prev.find(pp => pp.id === p.id);
       return prevP && p.count > prevP.count;
     });
+    
     if (currentLeader && lastLeaderIdRef.current && currentLeader.id !== lastLeaderIdRef.current && currentLeader.count > 0) {
       playSound('leader');
-      setNotification({ userName: currentLeader.name, count: currentLeader.count, type: 'leader', title: "NOVO LÍDER!" });
+      setNotification({ 
+        userName: currentLeader.name, 
+        count: currentLeader.count, 
+        type: 'leader', 
+        title: "NOVO LÍDER!",
+        imageUrl: getParticipantAvatar(currentLeader)
+      });
       lastLeaderIdRef.current = currentLeader.id;
       setTimeout(() => setNotification(null), 5000);
     } 
     else if (currentLantern && lastLanternIdRef.current && currentLantern.id !== lastLanternIdRef.current) {
       playSound('announcement');
-      setNotification({ userName: currentLantern.name, count: currentLantern.count, type: 'lantern', title: "NOVO LANTERNINHA! 🤡" });
+      setNotification({ 
+        userName: currentLantern.name, 
+        count: currentLantern.count, 
+        type: 'lantern', 
+        title: "NOVO LANTERNINHA! 🤡",
+        imageUrl: getParticipantAvatar(currentLantern)
+      });
       lastLanternIdRef.current = currentLantern.id;
       setTimeout(() => setNotification(null), 5000);
     }
     else if (updatedUser) {
       playSound('point');
-      setNotification({ userName: updatedUser.name, count: updatedUser.count, type: 'point', title: "MAIS UMA!" });
+      setNotification({ 
+        userName: updatedUser.name, 
+        count: updatedUser.count, 
+        type: 'point', 
+        title: "", // Removido "MAIS UMA"
+        imageUrl: getParticipantAvatar(updatedUser)
+      });
       setTimeout(() => setNotification(null), 3500);
     }
     lastParticipantsRef.current = current;
@@ -658,7 +679,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-6 animate-in fade-in zoom-in duration-300">
           <div className={cn(
-            "relative max-w-5xl w-full p-16 rounded-[4rem] border-8 text-center shadow-[0_0_150px_rgba(0,0,0,0.9)] backdrop-blur-3xl flex flex-col items-center justify-center overflow-hidden transition-all duration-500",
+            "relative max-w-5xl w-full p-16 rounded-[5rem] border-8 text-center shadow-[0_0_150px_rgba(0,0,0,0.9)] backdrop-blur-3xl flex flex-col items-center justify-center overflow-hidden transition-all duration-500",
             notification.type === 'leader' 
               ? "bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 border-yellow-200 text-black rotate-1" 
               : notification.type === 'lantern'
@@ -669,27 +690,37 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             <div className="absolute -top-24 -left-24 w-[40rem] h-[40rem] bg-white/10 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-[40rem] h-[40rem] bg-black/20 rounded-full blur-[120px] pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col items-center gap-8">
-              {/* Header Title */}
-              <div className="space-y-4">
-                <p className="text-4xl font-black uppercase tracking-[0.5em] opacity-70 italic drop-shadow-sm">
-                  {notification.title || (notification.type === 'leader' ? "NOVO LÍDER!" : "MAIS UMA!")}
-                </p>
+            <div className="relative z-10 flex flex-col items-center gap-6">
+              {/* Photo Area */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl animate-pulse"></div>
+                <Avatar className="w-64 h-64 border-8 border-white/30 shadow-2xl relative z-10">
+                  <AvatarImage src={notification.imageUrl} className="object-cover" />
+                  <AvatarFallback className="bg-white/10 text-6xl font-black">{notification.userName[0]}</AvatarFallback>
+                </Avatar>
+              </div>
+
+              {/* Text Area */}
+              <div className="space-y-2">
+                {notification.title && (
+                  <p className="text-3xl font-black uppercase tracking-[0.5em] opacity-70 italic drop-shadow-sm">
+                    {notification.title}
+                  </p>
+                )}
                 
-                {/* Main Name */}
-                <h2 className="text-[13rem] font-black italic uppercase tracking-tighter drop-shadow-[0_15px_15px_rgba(0,0,0,0.4)] leading-none">
+                <h2 className="text-[10rem] font-black italic uppercase tracking-tighter drop-shadow-[0_10px_10px_rgba(0,0,0,0.4)] leading-none">
                   {notification.userName}
                 </h2>
               </div>
 
               {/* Stats Badge */}
-              <div className="flex items-center gap-10 bg-black/20 backdrop-blur-xl px-16 py-8 rounded-[4rem] border-4 border-white/10 shadow-2xl">
+              <div className="flex items-center gap-8 bg-black/30 backdrop-blur-2xl px-12 py-6 rounded-full border-4 border-white/10 shadow-2xl">
                 <div className="flex flex-col items-center">
-                  <span className="text-3xl font-black italic uppercase tracking-widest opacity-60 leading-none mb-2">
+                  <span className="text-2xl font-black italic uppercase tracking-widest opacity-60 leading-none mb-1">
                     {notification.type === 'lantern' ? "TÁ DEVENDO" : "JÁ FORAM"}
                   </span>
                   <div className={cn(
-                    "text-[10rem] font-black italic tabular-nums leading-none drop-shadow-md",
+                    "text-[8rem] font-black italic tabular-nums leading-none drop-shadow-md",
                     notification.type === 'leader' ? "text-white" : "text-secondary"
                   )}>
                     {notification.count}
@@ -697,13 +728,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 </div>
                 
                 {/* Icon in badge */}
-                <div className="bg-white/10 p-6 rounded-full border border-white/10">
+                <div className="bg-white/10 p-4 rounded-full border border-white/10">
                   {notification.type === 'leader' ? (
-                    <Trophy className="w-24 h-24 text-white animate-bounce" />
+                    <Trophy className="w-16 h-16 text-white animate-bounce" />
                   ) : notification.type === 'point' ? (
-                    <CustomIcon className="w-24 h-24 text-white animate-pulse" />
+                    <CustomIcon className="w-16 h-16 text-white animate-pulse" />
                   ) : (
-                    <AlertCircle className="w-24 h-24 text-white animate-pulse" />
+                    <AlertCircle className="w-16 h-16 text-white animate-pulse" />
                   )}
                 </div>
               </div>
