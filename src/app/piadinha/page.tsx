@@ -22,9 +22,13 @@ export default function MemesPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    return () => {
+      if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
+    };
   }, []);
 
   const startRecording = async () => {
@@ -44,10 +48,23 @@ export default function MemesPage() {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
+        if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+
+      // Trava de segurança: Máximo 8 segundos por meme para economizar espaço no banco
+      recordingTimeoutRef.current = setTimeout(() => {
+        if (mediaRecorder.state === 'recording') {
+          stopRecording();
+          toast({
+            title: "Limite atingido",
+            description: "Memes são limitados a 8 segundos para garantir performance.",
+          });
+        }
+      }, 8000);
+
     } catch (err) {
       console.error("Erro ao acessar microfone:", err);
       toast({
@@ -66,7 +83,7 @@ export default function MemesPage() {
     }
   };
 
-  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 300) => {
+  const handleImageCompression = (file: File, callback: (dataUrl: string) => void, maxSize = 250) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -92,7 +109,8 @@ export default function MemesPage() {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+          // Qualidade reduzida para 0.4 para garantir que o documento não estoure 1MB
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.4);
           callback(optimizedDataUrl);
         }
       };
@@ -156,7 +174,7 @@ export default function MemesPage() {
     <div className="min-h-screen bg-background p-6 flex flex-col items-center justify-center">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-2">
-          <div className="bg-orange-500/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-orange-500/20 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
+          <div className="bg-orange-500/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-orange-500/20 shadow-[0_0_20px_rgba(236,72,153,0.2)]">
             <Mic className={`w-10 h-10 text-orange-500 ${isRecording ? 'animate-pulse' : ''}`} />
           </div>
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">
@@ -250,6 +268,7 @@ export default function MemesPage() {
                       <><Mic className="w-6 h-6 mr-2" /> Gravar Áudio</>
                     )}
                   </Button>
+                  {isRecording && <p className="text-[10px] text-red-500 font-bold animate-pulse">GRAVANDO (MÁX 8S)...</p>}
                 </div>
               ) : (
                 <div className="w-full space-y-6">
