@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -43,7 +44,7 @@ export function ControlPanel() {
   const { 
     data, jokes, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, decrementCount, updateParticipantCount, resetAll, resetOnlyPoints,
-    removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
+    clearLastWinner, removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
     moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
     triggerPiadinha, removeJoke, updateJokeName
@@ -422,10 +423,17 @@ export function ControlPanel() {
           </Card>
 
           <Card className="bg-card/50 border-white/5">
-            <CardHeader className="flex items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <CardTitle className="text-lg font-bold">Ranking Geral</CardTitle>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={resetOnlyPoints} className="text-primary border-primary/20 hover:bg-primary/10 bg-transparent text-[10px] font-bold uppercase"><History className="w-4 h-4 mr-1" /> Zerar Pontos</Button>
+              <div className="flex flex-wrap gap-2">
+                {data.lastWinner && (
+                  <Button variant="outline" size="sm" onClick={clearLastWinner} className="text-orange-500 border-orange-500/20 hover:bg-orange-500/10 bg-transparent text-[10px] font-bold uppercase">
+                    <Trash2 className="w-4 h-4 mr-1" /> Limpar Ganhador
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={resetOnlyPoints} className="text-primary border-primary/20 hover:bg-primary/10 bg-transparent text-[10px] font-bold uppercase">
+                  <History className="w-4 h-4 mr-1" /> Zerar Pontos
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10 bg-transparent text-[10px] font-bold uppercase"><RotateCcw className="w-4 h-4 mr-1" /> Zerar Tudo</Button></AlertDialogTrigger>
                   <AlertDialogContent className="bg-card border-white/10 backdrop-blur-xl">

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useCallback, useMemo } from 'react';
@@ -489,6 +490,10 @@ export function useCounter() {
     });
   };
 
+  const clearLastWinner = () => {
+    updateDocField({ lastWinner: null });
+  };
+
   const removeParticipant = (id: string) => {
     if (!counterRef || !data) return;
     const updatedParticipants = data.participants.filter(p => p.id !== id);
@@ -706,6 +711,7 @@ export function useCounter() {
     updateParticipantCount,
     resetAll,
     resetOnlyPoints,
+    clearLastWinner,
     removeParticipant,
     sendElegantMessage,
     moderateMessage,
