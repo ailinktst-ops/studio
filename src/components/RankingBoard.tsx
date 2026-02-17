@@ -78,7 +78,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const getParticipantAvatar = (p: Participant | any) => {
     if (p?.imageUrl) return p.imageUrl;
     const seed = p?.id || p?.name || "guest";
-    return `https://picsum.photos/seed/${seed}-character-human-face-portrait-anime-movie/400/400`;
+    return `https://picsum.photos/seed/${seed}-character-human-face-portrait-anime-movie/250/250`;
   };
 
   const playSound = (type: keyof typeof SOUND_URLS) => {
@@ -543,7 +543,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <AvatarImage src={getParticipantAvatar(data.challenge?.isRaffling ? approvedParticipants.find(p => p.name === currentChallengeName) : challengeWinner)} />
               <AvatarFallback className="bg-white/10 font-bold">{(data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name)?.[0]}</AvatarFallback>
             </Avatar>
-            <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
+            <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
               </span>
@@ -596,7 +596,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {/* CABEÇALHO DO OVERLAY (LOGO + MARCA) */}
       {overlay && (
-        <div className="flex flex-col items-center gap-4 mt-[-20px] mb-2 animate-in fade-in slide-in-from-top-10 duration-1000">
+        <div className="flex flex-col items-center gap-4 mt-[-10px] mb-2 animate-in fade-in slide-in-from-top-10 duration-1000">
           {brandImageUrl ? (
             <img src={brandImageUrl} className="w-24 h-24 object-cover rounded-3xl border-4 border-white/10 shadow-2xl rotate-3" alt="Logo" />
           ) : (
@@ -617,7 +617,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {/* ÁREA CENTRAL DE PARTICIPANTES / PÓDIO */}
       {!hasPoints ? (
-        <div className="flex justify-center items-center w-full max-w-6xl mt-[-20px] min-h-[350px]">
+        <div className="flex justify-center items-center w-full max-w-6xl mt-8 min-h-[350px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
                <Avatar className="w-80 h-80 border-[12px] border-primary shadow-[0_0_50px_rgba(168,85,247,0.5)] mb-8">
@@ -632,7 +632,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-6xl flex justify-center items-center min-h-[400px] mt-[-20px]">
+        <div className="w-full max-w-6xl flex justify-center items-center min-h-[400px] mt-8">
           {viewMode === 'PODIUM' ? (
             <div className="flex flex-row justify-center items-end gap-12 w-full animate-in zoom-in fade-in duration-700">
               {[1, 0, 2].map((actualIndex) => {
