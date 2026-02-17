@@ -1,9 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite leitura pública e escrita autenticada para toda a árvore de contadores
-    // Isso garante que sub-coleções como 'jokes' possam ser listadas pelo telão e painel
-    match /counters/{allPaths=**} {
+    // Permite leitura pública para todos os documentos e sub-coleções (Telão e Painel)
+    // Permite escrita apenas para usuários autenticados (Anônimos ou Admin)
+    match /{path=**} {
       allow read: if true;
       allow write: if request.auth != null;
     }

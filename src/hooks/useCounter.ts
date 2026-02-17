@@ -264,7 +264,7 @@ export function useCounter() {
   const updateBrandImage = useCallback((brandImageUrl: string) => updateDocField({ brandImageUrl }), [updateDocField]);
   const updatePhrases = useCallback((customPhrases: string[]) => updateDocField({ customPhrases }), [updateDocField]);
   const updateSocialLinks = useCallback((socialLinks: SocialLink[]) => updateDocField({ socialLinks }), [updateDocField]);
-  const clearPiadinha = useCallback(() => updateDocField({ piadinha: { ...data.piadinha, isActive: false } }), [updateDocField, data.piadinha]);
+  const clearPiadinha = useCallback(() => updateDocField({ piadinha: { isActive: false, timestamp: Date.now() } }), [updateDocField]);
 
   const addAdmin = (admin: AdminUser) => {
     if (!counterRef || !data) return;
@@ -330,7 +330,7 @@ export function useCounter() {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: jokesColRef.path,
         operation: 'create',
-        requestResourceData: newJoke
+        requestResourceData: { name: newJoke.name, timestamp: newJoke.timestamp }
       } satisfies SecurityRuleContext));
     });
   };
