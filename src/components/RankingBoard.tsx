@@ -7,9 +7,10 @@ import {
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
   Heart, Disc, Instagram, Youtube, Mic, ListOrdered, AlertCircle,
-  Megaphone
+  Megaphone, Volume2
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from '@/lib/utils';
 
 const ICON_MAP: Record<string, any> = {
@@ -38,7 +39,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   
   const [viewMode, setViewMode] = useState<'PODIUM' | 'INDIVIDUAL'>('PODIUM');
   const [highlightIndex, setHighlightIndex] = useState(-1);
-  const [isAudioStarted, setIsAudioStarted] = useState(true);
+  const [isAudioStarted, setIsAudioStarted] = useState(false);
   
   const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [challengePhase, setChallengePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
@@ -290,8 +291,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       piadinhaAudioRef.current = audio;
       lastPiadinhaTimestampRef.current = data.piadinha.timestamp;
 
-      audio.play().catch(() => {
-        setTimeout(() => clearPiadinha(), 5000);
+      audio.play().catch((err) => {
+        console.error("Erro ao tocar áudio do meme:", err);
       });
 
       audio.onended = () => {
@@ -420,6 +421,17 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
+      {!isAudioStarted && overlay && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/80 backdrop-blur-md">
+          <Button 
+            onClick={() => setIsAudioStarted(true)}
+            className="bg-primary hover:bg-primary/90 text-white font-black uppercase italic px-12 py-8 text-2xl rounded-3xl shadow-[0_0_50px_rgba(168,85,247,0.5)] animate-bounce"
+          >
+            <Volume2 className="w-10 h-10 mr-4" /> Ativar Áudio do Telão
+          </Button>
+        </div>
+      )}
+
       {overlay && brandImageUrl && (
         <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
           <img src={brandImageUrl} alt="Watermark" className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]" />
