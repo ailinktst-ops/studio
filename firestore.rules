@@ -1,31 +1,32 @@
-/**
- * FIRESTORE SECURITY RULES
- *
- * Core Philosophy:
- * This ruleset implements an open-access model for the prototype.
- * Given the nature of a real-time counter/ranking system where any participant
- * or administrator needs to sync state instantly, we allow public read/write
- * for the 'counters' collection.
- */
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Collection Rules ---
-
     /**
-     * @description Rules for the Counter collection. 
-     * Open for read and write to ensure no blocking during the prototype/event.
+     * FIRESTORE SECURITY RULES
+     *
+     * Core Philosophy:
+     * This ruleset implements an open-read/authenticated-write model designed for a real-time 
+     * counter and ranking application. The primary goal is to allow any user (including 
+     * unauthenticated "overlay" views) to read data while restricting modification 
+     * to authenticated users.
+     *
+     * Data Structure:
+     * - /counters/{counterId}: The primary document containing counter metadata and denormalized participant stats.
+     * - /counters/{counterId}/participants/{participantId}: Granular participant records for detailed updates.
      */
-    match /counters/{counterId} {
-      allow read, write: if true;
 
-      /**
-       * @description Rules for participants within a specific counter.
-       */
+    match /counters/{counterId} {
+      // Permite que qualquer pessoa (mesmo sem login) veja o ranking e o telão
+      allow read: if true;
+      
+      // Restringe a escrita apenas a usuários autenticados (Admin ou Participantes via AuthInitializer)
+      allow write: if request.auth != null;
+
       match /participants/{participantId} {
-        allow read, write: if true;
+        // Segue a mesma lógica para a sub-coleção de participantes
+        allow read: if true;
+        allow write: if request.auth != null;
       }
     }
 
