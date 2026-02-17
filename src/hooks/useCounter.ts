@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useCallback, useMemo } from 'react';
@@ -563,7 +564,7 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
-    // Espaço aumentado para pedidos de bebidas (fila de até 15 itens)
+    // Espaço aumentado para pedidos de pontos (fila de até 15 itens)
     const updatedRequests = [...(data?.pointRequests || []), newRequest].slice(-15);
     updateDocField({
       pointRequests: updatedRequests

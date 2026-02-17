@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -202,7 +203,7 @@ export function ControlPanel() {
             <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-white/5 bg-white/5">
               <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                 {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : <Beer className="w-3 h-3" />}
-                {alert.alertType === 'participant' ? 'Novo Participante' : 'Novo Pedido de Bebida'}
+                {alert.alertType === 'participant' ? 'Novo Participante' : 'Novo Pedido de Ponto'}
               </span>
               <Button variant="ghost" size="icon" onClick={() => removeAlert(alert.id)} className="h-6 w-6 text-white/20 hover:text-white">
                 <X className="w-4 h-4" />
@@ -523,8 +524,8 @@ export function ControlPanel() {
                       <span className="font-bold text-white uppercase italic">{p.name}</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={() => moderateParticipant(p.id, 'approved')} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic"><Check className="w-3 h-3 mr-1" /> Aprovar</Button>
-                      <Button onClick={() => moderateParticipant(p.id, 'rejected')} variant="destructive" className="h-8 text-[10px] font-black uppercase italic"><Ban className="w-3 h-3 mr-1" /> Recusar</Button>
+                      <Button onClick={() => moderateParticipant(id, 'approved')} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic"><Check className="w-3 h-3 mr-1" /> Aprovar</Button>
+                      <Button onClick={() => moderateParticipant(id, 'rejected')} variant="destructive" className="h-8 text-[10px] font-black uppercase italic"><Ban className="w-3 h-3 mr-1" /> Recusar</Button>
                     </div>
                   </div>
                 ))
@@ -556,7 +557,7 @@ export function ControlPanel() {
 
           <Card className="bg-white/5 border-white/10">
             <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-orange-500">Pedidos de Bebidas</CardTitle>
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-orange-500">Pedidos de Pontos</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3">
               {pendingPoints.length === 0 ? (

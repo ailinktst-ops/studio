@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -19,8 +20,8 @@ export default function PedirPontoPage() {
     setRequestedId(participantId);
     
     toast({
-      title: "Pedido de Bebida Enviado!",
-      description: `Sua bebida já foi solicitada, ${participantName}.`,
+      title: "Pedido de Ponto Enviado!",
+      description: `Seu ponto já foi solicitado, ${participantName}.`,
     });
 
     setTimeout(() => setRequestedId(null), 3000);
@@ -47,7 +48,7 @@ export default function PedirPontoPage() {
             <Beer className="w-10 h-10 text-secondary" />
           </div>
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none">
-            Pedir <span className="text-secondary">Bebida</span>
+            Pedir <span className="text-secondary">Ponto</span>
           </h1>
           <p className="text-white/40 font-bold uppercase tracking-widest text-xs mt-2">
             {data.brandName} • O que vai ser?
