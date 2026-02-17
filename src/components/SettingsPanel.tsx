@@ -34,6 +34,9 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   } = useCounter();
 
   const [newPhrase, setNewPhrase] = useState("");
+  const [editingPhraseIndex, setEditingPhraseIndex] = useState<number | null>(null);
+  const [editingPhraseValue, setEditingPhraseValue] = useState("");
+  
   const [customAnnouncement, setCustomAnnouncement] = useState("");
   const [newSocialType, setNewSocialType] = useState<'instagram' | 'youtube'>('instagram');
   const [newSocialUrl, setNewSocialUrl] = useState("");
@@ -102,6 +105,21 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
   const handleRemovePhrase = (index: number) => {
     const updated = data.customPhrases.filter((_, i) => i !== index);
     updatePhrases(updated);
+  };
+
+  const startEditingPhrase = (index: number, value: string) => {
+    setEditingPhraseIndex(index);
+    setEditingPhraseValue(value);
+  };
+
+  const handleSavePhrase = () => {
+    if (editingPhraseIndex !== null && editingPhraseValue.trim()) {
+      const updated = [...data.customPhrases];
+      updated[editingPhraseIndex] = editingPhraseValue.trim();
+      updatePhrases(updated);
+      setEditingPhraseIndex(null);
+      toast({ title: "Frase Atualizada", description: "O texto do letreiro foi alterado." });
+    }
   };
 
   const handleAddSocial = () => {
@@ -570,11 +588,36 @@ export function SettingsPanel({ loggedUser }: { loggedUser?: string }) {
               </div>
               <div className="space-y-2">
                 {data.customPhrases.map((phrase, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 text-xs text-white/80">
-                    {phrase}
-                    <button onClick={() => handleRemovePhrase(i)} className="text-white/20 hover:text-destructive">
-                      <X className="w-3 h-3" />
-                    </button>
+                  <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 text-xs text-white/80 group">
+                    <span className="truncate flex-1 mr-2">{phrase}</span>
+                    <div className="flex items-center gap-1">
+                      <Dialog open={editingPhraseIndex === i} onOpenChange={(open) => !open && setEditingPhraseIndex(null)}>
+                        <DialogTrigger asChild>
+                          <button onClick={() => startEditingPhrase(i, phrase)} className="text-white/20 hover:text-white transition-colors">
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card border-white/10 backdrop-blur-xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-white font-black italic uppercase">Editar Frase do Letreiro</DialogTitle>
+                            <DialogDescription className="text-white/40 font-bold uppercase text-[10px]">Altere o texto que aparece no telão</DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <Input 
+                              value={editingPhraseValue} 
+                              onChange={(e) => setEditingPhraseValue(e.target.value)} 
+                              className="bg-black/40 border-white/10 h-12 font-bold"
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={handleSavePhrase} className="w-full bg-secondary text-white font-black uppercase italic h-12">Salvar Alteração</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      <button onClick={() => handleRemovePhrase(i)} className="text-white/20 hover:text-destructive">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
