@@ -350,8 +350,8 @@ export function useCounter() {
       imageUrl: imageUrl || "",
       timestamp: Timestamp.now().toMillis()
     };
-    // Limita para 12 memes para evitar estouro de documento
-    const updatedJokes = [...data.jokes, newJoke].slice(-12);
+    // Limite reduzido para 6 memes para evitar estouro de documento (1MB)
+    const updatedJokes = [...data.jokes, newJoke].slice(-6);
     updateDocField({
       jokes: updatedJokes
     });
@@ -381,7 +381,6 @@ export function useCounter() {
     });
 
     setTimeout(() => {
-      // Usamos callback para pegar o estado mais recente
       clearPiadinha();
     }, 30000);
   }, [updateDocField, clearPiadinha]);
@@ -528,7 +527,6 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
-    // Limita mensagens para manter documento pequeno
     const updatedMessages = [...(data?.messages || []), newMessage].slice(-15);
     updateDocField({
       messages: updatedMessages
@@ -563,7 +561,6 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
-    // Limita fila de pontos para manter documento pequeno
     const updatedRequests = [...(data?.pointRequests || []), newRequest].slice(-10);
     updateDocField({
       pointRequests: updatedRequests
