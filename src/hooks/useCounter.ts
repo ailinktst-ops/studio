@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc, setDoc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -245,31 +245,32 @@ export function useCounter() {
 
   /**
    * Helper robusto para atualizar campos do documento global.
-   * Utiliza setDoc com merge para garantir que o documento exista.
+   * Utiliza setDoc com merge para garantir persistência e respeitar regras de segurança.
    */
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
-    if (!counterRef || !user || !data) return;
+    if (!counterRef || !user) return;
     
     // Usamos setDoc com merge: true para garantir que o documento exista
-    // e para evitar erros de permissão comuns com updateDoc em protótipos.
+    // e para evitar erros de permissão comuns com updateDoc em sessões anônimas frias.
     setDoc(counterRef, { 
       ...fields,
       updatedAt: Timestamp.now() 
     }, { merge: true }).catch(e => {
+      console.error("Erro ao atualizar Firestore:", e);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
         requestResourceData: fields
       }));
     });
-  }, [counterRef, user, data]);
+  }, [counterRef, user]);
 
   const updateTitle = useCallback((title: string) => updateDocField({ title }), [updateDocField]);
   const updateBrand = useCallback((brandName: string, brandIcon: string) => updateDocField({ brandName, brandIcon }), [updateDocField]);
   const updateBrandImage = useCallback((brandImageUrl: string) => updateDocField({ brandImageUrl }), [updateDocField]);
   const updatePhrases = useCallback((customPhrases: string[]) => updateDocField({ customPhrases }), [updateDocField]);
   const updateSocialLinks = useCallback((socialLinks: SocialLink[]) => updateDocField({ socialLinks }), [updateDocField]);
-  const clearPiadinha = useCallback(() => updateDocField({ "piadinha.isActive": false } as any), [updateDocField]);
+  const clearPiadinha = useCallback(() => updateDocField({ piadinha: { ...data.piadinha, isActive: false } }), [updateDocField, data.piadinha]);
 
   const addAdmin = (admin: AdminUser) => {
     if (!counterRef || !data) return;
@@ -366,10 +367,9 @@ export function useCounter() {
 
     // Fallback de segurança para garantir que o meme saia do estado ativo após 1 minuto
     setTimeout(() => {
-      // Usamos cast as any para permitir dot notation no helper
-      updateDocField({ "piadinha.isActive": false } as any);
+      updateDocField({ piadinha: { ...data.piadinha, isActive: false } });
     }, 60000);
-  }, [updateDocField]);
+  }, [updateDocField, data.piadinha]);
 
   const moderateParticipant = (id: string, status: 'approved' | 'rejected', category?: string) => {
     if (!counterRef || !data) return;
@@ -566,8 +566,7 @@ export function useCounter() {
     });
     
     setTimeout(() => {
-      // Usamos any para permitir acesso a campos aninhados via dot notation se necessário
-      updateDocField({ "raffle.isRaffling": false } as any);
+      updateDocField({ raffle: { ...data.raffle, isRaffling: false } as RaffleState });
     }, 5500);
   };
 
@@ -604,32 +603,28 @@ export function useCounter() {
     });
 
     setTimeout(() => {
-      updateDocField({ "challenge.isRaffling": false } as any);
+      updateDocField({ challenge: { ...data.challenge, isRaffling: false } as RaffleState });
     }, 5500);
   };
 
   const clearRaffle = () => {
-    if (!counterRef) return;
-    updateDocField({ "raffle.winnerId": null } as any);
+    if (!counterRef || !data.raffle) return;
+    updateDocField({ raffle: { ...data.raffle, winnerId: null } });
   };
 
   const clearChallenge = () => {
-    if (!counterRef) return;
-    updateDocField({ "challenge.winnerId": null } as any);
+    if (!counterRef || !data.challenge) return;
+    updateDocField({ challenge: { ...data.challenge, winnerId: null } });
   };
 
   const resetRaffleHistory = () => {
-    if (!counterRef) return;
-    updateDocField({
-      "raffle.winnersHistory": []
-    } as any);
+    if (!counterRef || !data.raffle) return;
+    updateDocField({ raffle: { ...data.raffle, winnersHistory: [] } });
   };
 
   const resetChallengeHistory = () => {
-    if (!counterRef) return;
-    updateDocField({
-      "challenge.winnersHistory": []
-    } as any);
+    if (!counterRef || !data.challenge) return;
+    updateDocField({ challenge: { ...data.challenge, winnersHistory: [] } });
   };
 
   const triggerAnnouncement = (message: string) => {
@@ -641,7 +636,7 @@ export function useCounter() {
         timestamp: Date.now()
       }
     });
-    setTimeout(() => updateDocField({ "announcement.isActive": false } as any), 8000);
+    setTimeout(() => updateDocField({ announcement: { ...data.announcement!, isActive: false } }), 8000);
   };
 
   const triggerSocialAnnouncement = (type: 'instagram' | 'youtube', url: string) => {
@@ -654,7 +649,7 @@ export function useCounter() {
         timestamp: Date.now()
       }
     });
-    setTimeout(() => updateDocField({ "socialAnnouncement.isActive": false } as any), 10000);
+    setTimeout(() => updateDocField({ socialAnnouncement: { ...data.socialAnnouncement!, isActive: false } }), 10000);
   };
 
   return {

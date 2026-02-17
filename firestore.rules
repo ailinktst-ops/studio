@@ -3,35 +3,36 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * FIRESTORE SECURITY RULES
-     *
-     * Core Philosophy:
-     * This ruleset implements an open-read/authenticated-write model designed for a real-time 
-     * counter and ranking application. The primary goal is to allow any user (including 
-     * unauthenticated "overlay" views) to read data while restricting modification 
-     * to authenticated users.
-     *
-     * Data Structure:
-     * - /counters/{counterId}: The primary document containing counter metadata and denormalized participant stats.
-     * - /counters/{counterId}/participants/{participantId}: Granular participant records for detailed updates.
+     * FIRESTORE SECURITY RULES - RankUp Counter
+     * 
+     * Filosofia:
+     * 1. Leitura Pública: Necessária para que o Overlay (Telão) e convidados vejam o ranking.
+     * 2. Escrita Autenticada: Apenas usuários com sessão ativa (mesmo anônima) podem alterar dados.
+     * Isso protege o banco de acessos automatizados externos e cumpre as políticas do Google.
      */
 
     match /counters/{counterId} {
-      // Permite que qualquer pessoa (mesmo sem login) veja o ranking e o telão
-      // Isso é necessário para o funcionamento do Overlay em dispositivos diversos
+      // Permite que qualquer pessoa veja o ranking (essencial para o Telão)
       allow read: if true;
       
-      // Restringe a escrita apenas a usuários autenticados.
-      // No seu app, todos os usuários entram via login anônimo automaticamente,
-      // o que satisfaz esta condição e protege o banco de acessos externos maliciosos.
-      allow write: if request.auth != null;
+      // Permite criar ou atualizar se o usuário estiver autenticado via App
+      // O App faz login anônimo automático para todos os usuários
+      allow create, update: if request.auth != null;
+      
+      // Proteção contra deleção acidental do documento principal
+      allow delete: if false;
 
+      // Regras para a sub-coleção de participantes
       match /participants/{participantId} {
-        // Segue a mesma lógica para a sub-coleção de participantes
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
+      
+      // Regras para a sub-coleção de mensagens e outros dados aninhados
+      match /{allChildren=**} {
         allow read: if true;
         allow write: if request.auth != null;
       }
     }
-
   }
 }
