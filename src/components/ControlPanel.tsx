@@ -254,15 +254,18 @@ export function ControlPanel() {
             <Smartphone className="w-3 h-3" /> QR Codes & Compartilhamento
           </span>
         </div>
-        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
           <Button variant="outline" size="sm" onClick={openCadastroWindow} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-secondary hover:text-white">
             <UserPlus className="w-4 h-4 mr-2" /> Cadastro
           </Button>
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-correio hover:text-white">
             <Heart className="w-4 h-4 mr-2" /> Correio
           </Button>
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/pedir-ponto', 'Pedir Ponto')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-600 hover:text-white">
-            <Beer className="w-4 h-4 mr-2" /> Pedir Ponto
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/piadinha', 'Memes')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white">
+            <Mic className="w-4 h-4 mr-2" /> Memes
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/pedir-ponto', 'Pedir Ponto')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-green-600 hover:text-white">
+            <Beer className="w-4 h-4 mr-2" /> Ponto
           </Button>
           <Link href={formatUrlWithCorrectPort('/overlay')} target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">

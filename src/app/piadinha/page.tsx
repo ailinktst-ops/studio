@@ -86,7 +86,6 @@ export default function MemesPage() {
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
-          // Otimização para memes: 300px e qualidade 0.5
           const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
           callback(optimizedDataUrl);
         }
