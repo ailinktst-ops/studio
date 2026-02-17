@@ -158,6 +158,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     } else {
       const timer = setTimeout(() => {
         if (highlightIndex < sortedParticipants.length - 1) {
+          setHighlightIndex(prev => prev + highlightIndex < sortedParticipants.length - 1 ? 1 : 0);
           setHighlightIndex(prev => prev + 1);
         } else {
           setViewMode('PODIUM');
@@ -446,7 +447,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               {data.socialAnnouncement.type === 'instagram' ? <Instagram className="w-8 h-8 text-white" /> : <Youtube className="w-8 h-8 text-white" />}
             </div>
             <div className="text-center w-full px-2">
-              <p className="text-[10px] font-black uppercase opacity-80 tracking-[0.2em] mb-1">SIGA NO {data.socialAnnouncement.type?.toUpperCase()}</p>
+              <p className="text-[10px] font-black uppercase opacity-80 tracking-widest mb-1">SIGA NO {data.socialAnnouncement.type?.toUpperCase()}</p>
               <p className="font-black italic uppercase tracking-tighter mb-4 drop-shadow-sm break-all text-xs">
                 {socialHandleText}
               </p>
@@ -614,11 +615,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="flex justify-center items-center w-full max-w-6xl mt-4 min-h-[400px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
-               <Avatar className="w-52 h-52 border-8 border-white/10 shadow-2xl mb-6">
+               <Avatar className="w-80 h-80 border-[12px] border-primary shadow-[0_0_50px_rgba(168,85,247,0.5)] mb-8">
                 <AvatarImage src={getParticipantAvatar(approvedParticipants[rotatingIndex])} className="object-cover" />
-                <AvatarFallback className="bg-white/10 text-6xl font-black text-white/20">{approvedParticipants[rotatingIndex]?.name[0]}</AvatarFallback>
+                <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">{approvedParticipants[rotatingIndex]?.name[0]}</AvatarFallback>
                </Avatar>
-               <h2 className="text-5xl font-black italic text-white uppercase tracking-tighter mb-4 text-center">{approvedParticipants[rotatingIndex]?.name}</h2>
+               <h2 className="text-6xl font-black italic text-white uppercase tracking-tighter mb-4 text-center">{approvedParticipants[rotatingIndex]?.name}</h2>
+               <p className="text-primary font-black uppercase tracking-[0.3em] text-2xl animate-pulse drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]">AGUARDANDO RODADA...</p>
             </div>
           ) : (
             <div className="text-center space-y-4"><Loader2 className="w-12 h-12 text-white/10 animate-spin mx-auto" /></div>
@@ -698,7 +700,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div className="flex items-center gap-8 bg-black/30 backdrop-blur-2xl px-12 py-6 rounded-full border-4 border-white/10 shadow-2xl">
                 <div className="text-[8rem] font-black italic tabular-nums leading-none">{notification.count}</div>
                 <div className="bg-white/10 p-4 rounded-full border border-white/10">
-                  {notification.type === 'leader' ? <Trophy className="w-16 h-16 text-white animate-bounce" /> : <CustomIcon className="w-16 h-16 text-white animate-pulse" />}
+                  {notification.type === 'leader' ? <Trophy className="w-16 h-16 text-white animate-pulse" /> : <CustomIcon className="w-16 h-16 text-white animate-pulse" />}
                 </div>
               </div>
             </div>
