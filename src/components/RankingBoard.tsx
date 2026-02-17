@@ -36,8 +36,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
   
-  // View mode for oscillation: 'PODIUM' or 'ALL'
+  // View mode for oscillation: 'PODIUM' or 'ALL' (Sequential Highlight)
   const [viewMode, setViewMode] = useState<'PODIUM' | 'ALL'>('PODIUM');
+  const [highlightIndex, setHighlightIndex] = useState(-1);
   
   // Áudio ativado por padrão para evitar a tela de clique
   const [isAudioStarted, setIsAudioStarted] = useState(true);
@@ -144,19 +145,33 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return null;
   }, [sortedParticipants]);
 
-  // Oscillation Logic: Alternates between Podium and All List
+  // Oscillation Logic: Alternates between Podium and All List Sequential Highlight
   useEffect(() => {
     if (!overlay || !hasPoints) {
       setViewMode('PODIUM');
+      setHighlightIndex(-1);
       return;
     }
 
-    const cycle = setInterval(() => {
-      setViewMode(prev => prev === 'PODIUM' ? 'ALL' : 'PODIUM');
-    }, viewMode === 'PODIUM' ? 15000 : 10000); // 15s top 3, 10s all list
-
-    return () => clearInterval(cycle);
-  }, [overlay, hasPoints, viewMode]);
+    if (viewMode === 'PODIUM') {
+      const timer = setTimeout(() => {
+        setViewMode('ALL');
+        setHighlightIndex(0);
+      }, 15000); // 15s for Podium
+      return () => clearTimeout(timer);
+    } else {
+      // mode ALL - highlight one by one
+      const timer = setTimeout(() => {
+        if (highlightIndex < sortedParticipants.length - 1) {
+          setHighlightIndex(prev => prev + 1);
+        } else {
+          setViewMode('PODIUM');
+          setHighlightIndex(-1);
+        }
+      }, 3000); // 3s per participant highlight
+      return () => clearTimeout(timer);
+    }
+  }, [overlay, hasPoints, viewMode, highlightIndex, sortedParticipants.length]);
 
   useEffect(() => {
     if (!overlay || approvedParticipants.length === 0 || hasPoints) return;
@@ -712,23 +727,47 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full animate-in slide-in-from-bottom-10 fade-in duration-700">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full animate-in slide-in-from-bottom-10 fade-in duration-700">
               {sortedParticipants.map((p, i) => (
-                <div key={p.id} className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 rounded-3xl flex items-center gap-4 animate-in slide-in-from-left duration-500" style={{ animationDelay: `${i * 50}ms` }}>
+                <div 
+                  key={p.id} 
+                  className={cn(
+                    "bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-[2.5rem] flex items-center gap-4 transition-all duration-500",
+                    highlightIndex === i 
+                      ? "scale-110 border-primary bg-primary/20 shadow-[0_0_30px_rgba(168,85,247,0.4)] z-50 ring-4 ring-primary/20" 
+                      : "opacity-40 grayscale-[0.5]"
+                  )} 
+                >
                   <div className="relative">
-                    <Avatar className="w-16 h-16 border-2 border-primary/40 shadow-xl">
+                    <Avatar className={cn(
+                      "w-20 h-20 border-2 shadow-xl transition-all",
+                      highlightIndex === i ? "border-primary scale-110" : "border-white/10"
+                    )}>
                       <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                       <AvatarFallback className="bg-white/5 font-black uppercase text-xs">{p.name[0]}</AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] w-6 h-6 rounded-full flex items-center justify-center font-black border border-white/20 shadow-md">
+                    <div className={cn(
+                      "absolute -top-2 -right-2 text-white text-[12px] w-8 h-8 rounded-full flex items-center justify-center font-black border border-white/20 shadow-md transition-all",
+                      highlightIndex === i ? "bg-primary scale-125" : "bg-white/10"
+                    )}>
                       {i + 1}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black italic uppercase text-xs truncate mb-1">{p.name}</p>
+                    <p className={cn(
+                      "font-black italic uppercase text-sm truncate mb-1 transition-all",
+                      highlightIndex === i ? "text-white text-lg" : "text-white/60"
+                    )}>
+                      {p.name}
+                    </p>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-black text-primary leading-none">{p.count}</span>
-                      <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest truncate">{p.category}</span>
+                      <span className={cn(
+                        "font-black leading-none transition-all",
+                        highlightIndex === i ? "text-4xl text-primary" : "text-2xl text-primary/60"
+                      )}>
+                        {p.count}
+                      </span>
+                      <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest truncate">{p.category}</span>
                     </div>
                   </div>
                 </div>
