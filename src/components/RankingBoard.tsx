@@ -727,27 +727,27 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full animate-in slide-in-from-bottom-10 fade-in duration-700">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full animate-in slide-in-from-bottom-10 fade-in duration-700 items-center justify-items-center">
               {sortedParticipants.map((p, i) => (
                 <div 
                   key={p.id} 
                   className={cn(
-                    "bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-[2.5rem] flex items-center gap-4 transition-all duration-500",
+                    "bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-[2.5rem] flex items-center gap-6 transition-all duration-500 w-full max-w-[280px]",
                     highlightIndex === i 
-                      ? "scale-110 border-primary bg-primary/20 shadow-[0_0_30px_rgba(168,85,247,0.4)] z-50 ring-4 ring-primary/20" 
-                      : "opacity-40 grayscale-[0.5]"
+                      ? "scale-[1.35] border-primary bg-primary/40 shadow-[0_0_60px_rgba(168,85,247,0.6)] z-50 ring-8 ring-primary/30 -translate-y-4" 
+                      : "opacity-30 grayscale-[0.8] scale-90"
                   )} 
                 >
                   <div className="relative">
                     <Avatar className={cn(
-                      "w-20 h-20 border-2 shadow-xl transition-all",
+                      "w-24 h-24 border-2 shadow-2xl transition-all",
                       highlightIndex === i ? "border-primary scale-110" : "border-white/10"
                     )}>
                       <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                       <AvatarFallback className="bg-white/5 font-black uppercase text-xs">{p.name[0]}</AvatarFallback>
                     </Avatar>
                     <div className={cn(
-                      "absolute -top-2 -right-2 text-white text-[12px] w-8 h-8 rounded-full flex items-center justify-center font-black border border-white/20 shadow-md transition-all",
+                      "absolute -top-3 -right-3 text-white text-[14px] w-10 h-10 rounded-full flex items-center justify-center font-black border border-white/20 shadow-md transition-all",
                       highlightIndex === i ? "bg-primary scale-125" : "bg-white/10"
                     )}>
                       {i + 1}
@@ -755,19 +755,22 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={cn(
-                      "font-black italic uppercase text-sm truncate mb-1 transition-all",
-                      highlightIndex === i ? "text-white text-lg" : "text-white/60"
+                      "font-black italic uppercase truncate mb-1 transition-all tracking-tighter",
+                      highlightIndex === i ? "text-white text-xl" : "text-white/60 text-sm"
                     )}>
                       {p.name}
                     </p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-baseline gap-2">
                       <span className={cn(
-                        "font-black leading-none transition-all",
-                        highlightIndex === i ? "text-4xl text-primary" : "text-2xl text-primary/60"
+                        "font-black leading-none transition-all drop-shadow-md",
+                        highlightIndex === i ? "text-5xl text-primary" : "text-2xl text-primary/60"
                       )}>
                         {p.count}
                       </span>
-                      <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest truncate">{p.category}</span>
+                      <span className={cn(
+                        "font-bold uppercase tracking-widest truncate transition-all",
+                        highlightIndex === i ? "text-[12px] text-white/60" : "text-[8px] text-white/20"
+                      )}>{p.category}</span>
                     </div>
                   </div>
                 </div>
