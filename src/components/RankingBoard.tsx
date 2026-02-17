@@ -512,10 +512,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
             rafflePhase === 'center' ? "bg-yellow-400 border-white scale-150" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1 scale-100"
           )}>
-            <Trophy className="w-12 h-12 text-black animate-bounce" />
             <p className="text-xs font-black uppercase tracking-widest opacity-70">Sorteio Geral</p>
             <Avatar className="w-32 h-32 border-4 border-black/20 shadow-xl my-2">
-              <AvatarImage src={getParticipantAvatar(data.raffle?.isRaffling ? approvedParticipants.find(p => p.name === currentRaffleName) : raffleWinner)} />
+              <AvatarImage src={getParticipantAvatar(data.raffle?.isRaffling ? approvedParticipants.find(p => p.name === currentRaffleName) : raffleWinner)} className="object-cover" />
               <AvatarFallback className="bg-black/10 font-bold">{(data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name)?.[0]}</AvatarFallback>
             </Avatar>
             <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
@@ -537,10 +536,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
             challengePhase === 'center' ? "bg-purple-500 border-white scale-150" : "bg-purple-600/95 border-purple-300 text-white -rotate-1 scale-100"
           )}>
-            <Zap className="w-12 h-12 text-white animate-pulse" />
             <p className="text-xs font-black uppercase tracking-widest opacity-70">Desafio Surpresa!</p>
             <Avatar className="w-32 h-32 border-4 border-white/20 shadow-xl my-2">
-              <AvatarImage src={getParticipantAvatar(data.challenge?.isRaffling ? approvedParticipants.find(p => p.name === currentChallengeName) : challengeWinner)} />
+              <AvatarImage src={getParticipantAvatar(data.challenge?.isRaffling ? approvedParticipants.find(p => p.name === currentChallengeName) : challengeWinner)} className="object-cover" />
               <AvatarFallback className="bg-white/10 font-bold">{(data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name)?.[0]}</AvatarFallback>
             </Avatar>
             <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
