@@ -622,12 +622,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      <div className={cn("text-center space-y-4", overlay ? "mb-12 mt-4" : "mb-6")}>
+      <div className={cn("text-center space-y-4", overlay ? "mb-8 mt-4" : "mb-6")}>
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
       {!hasPoints ? (
-        <div className="flex justify-center items-center w-full max-w-6xl mt-12 min-h-[400px]">
+        <div className="flex justify-center items-center w-full max-w-6xl mt-8 min-h-[400px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
                <Avatar className="w-80 h-80 border-[12px] border-primary shadow-[0_0_50px_rgba(168,85,247,0.5)] mb-8">
@@ -642,7 +642,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-6xl flex justify-center items-center min-h-[450px] mt-24">
+        <div className="w-full max-w-6xl flex justify-center items-center min-h-[450px] mt-12">
           {viewMode === 'PODIUM' ? (
             <div className="flex flex-row justify-center items-end gap-12 w-full animate-in zoom-in fade-in duration-700">
               {[1, 0, 2].map((actualIndex) => {
@@ -715,7 +715,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div className="flex items-center gap-8 bg-black/30 backdrop-blur-2xl px-12 py-6 rounded-full border-4 border-white/10 shadow-2xl">
                 <div className="text-[8rem] font-black italic tabular-nums leading-none">{notification.count}</div>
                 <div className="bg-white/10 p-4 rounded-full border border-white/10">
-                  {notification.type === 'leader' ? <Trophy className="w-16 h-16 text-white animate-pulse" /> : <CustomIcon className="w-16 h-16 text-white animate-pulse" />}
+                  {notification.type === 'leader' ? <Trophy className="w-16 h-16 text-white animate-pulse" /> : < beer className="w-16 h-16 text-white animate-pulse" />}
                 </div>
               </div>
             </div>
