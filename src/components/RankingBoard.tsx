@@ -655,9 +655,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                     </div>
                   </div>
                   <div className="text-center space-y-4">
-                    <h2 className="text-8xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl">{sortedParticipants[highlightIndex].name}</h2>
+                    <h2 className="text-6xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl">{sortedParticipants[highlightIndex].name}</h2>
                     <div className="flex items-center justify-center gap-6 bg-black/40 backdrop-blur-xl px-12 py-6 rounded-full border-2 border-white/10 shadow-2xl">
-                      <span className="text-9xl font-black text-primary drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-none">{sortedParticipants[highlightIndex].count}</span>
+                      <span className="text-8xl font-black text-primary drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-none">{sortedParticipants[highlightIndex].count}</span>
                     </div>
                   </div>
                 </div>
