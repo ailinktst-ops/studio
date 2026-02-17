@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -42,7 +41,7 @@ import Link from 'next/link';
 
 export function ControlPanel() {
   const { 
-    data, loading, isInitializing, 
+    data, jokes, loading, isInitializing, 
     addParticipant, updateParticipantImage, incrementCount, decrementCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
@@ -517,8 +516,8 @@ export function ControlPanel() {
           </Card>
 
           <Card className="bg-card/30 backdrop-blur-md border-white/5">
-            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-orange-500"><Mic className="w-5 h-5" /> Memes Enviados ({data.jokes?.length || 0})</CardTitle></CardHeader>
-            <CardContent className="space-y-4">{(data.jokes || []).map((joke) => (
+            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-orange-500"><Mic className="w-5 h-5" /> Memes Enviados ({jokes.length})</CardTitle></CardHeader>
+            <CardContent className="space-y-4">{(jokes || []).map((joke) => (
               <div key={joke.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
                  <div className="flex items-center gap-3"><Avatar className="w-10 h-10 border border-white/10 rounded-lg"><AvatarImage src={joke.imageUrl || ""} /><AvatarFallback className="bg-white/5"><Mic className="w-4 h-4 text-orange-500/40" /></AvatarFallback></Avatar><span className="text-sm font-black italic uppercase text-white/80">{joke.name}</span></div>
                  <div className="flex gap-2"><audio id={`audio-${joke.id}`} src={joke.audioUrl} className="hidden" /><Button variant="outline" size="icon" onClick={() => (document.getElementById(`audio-${joke.id}`) as HTMLAudioElement).play()} className="h-9 w-9 bg-white/5 border-white/10 hover:bg-orange-500/20"><Volume2 className="w-4 h-4 text-orange-500" /></Button>

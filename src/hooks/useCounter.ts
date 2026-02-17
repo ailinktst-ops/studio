@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useCallback } from 'react';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { useEffect, useCallback, useMemo } from 'react';
+import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { doc, setDoc, Timestamp, getDoc, collection, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -90,7 +90,6 @@ export interface CounterState {
   participants: Participant[];
   messages: ElegantMessage[];
   musicRequests: MusicRequest[];
-  jokes: Joke[];
   categories: string[];
   customPhrases: string[];
   updatedAt: any;
@@ -117,7 +116,6 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   participants: [],
   messages: [],
   musicRequests: [],
-  jokes: [],
   categories: VALID_CATEGORIES,
   customPhrases: [
     "A ELITE DA RESENHA EM TEMPO REAL", 
@@ -168,7 +166,14 @@ export function useCounter() {
     return doc(firestore, 'counters', DEFAULT_ID);
   }, [firestore]);
 
+  const jokesColRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'counters', DEFAULT_ID, 'jokes');
+  }, [firestore]);
+
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
+  const { data: jokesData, isLoading: isJokesLoading } = useCollection<Joke>(jokesColRef);
+
   const isLoading = isDocLoading || isUserLoading;
 
   const cleanData = (state: Partial<CounterState>): CounterState => {
@@ -189,10 +194,6 @@ export function useCounter() {
       })),
       messages: state.messages || [],
       musicRequests: state.musicRequests || [],
-      jokes: (state.jokes || []).map(j => ({
-        ...j,
-        name: j.name || `Meme ${j.id?.slice(0, 4) || '??'}`
-      })),
       customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
         ? state.customPhrases 
         : DEFAULT_STATE.customPhrases,
@@ -223,6 +224,7 @@ export function useCounter() {
   };
 
   const data = cleanData(rawData || {});
+  const jokes = useMemo(() => jokesData || [], [jokesData]);
 
   useEffect(() => {
     async function initDoc() {
@@ -243,15 +245,9 @@ export function useCounter() {
     initDoc();
   }, [isDocLoading, rawData, counterRef, user, isUserLoading]);
 
-  /**
-   * Helper robusto para atualizar campos do documento global.
-   * Utiliza setDoc com merge para garantir persistência e respeitar regras de segurança.
-   */
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
     if (!counterRef || !user) return;
     
-    // Usamos setDoc com merge: true para garantir que o documento exista
-    // e para evitar erros de permissão comuns com updateDoc em sessões anônimas frias.
     setDoc(counterRef, { 
       ...fields,
       updatedAt: Timestamp.now() 
@@ -323,39 +319,38 @@ export function useCounter() {
     return true;
   };
 
-  const submitJoke = (audioUrl: string, name: string, imageUrl?: string) => {
-    if (!counterRef || !data) return;
-    const newJoke: Joke = {
-      id: Math.random().toString(36).substring(2, 11),
+  const submitJoke = async (audioUrl: string, name: string, imageUrl?: string) => {
+    if (!jokesColRef || !user) return;
+    const id = Math.random().toString(36).substring(2, 11);
+    const newJoke: Omit<Joke, 'id'> = {
       name: name || `Meme ${Date.now().toString().slice(-4)}`,
       audioUrl,
-      imageUrl,
+      imageUrl: imageUrl || "",
       timestamp: Date.now()
     };
-    updateDocField({
-      jokes: [...(data.jokes || []), newJoke]
+    
+    // Salva na sub-coleção para não pesar o documento principal
+    await addDoc(jokesColRef, newJoke).catch(e => {
+      console.error("Erro ao salvar meme:", e);
     });
   };
 
-  const updateJokeName = (id: string, name: string) => {
-    if (!counterRef || !data) return;
-    const updatedJokes = data.jokes.map(j => j.id === id ? { ...j, name } : j);
-    updateDocField({
-      jokes: updatedJokes
-    });
+  const updateJokeName = async (id: string, name: string) => {
+    if (!firestore || !user) return;
+    const jokeRef = doc(firestore, 'counters', DEFAULT_ID, 'jokes', id);
+    await updateDoc(jokeRef, { name });
   };
 
-  const removeJoke = (id: string) => {
-    if (!counterRef || !data) return;
-    const updatedJokes = data.jokes.filter(j => j.id !== id);
-    updateDocField({
-      jokes: updatedJokes
-    });
+  const removeJoke = async (id: string) => {
+    if (!firestore || !user) return;
+    const jokeRef = doc(firestore, 'counters', DEFAULT_ID, 'jokes', id);
+    await deleteDoc(jokeRef);
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
     if (!joke.audioUrl) return;
     
+    // Atualiza apenas o meme ATIVO. Como é apenas um, não estoura o limite.
     updateDocField({
       piadinha: {
         audioUrl: joke.audioUrl,
@@ -365,11 +360,10 @@ export function useCounter() {
       }
     });
 
-    // Fallback de segurança para garantir que o meme saia do estado ativo após 1 minuto
     setTimeout(() => {
-      updateDocField({ piadinha: { ...data.piadinha, isActive: false } });
+      updateDocField({ piadinha: { isActive: false, timestamp: Date.now() } });
     }, 60000);
-  }, [updateDocField, data.piadinha]);
+  }, [updateDocField]);
 
   const moderateParticipant = (id: string, status: 'approved' | 'rejected', category?: string) => {
     if (!counterRef || !data) return;
@@ -438,7 +432,6 @@ export function useCounter() {
       participants: [],
       messages: [],
       musicRequests: [],
-      jokes: [],
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
       challenge: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
       activeMessageId: null,
@@ -654,6 +647,7 @@ export function useCounter() {
 
   return {
     data,
+    jokes,
     loading: isLoading,
     isInitializing: isDocLoading && !rawData,
     updateTitle,

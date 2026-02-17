@@ -1,34 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * FIRESTORE SECURITY RULES - RankUp Counter
-     * 
-     * Filosofia:
-     * 1. Leitura Pública: Necessária para que o Overlay (Telão) e convidados vejam o ranking.
-     * 2. Escrita Autenticada: Apenas usuários com sessão ativa (mesmo anônima) podem alterar dados.
-     * Isso protege o banco de acessos automatizados externos e cumpre as políticas do Google.
-     */
-
     match /counters/{counterId} {
-      // Permite que qualquer pessoa veja o ranking (essencial para o Telão)
+      // Leitura pública para Overlay e visitantes
       allow read: if true;
       
-      // Permite criar ou atualizar se o usuário estiver autenticado via App
-      // O App faz login anônimo automático para todos os usuários
-      allow create, update: if request.auth != null;
-      
-      // Proteção contra deleção acidental do documento principal
-      allow delete: if false;
+      // Escrita permitida para qualquer usuário autenticado (incluindo anônimos)
+      allow write: if request.auth != null;
 
-      // Regras para a sub-coleção de participantes
-      match /participants/{participantId} {
-        allow read: if true;
-        allow write: if request.auth != null;
-      }
-      
-      // Regras para a sub-coleção de mensagens e outros dados aninhados
+      // Regras para sub-coleções (participantes, mensagens, memes/jokes)
       match /{allChildren=**} {
         allow read: if true;
         allow write: if request.auth != null;
