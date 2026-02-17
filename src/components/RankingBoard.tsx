@@ -176,7 +176,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
     else if (updatedUser) {
       playSound('point');
-      setNotification({ userName: updatedUser.name, count: updatedUser.count, type: 'point', title: "MAIS UMA PARA!" });
+      setNotification({ userName: updatedUser.name, count: updatedUser.count, type: 'point', title: "MAIS UMA!" });
       setTimeout(() => setNotification(null), 3500);
     }
     lastParticipantsRef.current = current;
@@ -656,18 +656,57 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       )}
 
       {overlay && notification && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-10 animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-6 animate-in fade-in zoom-in duration-300">
           <div className={cn(
-            "max-w-4xl w-full p-12 rounded-[3rem] border-4 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-2xl transform rotate-1 flex flex-col items-center justify-center",
-            notification.type === 'leader' ? "bg-yellow-500/95 border-yellow-300 text-black animate-bounce" : 
-            notification.type === 'lantern' ? "bg-red-600/95 border-red-300 text-white animate-pulse" :
-            "bg-primary/95 border-white/20 text-white"
+            "relative max-w-5xl w-full p-16 rounded-[4rem] border-8 text-center shadow-[0_0_150px_rgba(0,0,0,0.9)] backdrop-blur-3xl flex flex-col items-center justify-center overflow-hidden transition-all duration-500",
+            notification.type === 'leader' 
+              ? "bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 border-yellow-200 text-black rotate-1" 
+              : notification.type === 'lantern'
+                ? "bg-gradient-to-br from-red-600 via-red-700 to-red-900 border-red-400 text-white -rotate-1"
+                : "bg-gradient-to-br from-primary via-purple-600 to-indigo-900 border-white/20 text-white rotate-1"
           )}>
-            {notification.title && <h2 className="text-4xl font-black italic uppercase tracking-[0.2em] mb-8 opacity-70">{notification.title}</h2>}
-            <h2 className="text-[10rem] font-black italic uppercase tracking-tighter mb-8 drop-shadow-2xl leading-none">{notification.userName}</h2>
-            <div className="flex items-center gap-6 mt-4">
-              <span className="text-5xl font-black italic uppercase tracking-widest opacity-80 leading-none">{notification.type === 'lantern' ? "Tá Devendo" : "Bebeu"}</span>
-              <span className={cn("text-8xl font-black italic uppercase px-8 py-4 rounded-[2rem]", notification.type === 'leader' ? "bg-black text-yellow-400" : "bg-black text-white")}>{notification.count}</span>
+            {/* Background glowing effects */}
+            <div className="absolute -top-24 -left-24 w-[40rem] h-[40rem] bg-white/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-[40rem] h-[40rem] bg-black/20 rounded-full blur-[120px] pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col items-center gap-8">
+              {/* Header Title */}
+              <div className="space-y-4">
+                <p className="text-4xl font-black uppercase tracking-[0.5em] opacity-70 italic drop-shadow-sm">
+                  {notification.title || (notification.type === 'leader' ? "NOVO LÍDER!" : "MAIS UMA!")}
+                </p>
+                
+                {/* Main Name */}
+                <h2 className="text-[13rem] font-black italic uppercase tracking-tighter drop-shadow-[0_15px_15px_rgba(0,0,0,0.4)] leading-none">
+                  {notification.userName}
+                </h2>
+              </div>
+
+              {/* Stats Badge */}
+              <div className="flex items-center gap-10 bg-black/20 backdrop-blur-xl px-16 py-8 rounded-[4rem] border-4 border-white/10 shadow-2xl">
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl font-black italic uppercase tracking-widest opacity-60 leading-none mb-2">
+                    {notification.type === 'lantern' ? "TÁ DEVENDO" : "JÁ FORAM"}
+                  </span>
+                  <div className={cn(
+                    "text-[10rem] font-black italic tabular-nums leading-none drop-shadow-md",
+                    notification.type === 'leader' ? "text-white" : "text-secondary"
+                  )}>
+                    {notification.count}
+                  </div>
+                </div>
+                
+                {/* Icon in badge */}
+                <div className="bg-white/10 p-6 rounded-full border border-white/10">
+                  {notification.type === 'leader' ? (
+                    <Trophy className="w-24 h-24 text-white animate-bounce" />
+                  ) : notification.type === 'point' ? (
+                    <CustomIcon className="w-24 h-24 text-white animate-pulse" />
+                  ) : (
+                    <AlertCircle className="w-24 h-24 text-white animate-pulse" />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
