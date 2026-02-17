@@ -298,7 +298,7 @@ export function useCounter() {
     updateDocField({ 
       piadinha: { 
         isActive: false, 
-        timestamp: Date.now(),
+        timestamp: Timestamp.now().toMillis(),
         audioUrl: ""
       } 
     });
@@ -361,7 +361,7 @@ export function useCounter() {
       name: name || `Meme ${Date.now().toString().slice(-4)}`,
       audioUrl,
       imageUrl: imageUrl || "",
-      timestamp: Date.now()
+      timestamp: Timestamp.now().toMillis()
     };
     updateDocField({
       jokes: [...data.jokes, newJoke]
@@ -388,7 +388,7 @@ export function useCounter() {
         audioUrl: joke.audioUrl,
         imageUrl: joke.imageUrl || "",
         isActive: true,
-        timestamp: Date.now()
+        timestamp: Timestamp.now().toMillis()
       }
     });
 
@@ -396,7 +396,7 @@ export function useCounter() {
       updateDocField({ 
         piadinha: { 
           isActive: false, 
-          timestamp: Date.now(),
+          timestamp: Timestamp.now().toMillis(),
           audioUrl: ""
         } 
       });
@@ -498,14 +498,14 @@ export function useCounter() {
   const resetOnlyPoints = () => {
     if (!counterRef || !data) return;
     
-    // Find current leader before resetting
     const approvedParticipants = data.participants.filter(p => p.status === 'approved');
     const sorted = [...approvedParticipants].sort((a, b) => b.count - a.count);
     const leader = sorted[0] && sorted[0].count > 0 ? sorted[0] : null;
 
-    // Filter only those who had points for the history
+    // Salvar apenas os 10 primeiros que pontuaram para otimizar tamanho do documento
     const previousRanking = sorted
       .filter(p => p.count > 0)
+      .slice(0, 10)
       .map(p => ({
         name: p.name,
         count: p.count,
@@ -545,7 +545,7 @@ export function useCounter() {
       to,
       content,
       status: 'pending',
-      timestamp: Date.now()
+      timestamp: Timestamp.now().toMillis()
     };
     updateDocField({
       messages: [...(data?.messages || []), newMessage]
@@ -578,7 +578,7 @@ export function useCounter() {
       artist,
       song,
       status: 'pending',
-      timestamp: Date.now()
+      timestamp: Timestamp.now().toMillis()
     };
     updateDocField({
       musicRequests: [...(data?.musicRequests || []), newRequest]
@@ -612,7 +612,7 @@ export function useCounter() {
       participantId,
       participantName,
       status: 'pending',
-      timestamp: Date.now()
+      timestamp: Timestamp.now().toMillis()
     };
     updateDocField({
       pointRequests: [...(data?.pointRequests || []), newRequest]
@@ -669,7 +669,7 @@ export function useCounter() {
         isRaffling: true,
         winnerId: winner.id,
         candidates: candidates,
-        startTime: Date.now(),
+        startTime: Timestamp.now().toMillis(),
         winnersHistory: newHistory
       }
     });
@@ -706,7 +706,7 @@ export function useCounter() {
         isRaffling: true,
         winnerId: winner.id,
         candidates: candidates,
-        startTime: Date.now(),
+        startTime: Timestamp.now().toMillis(),
         winnersHistory: newHistory
       }
     });
@@ -742,7 +742,7 @@ export function useCounter() {
       announcement: {
         message: message.trim(),
         isActive: true,
-        timestamp: Date.now()
+        timestamp: Timestamp.now().toMillis()
       }
     });
     setTimeout(() => updateDocField({ announcement: { ...data.announcement!, isActive: false } }), 8000);
@@ -755,7 +755,7 @@ export function useCounter() {
         type,
         url,
         isActive: true,
-        timestamp: Date.now()
+        timestamp: Timestamp.now().toMillis()
       }
     });
     setTimeout(() => updateDocField({ socialAnnouncement: { ...data.socialAnnouncement!, isActive: false } }), 10000);

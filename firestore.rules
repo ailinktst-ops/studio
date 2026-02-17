@@ -13,4 +13,4 @@ service cloud.firestore {
     }
   }
 }
-// Atualização forçada das regras para garantir propagação correta de permissões anônimas.
+// Atualização forçada das regras para garantir propagação correta de permissões anônimas e payloads otimizados.

@@ -153,7 +153,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       const timer = setTimeout(() => {
         setViewMode('INDIVIDUAL');
         setHighlightIndex(0);
-      }, 25000); // Podium dura 25 segundos
+      }, 25000); 
       return () => clearTimeout(timer);
     } else {
       const timer = setTimeout(() => {
@@ -163,7 +163,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           setViewMode('PODIUM');
           setHighlightIndex(-1);
         }
-      }, 2000); // Cada participante no ciclo individual dura 2 segundos
+      }, 2000); 
       return () => clearTimeout(timer);
     }
   }, [overlay, hasPoints, viewMode, highlightIndex, sortedParticipants.length]);
@@ -354,12 +354,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return () => { if (interval) clearInterval(interval); };
   }, [overlay, data.customPhrases]);
 
-  const ITEMS_PER_WINDOW = 30; 
   const sideList = useMemo(() => {
     if (!hasPoints) return approvedParticipants;
     return sortedParticipants.slice(3);
   }, [sortedParticipants, approvedParticipants, hasPoints]);
   
+  const ITEMS_PER_WINDOW = 30; 
   useEffect(() => {
     if (!overlay || sideList.length <= ITEMS_PER_WINDOW) {
       setSideListOffset(0);
@@ -379,7 +379,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return sideList.slice(sideListOffset, sideListOffset + ITEMS_PER_WINDOW);
   }, [overlay, sideList, sideListOffset]);
 
-  // Logic for the rotating previous ranking history
   const previousRanking = data.previousRanking || [];
   useEffect(() => {
     if (overlay && previousRanking.length > 0) {
@@ -632,14 +631,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               {[1, 0, 2].map((actualIndex) => {
                 const p = top3[actualIndex];
                 if (!p) return <div key={actualIndex} className="hidden md:block w-72" />;
-                const glowColor = actualIndex === 0 ? "bg-yellow-400" : (actualIndex === 1 ? "bg-zinc-400" : (actualIndex === 2 ? "bg-amber-800" : "bg-primary"));
                 const borderColor = actualIndex === 0 ? "border-yellow-400" : (actualIndex === 1 ? "border-zinc-300" : "border-amber-700");
                 const badgeColor = actualIndex === 0 ? "bg-yellow-400 text-black" : (actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white");
                 
                 return (
                   <div key={p.id} className={cn("relative flex flex-col items-center p-8 transition-all duration-500", actualIndex === 0 ? "scale-125 z-20 order-2" : actualIndex === 1 ? "order-1 opacity-80" : "order-3 opacity-80")}>
                     <div className="relative mb-6">
-                      <div className={cn("absolute inset-0 rounded-full blur-2xl opacity-20 animate-pulse", glowColor)}></div>
                       <Avatar className={cn("w-40 h-40 border-8 shadow-2xl", borderColor)}>
                         <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
                         <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
