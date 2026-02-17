@@ -36,11 +36,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
   
-  // View mode for oscillation: 'PODIUM' or 'ALL' (Sequential Highlight)
-  const [viewMode, setViewMode] = useState<'PODIUM' | 'ALL'>('PODIUM');
+  // View mode for oscillation: 'PODIUM' or 'INDIVIDUAL'
+  const [viewMode, setViewMode] = useState<'PODIUM' | 'INDIVIDUAL'>('PODIUM');
   const [highlightIndex, setHighlightIndex] = useState(-1);
   
-  // Áudio ativado por padrão para evitar a tela de clique
+  // Áudio ativado por padrão
   const [isAudioStarted, setIsAudioStarted] = useState(true);
   
   const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
@@ -89,9 +89,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       audio.loop = true;
       challengeAudioRef.current = audio;
     }
-    audio.play().catch(() => {
-      // Falha silenciosa se o navegador bloquear o autoplay
-    });
+    audio.play().catch(() => {});
   };
 
   const stopChallengeSound = () => {
@@ -145,7 +143,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return null;
   }, [sortedParticipants]);
 
-  // Oscillation Logic: Alternates between Podium and All List Sequential Highlight
+  // Oscillation Logic: Alternates between Podium and Individual Highlight
   useEffect(() => {
     if (!overlay || !hasPoints) {
       setViewMode('PODIUM');
@@ -155,12 +153,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
     if (viewMode === 'PODIUM') {
       const timer = setTimeout(() => {
-        setViewMode('ALL');
+        setViewMode('INDIVIDUAL');
         setHighlightIndex(0);
       }, 15000); // 15s for Podium
       return () => clearTimeout(timer);
     } else {
-      // mode ALL - highlight one by one
+      // mode INDIVIDUAL - show one by one
       const timer = setTimeout(() => {
         if (highlightIndex < sortedParticipants.length - 1) {
           setHighlightIndex(prev => prev + 1);
@@ -168,7 +166,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           setViewMode('PODIUM');
           setHighlightIndex(-1);
         }
-      }, 3000); // 3s per participant highlight
+      }, 4000); // 4s per participant
       return () => clearTimeout(timer);
     }
   }, [overlay, hasPoints, viewMode, highlightIndex, sortedParticipants.length]);
@@ -280,7 +278,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.announcement, overlay, isAudioStarted]);
 
-  // Listener Definitivo para o Áudio do Meme
   useEffect(() => {
     if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
       if (piadinhaAudioRef.current) {
@@ -292,8 +289,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       piadinhaAudioRef.current = audio;
       lastPiadinhaTimestampRef.current = data.piadinha.timestamp;
 
-      audio.play().catch((err) => {
-        console.warn("Meme audio failed:", err);
+      audio.play().catch(() => {
         setTimeout(() => clearPiadinha(), 5000);
       });
 
@@ -727,54 +723,53 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full animate-in slide-in-from-bottom-10 fade-in duration-700 items-center justify-items-center">
-              {sortedParticipants.map((p, i) => (
-                <div 
-                  key={p.id} 
-                  className={cn(
-                    "bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-[2.5rem] flex items-center gap-6 transition-all duration-500 w-full max-w-[280px]",
-                    highlightIndex === i 
-                      ? "scale-[1.35] border-primary bg-primary/40 shadow-[0_0_60px_rgba(168,85,247,0.6)] z-50 ring-8 ring-primary/30 -translate-y-4" 
-                      : "opacity-30 grayscale-[0.8] scale-90"
-                  )} 
-                >
-                  <div className="relative">
-                    <Avatar className={cn(
-                      "w-24 h-24 border-2 shadow-2xl transition-all",
-                      highlightIndex === i ? "border-primary scale-110" : "border-white/10"
-                    )}>
-                      <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
-                      <AvatarFallback className="bg-white/5 font-black uppercase text-xs">{p.name[0]}</AvatarFallback>
-                    </Avatar>
+            <div className="flex justify-center items-center w-full animate-in zoom-in fade-in duration-700">
+              {sortedParticipants[highlightIndex] && (
+                <div key={sortedParticipants[highlightIndex].id} className="flex flex-col items-center scale-110">
+                  <div className="relative mb-12">
+                    {/* Glow background based on position */}
                     <div className={cn(
-                      "absolute -top-3 -right-3 text-white text-[14px] w-10 h-10 rounded-full flex items-center justify-center font-black border border-white/20 shadow-md transition-all",
-                      highlightIndex === i ? "bg-primary scale-125" : "bg-white/10"
+                      "absolute inset-0 rounded-full blur-[80px] opacity-20 animate-pulse",
+                      highlightIndex === 0 ? "bg-yellow-400" : highlightIndex === 1 ? "bg-zinc-400" : highlightIndex === 2 ? "bg-amber-800" : "bg-primary"
+                    )}></div>
+                    
+                    <Avatar className={cn(
+                      "w-72 h-72 border-[12px] shadow-[0_0_80px_rgba(0,0,0,0.5)] transition-all",
+                      highlightIndex === 0 ? "border-yellow-400" : highlightIndex === 1 ? "border-zinc-300" : highlightIndex === 2 ? "border-amber-700" : "border-primary/40"
                     )}>
-                      {i + 1}
+                      <AvatarImage src={getParticipantAvatar(sortedParticipants[highlightIndex])} className="object-cover" />
+                      <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">
+                        {sortedParticipants[highlightIndex].name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className={cn(
+                      "absolute -top-6 -right-6 text-white text-3xl w-24 h-24 rounded-full flex items-center justify-center font-black italic border-4 border-white/20 shadow-2xl rotate-12",
+                      highlightIndex === 0 ? "bg-yellow-400 text-black" : highlightIndex === 1 ? "bg-zinc-300 text-black" : highlightIndex === 2 ? "bg-amber-700 text-white" : "bg-primary text-white"
+                    )}>
+                      {highlightIndex + 1}º
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "font-black italic uppercase truncate mb-1 transition-all tracking-tighter",
-                      highlightIndex === i ? "text-white text-xl" : "text-white/60 text-sm"
-                    )}>
-                      {p.name}
-                    </p>
-                    <div className="flex items-baseline gap-2">
-                      <span className={cn(
-                        "font-black leading-none transition-all drop-shadow-md",
-                        highlightIndex === i ? "text-5xl text-primary" : "text-2xl text-primary/60"
-                      )}>
-                        {p.count}
+
+                  <div className="text-center space-y-4">
+                    <h2 className="text-8xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl">
+                      {sortedParticipants[highlightIndex].name}
+                    </h2>
+                    
+                    <div className="flex items-center justify-center gap-6 bg-black/40 backdrop-blur-xl px-12 py-6 rounded-full border-2 border-white/10 shadow-2xl">
+                      <span className="text-9xl font-black text-primary drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-none">
+                        {sortedParticipants[highlightIndex].count}
                       </span>
-                      <span className={cn(
-                        "font-bold uppercase tracking-widest truncate transition-all",
-                        highlightIndex === i ? "text-[12px] text-white/60" : "text-[8px] text-white/20"
-                      )}>{p.category}</span>
+                      <div className="text-left">
+                        <p className="text-[14px] font-black uppercase text-white/40 tracking-[0.3em] leading-none mb-2">PONTOS ATUAIS</p>
+                        <p className="text-2xl font-black italic uppercase text-secondary tracking-tighter leading-none">
+                          {sortedParticipants[highlightIndex].category}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
@@ -790,12 +785,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 ? "bg-gradient-to-br from-red-600 via-red-700 to-red-900 border-red-400 text-white -rotate-1"
                 : "bg-gradient-to-br from-primary via-purple-600 to-indigo-900 border-white/20 text-white rotate-1"
           )}>
-            {/* Background glowing effects */}
             <div className="absolute -top-24 -left-24 w-[40rem] h-[40rem] bg-white/10 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-[40rem] h-[40rem] bg-black/20 rounded-full blur-[120px] pointer-events-none" />
 
             <div className="relative z-10 flex flex-col items-center gap-6">
-              {/* Photo Area */}
               <div className="relative">
                 <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl animate-pulse"></div>
                 <Avatar className="w-64 h-64 border-8 border-white/30 shadow-2xl relative z-10">
@@ -804,7 +797,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 </Avatar>
               </div>
 
-              {/* Text Area */}
               <div className="space-y-2">
                 {notification.title && (
                   <p className="text-3xl font-black uppercase tracking-[0.5em] opacity-70 italic drop-shadow-sm">
@@ -817,7 +809,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 </h2>
               </div>
 
-              {/* Stats Badge */}
               <div className="flex items-center gap-8 bg-black/30 backdrop-blur-2xl px-12 py-6 rounded-full border-4 border-white/10 shadow-2xl">
                 <div className="flex flex-col items-center">
                   <span className="text-2xl font-black italic uppercase tracking-widest opacity-60 leading-none mb-1">
@@ -831,7 +822,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                   </div>
                 </div>
                 
-                {/* Icon in badge */}
                 <div className="bg-white/10 p-4 rounded-full border border-white/10">
                   {notification.type === 'leader' ? (
                     <Trophy className="w-16 h-16 text-white animate-bounce" />
