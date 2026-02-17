@@ -610,7 +610,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-6xl flex justify-center items-center min-h-[450px]">
+        <div className="w-full max-w-6xl flex justify-center items-center min-h-[450px] mt-12">
           {viewMode === 'PODIUM' ? (
             <div className="flex flex-row justify-center items-end gap-12 w-full animate-in zoom-in fade-in duration-700">
               {[1, 0, 2].map((actualIndex) => {
@@ -646,7 +646,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                 <div key={sortedParticipants[highlightIndex].id} className="flex flex-col items-center scale-110 transition-transform duration-1000">
                   <div className="relative mb-8">
                     <div className={cn("absolute inset-0 rounded-full blur-[60px] opacity-20 animate-pulse bg-primary")}></div>
-                    <Avatar className="w-60 h-60 border-[10px] border-primary/40 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
+                    <Avatar className="w-64 h-64 border-[10px] border-primary/40 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
                       <AvatarImage src={getParticipantAvatar(sortedParticipants[highlightIndex])} className="object-cover" />
                       <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">{sortedParticipants[highlightIndex].name[0]}</AvatarFallback>
                     </Avatar>
