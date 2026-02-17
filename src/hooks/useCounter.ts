@@ -4,7 +4,7 @@ import { useEffect, useCallback, useMemo } from 'react';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc, Timestamp, getDoc, collection, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 export interface Participant {
   id: string;
@@ -60,7 +60,8 @@ export interface RaffleState {
 }
 
 export interface PiadinhaState {
-  audioUrl?: string;
+  jokeId?: string; // Referência ao ID na sub-coleção para evitar excesso de tamanho no doc principal
+  audioUrl?: string; // Mantido para compatibilidade temporária
   imageUrl?: string;
   isActive: boolean;
   timestamp: number | null;
@@ -139,8 +140,6 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   },
   activeMessageId: null,
   piadinha: {
-    audioUrl: "",
-    imageUrl: "",
     isActive: false,
     timestamp: null
   },
@@ -252,12 +251,11 @@ export function useCounter() {
       ...fields,
       updatedAt: Timestamp.now() 
     }, { merge: true }).catch(e => {
-      console.error("Erro ao atualizar Firestore:", e);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: counterRef.path,
         operation: 'update',
         requestResourceData: fields
-      }));
+      } satisfies SecurityRuleContext));
     });
   }, [counterRef, user]);
 
@@ -319,9 +317,8 @@ export function useCounter() {
     return true;
   };
 
-  const submitJoke = async (audioUrl: string, name: string, imageUrl?: string) => {
+  const submitJoke = (audioUrl: string, name: string, imageUrl?: string) => {
     if (!jokesColRef || !user) return;
-    const id = Math.random().toString(36).substring(2, 11);
     const newJoke: Omit<Joke, 'id'> = {
       name: name || `Meme ${Date.now().toString().slice(-4)}`,
       audioUrl,
@@ -329,31 +326,44 @@ export function useCounter() {
       timestamp: Date.now()
     };
     
-    // Salva na sub-coleção para não pesar o documento principal
-    await addDoc(jokesColRef, newJoke).catch(e => {
-      console.error("Erro ao salvar meme:", e);
+    addDoc(jokesColRef, newJoke).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: jokesColRef.path,
+        operation: 'create',
+        requestResourceData: newJoke
+      } satisfies SecurityRuleContext));
     });
   };
 
-  const updateJokeName = async (id: string, name: string) => {
+  const updateJokeName = (id: string, name: string) => {
     if (!firestore || !user) return;
     const jokeRef = doc(firestore, 'counters', DEFAULT_ID, 'jokes', id);
-    await updateDoc(jokeRef, { name });
+    updateDoc(jokeRef, { name }).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: jokeRef.path,
+        operation: 'update',
+        requestResourceData: { name }
+      } satisfies SecurityRuleContext));
+    });
   };
 
-  const removeJoke = async (id: string) => {
+  const removeJoke = (id: string) => {
     if (!firestore || !user) return;
     const jokeRef = doc(firestore, 'counters', DEFAULT_ID, 'jokes', id);
-    await deleteDoc(jokeRef);
+    deleteDoc(jokeRef).catch(e => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: jokeRef.path,
+        operation: 'delete'
+      } satisfies SecurityRuleContext));
+    });
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
-    if (!joke.audioUrl) return;
-    
-    // Atualiza apenas o meme ATIVO. Como é apenas um, não estoura o limite.
+    // Agora enviamos apenas a referência por ID para o telão
+    // Isso evita problemas de tamanho no documento principal
     updateDocField({
       piadinha: {
-        audioUrl: joke.audioUrl,
+        jokeId: joke.id,
         imageUrl: joke.imageUrl || "",
         isActive: true,
         timestamp: Date.now()
@@ -437,7 +447,7 @@ export function useCounter() {
       activeMessageId: null,
       announcement: { message: "", isActive: false, timestamp: null },
       socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null },
-      piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null }
+      piadinha: { jokeId: "", imageUrl: "", isActive: false, timestamp: null }
     };
     updateDocField(resetData);
   };

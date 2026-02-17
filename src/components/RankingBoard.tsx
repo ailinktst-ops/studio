@@ -1,8 +1,9 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useCounter, Participant } from '@/hooks/useCounter';
+import { useCounter, Participant, Joke } from '@/hooks/useCounter';
+import { useDoc, useMemoFirebase, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { 
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
@@ -26,6 +27,7 @@ const SOUND_URLS = {
 };
 
 export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
+  const firestore = useFirestore();
   const { data, loading, isInitializing, clearPiadinha } = useCounter();
   const [currentRaffleName, setCurrentRaffleName] = useState("");
   const [currentChallengeName, setCurrentChallengeName] = useState("");
@@ -40,6 +42,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [challengePhase, setChallengePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [correioPhase, setCorreioPhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
+
+  // Busca o meme ativo da sub-coleção de forma independente
+  const activeJokeRef = useMemoFirebase(() => {
+    if (!firestore || !data.piadinha?.jokeId) return null;
+    return doc(firestore, 'counters', 'current', 'jokes', data.piadinha.jokeId);
+  }, [firestore, data.piadinha?.jokeId]);
+
+  const { data: activeJokeData } = useDoc<Joke>(activeJokeRef);
 
   const [notification, setNotification] = useState<{ 
     userName: string; 
@@ -225,19 +235,18 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [data.announcement, overlay, isAudioStarted]);
 
   useEffect(() => {
-    if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
+    if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && activeJokeData?.audioUrl) {
       if (piadinhaAudioRef.current) {
         piadinhaAudioRef.current.pause();
         piadinhaAudioRef.current = null;
       }
       
-      const audio = new Audio(data.piadinha.audioUrl);
+      const audio = new Audio(activeJokeData.audioUrl);
       piadinhaAudioRef.current = audio;
       lastPiadinhaTimestampRef.current = data.piadinha.timestamp;
 
       audio.play().catch((err) => {
         console.warn("Meme audio failed:", err);
-        // If play is blocked, we still want to clear the state eventually
         setTimeout(() => clearPiadinha(), 5000);
       });
 
@@ -246,7 +255,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         piadinhaAudioRef.current = null;
       };
     }
-  }, [data.piadinha, overlay, clearPiadinha, isAudioStarted]);
+  }, [data.piadinha, activeJokeData, overlay, clearPiadinha, isAudioStarted]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -431,8 +440,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div className="absolute inset-0 bg-orange-500 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
               <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)] scale-up-down">
                 <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-orange-500 bg-black flex items-center justify-center">
-                  {data.piadinha.imageUrl ? (
-                    <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Meme" />
+                  {activeJokeData?.imageUrl ? (
+                    <img src={activeJokeData.imageUrl} className="w-full h-full object-cover" alt="Meme" />
                   ) : (
                     <Mic className="w-32 h-32 text-orange-500" />
                   )}
@@ -538,8 +547,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             data.raffle?.isRaffling ? "animate-pulse" : ""
           )}>
             <div className="flex items-center gap-3">
-              <Sparkles className={cn("w-8 h-8", data.raffle?.isRaffling ? "animate-spin" : "")} />
-              <span className="text-lg font-black uppercase tracking-[0.2em] italic">SORTEADO(A)</span>
+              <span className={cn("text-lg font-black uppercase tracking-[0.2em] italic")}>SORTEADO(A)</span>
             </div>
             <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
