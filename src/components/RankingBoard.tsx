@@ -34,7 +34,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
   const [qrMusicaUrl, setQrMusicaUrl] = useState("");
-  const [isAudioStarted, setIsAudioStarted] = useState(false);
+  
+  // Áudio ativado por padrão para evitar a tela de clique
+  const [isAudioStarted, setIsAudioStarted] = useState(true);
   
   const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [challengePhase, setChallengePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
@@ -81,7 +83,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       audio.loop = true;
       challengeAudioRef.current = audio;
     }
-    audio.play().catch(() => {});
+    audio.play().catch(() => {
+      // Falha silenciosa se o navegador bloquear o autoplay
+    });
   };
 
   const stopChallengeSound = () => {
@@ -223,10 +227,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.announcement, overlay, isAudioStarted]);
 
-  // Listener Definitivo para o Áudio do Meme (Modelo original estável)
+  // Listener Definitivo para o Áudio do Meme
   useEffect(() => {
     if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
-      // Para qualquer áudio anterior
       if (piadinhaAudioRef.current) {
         piadinhaAudioRef.current.pause();
         piadinhaAudioRef.current = null;
@@ -238,7 +241,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       audio.play().catch((err) => {
         console.warn("Meme audio failed:", err);
-        // Fallback: limpa o meme se não conseguir tocar após 5 segundos
         setTimeout(() => clearPiadinha(), 5000);
       });
 
@@ -365,17 +367,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
-      {overlay && !isAudioStarted && (
-        <div 
-          className="fixed inset-0 z-[500] bg-black/95 flex flex-col items-center justify-center cursor-pointer animate-in fade-in duration-500"
-          onClick={() => setIsAudioStarted(true)}
-        >
-          <Volume2 className="w-24 h-24 text-primary animate-pulse mb-6" />
-          <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Clique para Ativar o Áudio</h2>
-          <p className="text-white/40 font-bold uppercase text-xs mt-4 tracking-[0.3em]">O telão precisa de permissão para tocar notificações</p>
-        </div>
-      )}
-
       {overlay && brandImageUrl && (
         <div className="fixed inset-0 z-[-1] opacity-[0.03] pointer-events-none flex items-center justify-center overflow-hidden">
           <img src={brandImageUrl} alt="Watermark" className="w-[80vw] h-[80vh] object-contain grayscale blur-[2px] scale-125 rotate-[-15deg]" />
