@@ -246,6 +246,7 @@ export function useCounter() {
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
     if (!counterRef || !user) return;
     
+    // Usamos setDoc com merge: true para garantir consistência em atualizações parciais
     setDoc(counterRef, { 
       ...fields,
       updatedAt: Timestamp.now() 
@@ -263,7 +264,16 @@ export function useCounter() {
   const updateBrandImage = useCallback((brandImageUrl: string) => updateDocField({ brandImageUrl }), [updateDocField]);
   const updatePhrases = useCallback((customPhrases: string[]) => updateDocField({ customPhrases }), [updateDocField]);
   const updateSocialLinks = useCallback((socialLinks: SocialLink[]) => updateDocField({ socialLinks }), [updateDocField]);
-  const clearPiadinha = useCallback(() => updateDocField({ piadinha: { isActive: false, timestamp: Date.now() } }), [updateDocField]);
+  
+  const clearPiadinha = useCallback(() => {
+    updateDocField({ 
+      piadinha: { 
+        isActive: false, 
+        timestamp: Date.now(),
+        jokeId: ""
+      } 
+    });
+  }, [updateDocField]);
 
   const addAdmin = (admin: AdminUser) => {
     if (!counterRef || !data) return;
@@ -358,8 +368,8 @@ export function useCounter() {
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
-    // REMANEJAMENTO IDEAL: Sincroniza apenas o ID. 
-    // O áudio pesado (Base64) permanece na sub-coleção 'jokes' para evitar o limite de 1MB do doc principal.
+    // CORREÇÃO DEFINITIVA: Sincroniza apenas o ID. 
+    // NUNCA enviamos o audioUrl (Base64) no documento principal para evitar o limite de 1MB e erro de permissão.
     updateDocField({
       piadinha: {
         jokeId: joke.id,
@@ -369,9 +379,15 @@ export function useCounter() {
       }
     });
 
-    // Auto-limpeza após 1 minuto
+    // Auto-limpeza após 1 minuto para resetar o estado no telão
     setTimeout(() => {
-      updateDocField({ piadinha: { isActive: false, timestamp: Date.now() } });
+      updateDocField({ 
+        piadinha: { 
+          isActive: false, 
+          timestamp: Date.now(),
+          jokeId: ""
+        } 
+      });
     }, 60000);
   }, [updateDocField]);
 
