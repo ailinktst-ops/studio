@@ -155,6 +155,17 @@
             "imageUrl": { "type": "string" }
           }
         },
+        "previousRanking": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "count": { "type": "number" },
+              "imageUrl": { "type": "string" }
+            }
+          }
+        },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
     }

@@ -51,6 +51,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     title?: string;
     imageUrl?: string;
   } | null>(null);
+
+  const [prevRankingIndex, setPrevRankingIndex] = useState(0);
   
   const lastParticipantsRef = useRef<Participant[]>([]);
   const lastLeaderIdRef = useRef<string | null>(null);
@@ -73,9 +75,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const CustomIcon = ICON_MAP[data.brandIcon] || Beer;
   const brandImageUrl = data.brandImageUrl || "";
 
-  const getParticipantAvatar = (p: Participant) => {
+  const getParticipantAvatar = (p: Participant | any) => {
     if (p.imageUrl) return p.imageUrl;
-    const seed = p.id || "guest";
+    const seed = p.id || p.name || "guest";
     return `https://picsum.photos/seed/${seed}-character-human-face-portrait-anime-movie/400/400`;
   };
 
@@ -377,6 +379,17 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return sideList.slice(sideListOffset, sideListOffset + ITEMS_PER_WINDOW);
   }, [overlay, sideList, sideListOffset]);
 
+  // Logic for the rotating previous ranking history
+  const previousRanking = data.previousRanking || [];
+  useEffect(() => {
+    if (overlay && previousRanking.length > 0) {
+      const interval = setInterval(() => {
+        setPrevRankingIndex(prev => (prev + 1) % previousRanking.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [overlay, previousRanking.length]);
+
   if (isInitializing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
@@ -402,6 +415,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Social'}`
       : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]
   ) : '';
+
+  const currentPrevItem = previousRanking[prevRankingIndex];
 
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
@@ -537,19 +552,20 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && data.lastWinner && (
+      {overlay && previousRanking.length > 0 && currentPrevItem && (
         <div className="fixed right-8 top-[45%] z-[70] w-72 animate-in slide-in-from-right-20 duration-1000 text-right">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">
-            Campeão Rodada Anterior <Trophy className="w-3 h-3 text-yellow-500" />
+            Ranking Rodada Anterior <Trophy className="w-3 h-3 text-yellow-500" />
           </h3>
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center justify-end gap-4">
+          <div key={prevRankingIndex} className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center justify-end gap-4 animate-in zoom-in slide-in-from-right-4 duration-500">
             <div className="text-right">
-              <p className="text-xs font-black text-white italic uppercase truncate">{data.lastWinner.name}</p>
-              <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">{data.lastWinner.count} Pontos</p>
+              <p className="text-xs font-black text-white italic uppercase truncate">{currentPrevItem.name}</p>
+              <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">{currentPrevItem.count} Pontos</p>
+              <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">{prevRankingIndex + 1}º Lugar</p>
             </div>
             <Avatar className="w-12 h-12 border-2 border-yellow-500 shadow-lg">
-              <AvatarImage src={data.lastWinner.imageUrl || ""} className="object-cover" />
-              <AvatarFallback className="bg-white/5 font-bold uppercase">{data.lastWinner.name[0]}</AvatarFallback>
+              <AvatarImage src={getParticipantAvatar(currentPrevItem)} className="object-cover" />
+              <AvatarFallback className="bg-white/5 font-bold uppercase">{currentPrevItem.name[0]}</AvatarFallback>
             </Avatar>
           </div>
         </div>
@@ -616,7 +632,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               {[1, 0, 2].map((actualIndex) => {
                 const p = top3[actualIndex];
                 if (!p) return <div key={actualIndex} className="hidden md:block w-72" />;
-                const glowColor = actualIndex === 0 ? "bg-yellow-400" : (actualIndex === 1 ? "bg-zinc-400" : "bg-amber-800");
+                const glowColor = actualIndex === 0 ? "bg-yellow-400" : (actualIndex === 1 ? "bg-zinc-400" : (actualIndex === 2 ? "bg-amber-800" : "bg-primary"));
                 const borderColor = actualIndex === 0 ? "border-yellow-400" : (actualIndex === 1 ? "border-zinc-300" : "border-amber-700");
                 const badgeColor = actualIndex === 0 ? "bg-yellow-400 text-black" : (actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white");
                 

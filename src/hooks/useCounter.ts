@@ -94,6 +94,12 @@ export interface LastWinnerState {
   imageUrl?: string;
 }
 
+export interface RankingItem {
+  name: string;
+  count: number;
+  imageUrl?: string;
+}
+
 export interface CounterState {
   id: string;
   title: string;
@@ -117,6 +123,7 @@ export interface CounterState {
   announcement?: AnnouncementState;
   socialAnnouncement?: SocialAnnouncementState;
   lastWinner?: LastWinnerState | null;
+  previousRanking?: RankingItem[];
 }
 
 const DEFAULT_ID = "current";
@@ -173,7 +180,8 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
     isActive: false,
     timestamp: null
   },
-  lastWinner: null
+  lastWinner: null,
+  previousRanking: []
 };
 
 export function useCounter() {
@@ -235,7 +243,8 @@ export function useCounter() {
         ...DEFAULT_STATE.socialAnnouncement!,
         ...(state.socialAnnouncement || {})
       },
-      lastWinner: state.lastWinner || null
+      lastWinner: state.lastWinner || null,
+      previousRanking: state.previousRanking || []
     } as CounterState;
   };
 
@@ -477,7 +486,8 @@ export function useCounter() {
       announcement: { message: "", isActive: false, timestamp: null },
       socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null },
       piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null },
-      lastWinner: null
+      lastWinner: null,
+      previousRanking: []
     };
     updateDocField(resetData);
   };
@@ -490,6 +500,15 @@ export function useCounter() {
     const sorted = [...approvedParticipants].sort((a, b) => b.count - a.count);
     const leader = sorted[0] && sorted[0].count > 0 ? sorted[0] : null;
 
+    // Filter only those who had points for the history
+    const previousRanking = sorted
+      .filter(p => p.count > 0)
+      .map(p => ({
+        name: p.name,
+        count: p.count,
+        imageUrl: p.imageUrl || ""
+      }));
+
     const resetParticipants = data.participants.map(p => ({ ...p, count: 0 }));
     
     updateDocField({
@@ -498,12 +517,13 @@ export function useCounter() {
         name: leader.name,
         count: leader.count,
         imageUrl: leader.imageUrl || ""
-      } : null
+      } : null,
+      previousRanking: previousRanking
     });
   };
 
   const clearLastWinner = () => {
-    updateDocField({ lastWinner: null });
+    updateDocField({ lastWinner: null, previousRanking: [] });
   };
 
   const removeParticipant = (id: string) => {
