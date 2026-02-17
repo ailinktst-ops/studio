@@ -271,7 +271,6 @@ export function useCounter() {
   }, [isDocLoading, rawData, counterRef, user, isUserLoading]);
 
   const updateDocField = useCallback((fields: Partial<CounterState>) => {
-    // Verificação robusta de autenticação antes de tentar gravar no Firestore
     if (!counterRef || !user || isUserLoading) {
       return;
     }
@@ -502,7 +501,6 @@ export function useCounter() {
     const sorted = [...approvedParticipants].sort((a, b) => b.count - a.count);
     const leader = sorted[0] && sorted[0].count > 0 ? sorted[0] : null;
 
-    // Salvar apenas os 10 primeiros que pontuaram para otimizar tamanho do documento
     const previousRanking = sorted
       .filter(p => p.count > 0)
       .slice(0, 10)
@@ -664,18 +662,21 @@ export function useCounter() {
     }
     const candidates = animPool.sort(() => Math.random() - 0.5);
 
-    updateDocField({
-      raffle: {
-        isRaffling: true,
-        winnerId: winner.id,
-        candidates: candidates,
-        startTime: Timestamp.now().toMillis(),
-        winnersHistory: newHistory
-      }
-    });
+    const newRaffleState = {
+      isRaffling: true,
+      winnerId: winner.id,
+      candidates: candidates,
+      startTime: Timestamp.now().toMillis(),
+      winnersHistory: newHistory
+    };
+
+    updateDocField({ raffle: newRaffleState });
     
     setTimeout(() => {
-      updateDocField({ raffle: { ...data.raffle, isRaffling: false } as RaffleState });
+      setDoc(counterRef, { 
+        raffle: { ...newRaffleState, isRaffling: false },
+        updatedAt: Timestamp.now() 
+      }, { merge: true });
     }, 5500);
   };
 
@@ -701,18 +702,21 @@ export function useCounter() {
     }
     const candidates = animPool.sort(() => Math.random() - 0.5);
 
-    updateDocField({
-      challenge: {
-        isRaffling: true,
-        winnerId: winner.id,
-        candidates: candidates,
-        startTime: Timestamp.now().toMillis(),
-        winnersHistory: newHistory
-      }
-    });
+    const newChallengeState = {
+      isRaffling: true,
+      winnerId: winner.id,
+      candidates: candidates,
+      startTime: Timestamp.now().toMillis(),
+      winnersHistory: newHistory
+    };
+
+    updateDocField({ challenge: newChallengeState });
 
     setTimeout(() => {
-      updateDocField({ challenge: { ...data.challenge, isRaffling: false } as RaffleState });
+      setDoc(counterRef, { 
+        challenge: { ...newChallengeState, isRaffling: false },
+        updatedAt: Timestamp.now() 
+      }, { merge: true });
     }, 5500);
   };
 

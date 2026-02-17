@@ -76,8 +76,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const brandImageUrl = data.brandImageUrl || "";
 
   const getParticipantAvatar = (p: Participant | any) => {
-    if (p.imageUrl) return p.imageUrl;
-    const seed = p.id || p.name || "guest";
+    if (p?.imageUrl) return p.imageUrl;
+    const seed = p?.id || p?.name || "guest";
     return `https://picsum.photos/seed/${seed}-character-human-face-portrait-anime-movie/400/400`;
   };
 
@@ -514,6 +514,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}>
             <Trophy className="w-12 h-12 text-black animate-bounce" />
             <p className="text-xs font-black uppercase tracking-widest opacity-70">Sorteio Geral</p>
+            <Avatar className="w-32 h-32 border-4 border-black/20 shadow-xl my-2">
+              <AvatarImage src={getParticipantAvatar(data.raffle?.isRaffling ? approvedParticipants.find(p => p.name === currentRaffleName) : raffleWinner)} />
+              <AvatarFallback className="bg-black/10 font-bold">{(data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name)?.[0]}</AvatarFallback>
+            </Avatar>
             <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name}
@@ -535,6 +539,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}>
             <Zap className="w-12 h-12 text-white animate-pulse" />
             <p className="text-xs font-black uppercase tracking-widest opacity-70">Desafio Surpresa!</p>
+            <Avatar className="w-32 h-32 border-4 border-white/20 shadow-xl my-2">
+              <AvatarImage src={getParticipantAvatar(data.challenge?.isRaffling ? approvedParticipants.find(p => p.name === currentChallengeName) : challengeWinner)} />
+              <AvatarFallback className="bg-white/10 font-bold">{(data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name)?.[0]}</AvatarFallback>
+            </Avatar>
             <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
