@@ -8,7 +8,7 @@ import {
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
   Music, Mic, Send,
-  ExternalLink, Eraser, Volume2, Smartphone, X, Edit, QrCode
+  ExternalLink, Eraser, Volume2, Smartphone, X, Edit, QrCode, Beer
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,7 @@ export function ControlPanel() {
     clearLastWinner, removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
     moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
-    triggerPiadinha, removeJoke, updateJokeName
+    triggerPiadinha, removeJoke, updateJokeName, moderatePointRequest
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
@@ -75,9 +75,9 @@ export function ControlPanel() {
     return `${origin}${path}`;
   };
 
-  const getParticipantAvatar = (p: Participant) => {
+  const getParticipantAvatar = (p: any) => {
     if (p.imageUrl) return p.imageUrl;
-    return `https://picsum.photos/seed/${p.id}-character-human-face-portrait-anime-movie/200/200`;
+    return `https://picsum.photos/seed/${p.id || p.participantId}-character-human-face-portrait-anime-movie/200/200`;
   };
 
   const openCadastroWindow = () => {
@@ -142,10 +142,11 @@ export function ControlPanel() {
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
   const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
+  const pendingPoints = (data.pointRequests || []).filter(p => p.status === 'pending');
   const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
   
-  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length;
+  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length + pendingPoints.length;
 
   useEffect(() => {
     if (isInitializing) return;
@@ -153,6 +154,7 @@ export function ControlPanel() {
     if (!initializedAlertsRef.current) {
       pendingParticipants.forEach(p => seenIdsRef.current.add(p.id));
       pendingMusic.forEach(m => seenIdsRef.current.add(m.id));
+      pendingPoints.forEach(pt => seenIdsRef.current.add(pt.id));
       initializedAlertsRef.current = true;
       return;
     }
@@ -172,10 +174,17 @@ export function ControlPanel() {
       }
     });
 
+    pendingPoints.forEach(pt => {
+      if (!seenIdsRef.current.has(pt.id)) {
+        newItems.push({ ...pt, alertType: 'point' });
+        seenIdsRef.current.add(pt.id);
+      }
+    });
+
     if (newItems.length > 0) {
       setActiveAlerts(prev => [...prev, ...newItems]);
     }
-  }, [pendingParticipants, pendingMusic, isInitializing]);
+  }, [pendingParticipants, pendingMusic, pendingPoints, isInitializing]);
 
   const removeAlert = (id: string) => {
     setActiveAlerts(prev => prev.filter(a => a.id !== id));
@@ -236,8 +245,8 @@ export function ControlPanel() {
           <Card key={alert.id} className="bg-card/95 backdrop-blur-xl border-2 border-primary/50 shadow-2xl animate-in slide-in-from-right-10 duration-500 overflow-hidden">
             <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-white/5 bg-white/5">
               <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : <Music className="w-3 h-3" />}
-                {alert.alertType === 'participant' ? 'Novo Participante' : 'Novo Pedido de Música'}
+                {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : alert.alertType === 'music' ? <Music className="w-3 h-3" /> : <Beer className="w-3 h-3" />}
+                {alert.alertType === 'participant' ? 'Novo Participante' : alert.alertType === 'music' ? 'Novo Pedido de Música' : 'Novo Ponto Solicitado'}
               </span>
               <Button variant="ghost" size="icon" onClick={() => removeAlert(alert.id)} className="h-6 w-6 text-white/20 hover:text-white">
                 <X className="w-4 h-4" />
@@ -245,10 +254,10 @@ export function ControlPanel() {
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center gap-4">
-                {alert.alertType === 'participant' ? (
+                {alert.alertType === 'participant' || alert.alertType === 'point' ? (
                   <Avatar className="w-12 h-12 border-2 border-primary/20">
                     <AvatarImage src={getParticipantAvatar(alert)} className="object-cover" data-ai-hint="character portrait" />
-                    <AvatarFallback className="bg-white/5 font-bold">{alert.name[0]}</AvatarFallback>
+                    <AvatarFallback className="bg-white/5 font-bold">{alert.name?.[0] || alert.participantName?.[0]}</AvatarFallback>
                   </Avatar>
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/20">
@@ -258,6 +267,8 @@ export function ControlPanel() {
                 <div className="flex-1 min-w-0">
                   {alert.alertType === 'participant' ? (
                     <p className="text-white font-black italic uppercase truncate">{alert.name}</p>
+                  ) : alert.alertType === 'point' ? (
+                    <p className="text-white font-black italic uppercase truncate">{alert.participantName}</p>
                   ) : (
                     <>
                       <p className="text-white font-black italic uppercase text-xs truncate">{alert.artist}</p>
@@ -271,8 +282,10 @@ export function ControlPanel() {
                   onClick={() => {
                     if (alert.alertType === 'participant') {
                       moderateParticipant(alert.id, 'approved');
-                    } else {
+                    } else if (alert.alertType === 'music') {
                       handleApproveMusic(alert.id);
+                    } else {
+                      moderatePointRequest(alert.id, 'approved');
                     }
                     removeAlert(alert.id);
                   }}
@@ -284,8 +297,10 @@ export function ControlPanel() {
                   onClick={() => {
                     if (alert.alertType === 'participant') {
                       moderateParticipant(alert.id, 'rejected');
-                    } else {
+                    } else if (alert.alertType === 'music') {
                       moderateMusic(alert.id, 'rejected');
+                    } else {
+                      moderatePointRequest(alert.id, 'rejected');
                     }
                     removeAlert(alert.id);
                   }}
@@ -313,8 +328,8 @@ export function ControlPanel() {
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/correio', 'Correio')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-correio hover:text-white">
             <Heart className="w-4 h-4 mr-2" /> Correio
           </Button>
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/musica', 'Música')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-blue-600 hover:text-white">
-            <Music className="w-4 h-4 mr-2" /> Música
+          <Button variant="outline" size="sm" onClick={() => copyToClipboard('/pedir-ponto', 'Pedir Ponto')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-600 hover:text-white">
+            <Beer className="w-4 h-4 mr-2" /> Pedir Ponto
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.open(formatUrlWithCorrectPort('/piadinha'), '_blank')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white">
             <Mic className="w-4 h-4 mr-2" /> Memes
@@ -536,6 +551,25 @@ export function ControlPanel() {
                 <div className="flex gap-2">
                   <Button onClick={() => moderateParticipant(p.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aprovar</Button>
                   <Button onClick={() => moderateParticipant(p.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
+                </div>
+              </div>
+            ))}</CardContent>
+          </Card>
+
+          <Card className="bg-card/30 backdrop-blur-md border-white/5">
+            <CardHeader><CardTitle className="text-lg font-bold flex items-center gap-2 text-orange-600"><Beer className="w-5 h-5" /> Pontos Solicitados ({pendingPoints.length})</CardTitle></CardHeader>
+            <CardContent className="space-y-4">{pendingPoints.map(req => (
+              <div key={req.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10 border border-white/10">
+                    <AvatarImage src={getParticipantAvatar(req)} className="object-cover" />
+                    <AvatarFallback className="bg-white/5 font-bold">{req.participantName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-black italic uppercase text-white/80">{req.participantName}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => moderatePointRequest(req.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 text-white font-bold uppercase text-[10px]"><Check className="w-4 h-4 mr-1" /> Aceitar</Button>
+                  <Button onClick={() => moderatePointRequest(req.id, 'rejected')} size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px]"><Ban className="w-4 h-4 mr-1" /> Rejeitar</Button>
                 </div>
               </div>
             ))}</CardContent>

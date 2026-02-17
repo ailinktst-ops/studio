@@ -7,7 +7,7 @@ import {
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
   Heart, Disc, Instagram, Youtube, Mic, ListOrdered, AlertCircle,
-  Megaphone, Volume2
+  Megaphone
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
@@ -34,13 +34,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [sideListOffset, setSideListOffset] = useState(0);
   const [qrCorreioUrl, setQrCorreioUrl] = useState("");
   const [qrCadastroUrl, setQrCadastroUrl] = useState("");
-  const [qrMusicaUrl, setQrMusicaUrl] = useState("");
+  const [qrPontoUrl, setQrPontoUrl] = useState("");
   
-  // View mode for oscillation: 'PODIUM' or 'INDIVIDUAL'
   const [viewMode, setViewMode] = useState<'PODIUM' | 'INDIVIDUAL'>('PODIUM');
   const [highlightIndex, setHighlightIndex] = useState(-1);
-  
-  // Áudio ativado por padrão
   const [isAudioStarted, setIsAudioStarted] = useState(true);
   
   const [rafflePhase, setRafflePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
@@ -115,7 +112,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       const origin = formatUrlWithCorrectPort('');
       setQrCorreioUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/correio')}`);
       setQrCadastroUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/cadastro')}`);
-      setQrMusicaUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/musica')}`);
+      setQrPontoUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(origin + '/pedir-ponto')}`);
     }
   }, []);
 
@@ -143,7 +140,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     return null;
   }, [sortedParticipants]);
 
-  // Oscillation Logic: Alternates between Podium and Individual Highlight
   useEffect(() => {
     if (!overlay || !hasPoints) {
       setViewMode('PODIUM');
@@ -155,10 +151,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       const timer = setTimeout(() => {
         setViewMode('INDIVIDUAL');
         setHighlightIndex(0);
-      }, 15000); // 15s for Podium
+      }, 15000);
       return () => clearTimeout(timer);
     } else {
-      // mode INDIVIDUAL - show one by one
       const timer = setTimeout(() => {
         if (highlightIndex < sortedParticipants.length - 1) {
           setHighlightIndex(prev => prev + 1);
@@ -166,7 +161,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           setViewMode('PODIUM');
           setHighlightIndex(-1);
         }
-      }, 4000); // 4s per participant
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [overlay, hasPoints, viewMode, highlightIndex, sortedParticipants.length]);
@@ -228,7 +223,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         title: "",
         imageUrl: getParticipantAvatar(updatedUser)
       });
-      setTimeout(() => setNotification(null), 3500);
+      setTimeout(() => setNotification(null), 4000);
     }
     lastParticipantsRef.current = current;
   }, [approvedParticipants, overlay, sortedParticipants, currentLantern, isAudioStarted]);
@@ -238,7 +233,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       playSound('heart');
       setCorreioPhase('center');
       lastMessageIdRef.current = data.activeMessageId;
-      setTimeout(() => setCorreioPhase('docked'), 5000);
+      setTimeout(() => setCorreioPhase('docked'), 6000);
     } else if (!data.activeMessageId) {
       setCorreioPhase('hidden');
     }
@@ -347,12 +342,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   }, [data.challenge?.isRaffling, data.challenge?.candidates, approvedParticipants, data.challenge?.winnerId, isAudioStarted]);
 
   useEffect(() => {
-    if (!overlay) return;
-    const totalPhrases = (data.customPhrases?.length || 0) + 1;
-    const interval = setInterval(() => {
-      setTickerIndex((prev) => (prev + 1) % totalPhrases);
-    }, 6000);
-    return () => clearInterval(interval);
+    let interval: NodeJS.Timeout;
+    if (overlay) {
+      const totalPhrases = (data.customPhrases?.length || 0) + 1;
+      interval = setInterval(() => {
+        setTickerIndex((prev) => (prev + 1) % totalPhrases);
+      }, 6000);
+    }
+    return () => { if (interval) clearInterval(interval); };
   }, [overlay, data.customPhrases]);
 
   const ITEMS_PER_WINDOW = 30; 
@@ -406,13 +403,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       : data.socialAnnouncement.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]
   ) : '';
 
-  const getHandleFontSize = (handle: string) => {
-    if (handle.length > 20) return "text-[8px]";
-    if (handle.length > 15) return "text-[10px]";
-    if (handle.length > 12) return "text-xs";
-    return "text-lg";
-  };
-
   return (
     <div className={cn("flex flex-col items-center w-full relative", overlay ? "bg-transparent min-h-screen p-8 overflow-hidden" : "p-8 max-w-6xl mx-auto space-y-12")}>
       
@@ -425,7 +415,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
       {overlay && data.announcement?.isActive && (
         <div className="fixed inset-0 z-[220] flex items-center justify-center p-10 bg-red-600/90 backdrop-blur-2xl animate-in fade-in duration-300">
            <div className="flex flex-col items-center gap-12 text-center animate-bounce">
-              <Megaphone className="w-48 h-48 text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]" />
               <h2 className="text-8xl font-black italic uppercase text-white tracking-tighter drop-shadow-2xl">
                 {data.announcement.message}
               </h2>
@@ -440,26 +429,15 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             data.socialAnnouncement.type === 'instagram' ? "bg-gradient-to-tr from-[#ffdc80] via-[#f56040] via-[#e1306c] to-[#405de6]" : "bg-[#ff0000]"
           )}>
             <div className="bg-white/20 p-2.5 rounded-2xl shadow-lg animate-bounce border-2 border-white/60">
-              {data.socialAnnouncement.type === 'instagram' ? (
-                <Instagram className="w-8 h-8 text-white" />
-              ) : (
-                <Youtube className="w-8 h-8 text-white" />
-              )}
+              {data.socialAnnouncement.type === 'instagram' ? <Instagram className="w-8 h-8 text-white" /> : <Youtube className="w-8 h-8 text-white" />}
             </div>
             <div className="text-center w-full px-2">
               <p className="text-[10px] font-black uppercase opacity-80 tracking-[0.2em] mb-1">SIGA NO {data.socialAnnouncement.type?.toUpperCase()}</p>
-              <p className={cn(
-                "font-black italic uppercase tracking-tighter mb-4 drop-shadow-sm break-all",
-                getHandleFontSize(socialHandleText)
-              )}>
+              <p className="font-black italic uppercase tracking-tighter mb-4 drop-shadow-sm break-all text-xs">
                 {socialHandleText}
               </p>
               <div className="p-2.5 bg-white rounded-2xl border border-black/5 shadow-inner">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.socialAnnouncement.url)}`} 
-                  alt="QR Social" 
-                  className="w-full aspect-square"
-                />
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.socialAnnouncement.url)}`} alt="QR" className="w-full aspect-square" />
               </div>
             </div>
           </div>
@@ -470,13 +448,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
               <div className="absolute inset-0 bg-orange-500 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
-              <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)] scale-up-down">
+              <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)]">
                 <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-orange-500 bg-black flex items-center justify-center">
-                  {data.piadinha.imageUrl ? (
-                    <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Meme" />
-                  ) : (
-                    <Mic className="w-32 h-32 text-orange-500" />
-                  )}
+                  {data.piadinha.imageUrl ? <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Meme" /> : <Mic className="w-32 h-32 text-orange-500" />}
                 </div>
               </div>
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-8 py-2 rounded-full font-black uppercase italic shadow-lg animate-pulse whitespace-nowrap">
@@ -521,13 +495,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-correio/20"><img src={qrCorreioUrl} alt="QR" className="w-24 h-24" /></div>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Música</span>
-              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-blue-500/20"><img src={qrMusicaUrl} alt="QR" className="w-24 h-24" /></div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Pedir Ponto</span>
+              <div className="p-2 bg-white rounded-2xl shadow-2xl border-4 border-orange-500/20"><img src={qrPontoUrl} alt="QR" className="w-24 h-24" /></div>
             </div>
           </div>
-          <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mr-4">
-            Rank interativo - Desenvolvido por Link.
-          </p>
         </div>
       )}
 
@@ -538,11 +509,9 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
             {visibleSideList.map((p, i) => (
               <div key={p.id} className="flex items-center justify-between py-1 px-3 border-l-2 border-white/5 hover:border-primary animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-[10px] font-black text-white/20 w-8">
-                    {sortedParticipants.indexOf(p) + 1}º
-                  </span>
+                  <span className="text-[10px] font-black text-white/20 w-8">{sortedParticipants.indexOf(p) + 1}º</span>
                   <Avatar className="w-6 h-6 border border-white/10">
-                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
+                    <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                     <AvatarFallback className="bg-white/5 font-bold uppercase">{p.name[0]}</AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-bold text-white/80 uppercase truncate">{p.name}</span>
@@ -556,7 +525,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {overlay && approvedMusic.length > 0 && (
         <div className="fixed right-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-right-20 duration-1000 text-right">
-          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">Pedidos de Músicas! <Disc className="w-3 h-3 animate-spin" /></h3>
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">Playlist <Disc className="w-3 h-3 animate-spin" /></h3>
           <div className="space-y-3">
             {approvedMusic.map((m, i) => (
               <div key={m.id} className="animate-in fade-in slide-in-from-right-4" style={{ animationDelay: `${i * 100}ms` }}>
@@ -579,7 +548,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">{data.lastWinner.count} Pontos</p>
             </div>
             <Avatar className="w-12 h-12 border-2 border-yellow-500 shadow-lg">
-              <AvatarImage src={data.lastWinner.imageUrl || `https://picsum.photos/seed/${data.lastWinner.name}/200/200`} className="object-cover" />
+              <AvatarImage src={data.lastWinner.imageUrl || ""} className="object-cover" />
               <AvatarFallback className="bg-white/5 font-bold uppercase">{data.lastWinner.name[0]}</AvatarFallback>
             </Avatar>
           </div>
@@ -593,12 +562,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         )}>
           <div className={cn(
             "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
-            rafflePhase === 'center' ? "bg-yellow-400 border-white scale-150" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1 scale-100",
-            data.raffle?.isRaffling ? "animate-pulse" : ""
+            rafflePhase === 'center' ? "bg-yellow-400 border-white scale-150" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1 scale-100"
           )}>
-            <div className="flex items-center gap-3">
-              <span className={cn("text-lg font-black uppercase tracking-[0.2em] italic")}>SORTEADO(A)</span>
-            </div>
             <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name}
@@ -615,13 +580,8 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         )}>
           <div className={cn(
             "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
-            challengePhase === 'center' ? "bg-purple-500 border-white scale-150" : "bg-purple-600/95 border-purple-300 text-white -rotate-1 scale-100",
-            data.challenge?.isRaffling ? "animate-pulse" : ""
+            challengePhase === 'center' ? "bg-purple-500 border-white scale-150" : "bg-purple-600/95 border-purple-300 text-white -rotate-1 scale-100"
           )}>
-            <div className="flex items-center gap-3">
-              <Zap className={cn("w-8 h-8", data.challenge?.isRaffling ? "animate-bounce" : "")} />
-              <span className="text-lg font-black uppercase tracking-[0.2em] italic">DESAFIADO(A)</span>
-            </div>
             <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-white/5">
               <span className="text-4xl font-black italic uppercase tracking-tighter">
                 {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
@@ -631,34 +591,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && currentLantern && (
-        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="bg-red-600/20 backdrop-blur-xl border-2 border-red-500/30 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl">
-            <div className="relative">
-              <Avatar className="w-12 h-12 border-2 border-red-500 shadow-lg">
-                <AvatarImage src={getParticipantAvatar(currentLantern)} className="object-cover" data-ai-hint="character portrait" />
-                <AvatarFallback className="bg-white/5 font-bold uppercase">{currentLantern.name[0]}</AvatarFallback>
-              </Avatar>
-              <div className="absolute -top-2 -right-2 bg-red-600 p-1 rounded-full shadow-lg animate-bounce"><AlertCircle className="w-3 h-3 text-white" /></div>
-            </div>
-            <div>
-              <p className="text-[8px] font-black uppercase text-red-500 tracking-[0.2em] mb-0.5">Lanterninha do Ranking:</p>
-              <div className="flex items-center gap-2">
-                <p className="text-xl font-black italic uppercase text-white leading-none">{currentLantern.name}</p>
-                <span className="text-xs font-black text-red-400 bg-red-500/20 px-2 py-0.5 rounded-lg border border-red-500/20">{currentLantern.count}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="text-center space-y-4 mb-12">
-        <div className="flex items-center justify-center gap-4 mb-2">
-          <div className={cn("rounded-xl shadow-lg overflow-hidden flex items-center justify-center w-12 h-12", brandImageUrl ? "p-0" : "p-2 bg-white/10")}>
-            {brandImageUrl ? <img src={brandImageUrl} className="w-full h-full object-cover" alt="Logo" /> : <CustomIcon className="w-full h-full text-primary" />}
-          </div>
-          <span className="text-xl font-black italic uppercase text-white/40 tracking-widest">{data.brandName}</span>
-        </div>
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
@@ -666,30 +599,14 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="flex justify-center items-center w-full max-w-6xl mt-4 min-h-[450px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
-               <div className="relative mb-8">
-                  <div className="absolute inset-0 rounded-full blur-3xl opacity-20 bg-primary animate-pulse"></div>
-                  <Avatar className="w-56 h-56 border-8 border-white/10 shadow-2xl">
-                    <AvatarImage src={getParticipantAvatar(approvedParticipants[rotatingIndex])} className="object-cover" />
-                    <AvatarFallback className="bg-white/10 text-6xl font-black text-white/20">
-                      {approvedParticipants[rotatingIndex]?.name[0]}
-                    </AvatarFallback>
-                  </Avatar>
-               </div>
-               <h2 className="text-6xl font-black italic text-white uppercase tracking-tighter mb-4 text-center">
-                 {approvedParticipants[rotatingIndex]?.name}
-               </h2>
-               <div className="flex items-center gap-2">
-                 <div className="h-2 w-2 rounded-full bg-primary animate-ping" />
-                 <p className="text-primary font-black uppercase italic tracking-[0.3em] text-sm">
-                   Aguardando Início...
-                 </p>
-               </div>
+               <Avatar className="w-56 h-56 border-8 border-white/10 shadow-2xl mb-8">
+                <AvatarImage src={getParticipantAvatar(approvedParticipants[rotatingIndex])} className="object-cover" />
+                <AvatarFallback className="bg-white/10 text-6xl font-black text-white/20">{approvedParticipants[rotatingIndex]?.name[0]}</AvatarFallback>
+               </Avatar>
+               <h2 className="text-6xl font-black italic text-white uppercase tracking-tighter mb-4 text-center">{approvedParticipants[rotatingIndex]?.name}</h2>
             </div>
           ) : (
-            <div className="text-center space-y-4">
-               <Loader2 className="w-12 h-12 text-white/10 animate-spin mx-auto" />
-               <p className="text-white/20 font-black uppercase italic tracking-widest">Nenhum participante aprovado</p>
-            </div>
+            <div className="text-center space-y-4"><Loader2 className="w-12 h-12 text-white/10 animate-spin mx-auto" /></div>
           )}
         </div>
       ) : (
@@ -699,24 +616,25 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               {[1, 0, 2].map((actualIndex) => {
                 const p = top3[actualIndex];
                 if (!p) return <div key={actualIndex} className="hidden md:block w-72" />;
+                const glowColor = actualIndex === 0 ? "bg-yellow-400" : (actualIndex === 1 ? "bg-zinc-400" : "bg-amber-800");
+                const borderColor = actualIndex === 0 ? "border-yellow-400" : (actualIndex === 1 ? "border-zinc-300" : "border-amber-700");
+                const badgeColor = actualIndex === 0 ? "bg-yellow-400 text-black" : (actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white");
+                
                 return (
                   <div key={p.id} className={cn("relative flex flex-col items-center p-8 transition-all duration-500", actualIndex === 0 ? "scale-125 z-20 order-2" : actualIndex === 1 ? "order-1 opacity-80" : "order-3 opacity-80")}>
                     <div className="relative mb-6">
-                      <div className={cn("absolute inset-0 rounded-full blur-2xl opacity-20 animate-pulse", actualIndex === 0 ? "bg-yellow-400" : actualIndex === 1 ? "bg-zinc-400" : "bg-amber-800")}></div>
-                      <Avatar className={cn("w-40 h-40 border-8 shadow-2xl", actualIndex === 0 ? "border-yellow-400" : actualIndex === 1 ? "border-zinc-300" : "border-amber-700")}>
-                        <AvatarImage src={getParticipantAvatar(p)} className="object-cover" data-ai-hint="character portrait" />
+                      <div className={cn("absolute inset-0 rounded-full blur-2xl opacity-20 animate-pulse", glowColor)}></div>
+                      <Avatar className={cn("w-40 h-40 border-8 shadow-2xl", borderColor)}>
+                        <AvatarImage src={getParticipantAvatar(p)} className="object-cover" />
                         <AvatarFallback className="bg-white/10 text-4xl font-black text-white/20">{p.name[0]}</AvatarFallback>
                       </Avatar>
-                      {p.count > 0 && (
-                        <div className={cn("absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full w-12 h-12 flex items-center justify-center font-black italic border-2 border-white/20", actualIndex === 0 ? "bg-yellow-400 text-black" : actualIndex === 1 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white")}>
-                          {actualIndex + 1}º
-                        </div>
-                      )}
+                      <div className={cn("absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full w-12 h-12 flex items-center justify-center font-black italic border-2 border-white/20", badgeColor)}>
+                        {actualIndex + 1}º
+                      </div>
                     </div>
                     <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter mb-2">{p.name}</h2>
                     <div className="flex items-center gap-3">
                       <span className="text-6xl font-black text-primary drop-shadow-lg">{p.count}</span>
-                      <span className="text-white/20 font-bold uppercase text-[10px] tracking-widest">{p.category}</span>
                     </div>
                   </div>
                 );
@@ -725,47 +643,21 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           ) : (
             <div className="flex justify-center items-center w-full animate-in zoom-in fade-in duration-700">
               {sortedParticipants[highlightIndex] && (
-                <div key={sortedParticipants[highlightIndex].id} className="flex flex-col items-center scale-110">
+                <div key={sortedParticipants[highlightIndex].id} className="flex flex-col items-center scale-[1.35] transition-transform duration-1000">
                   <div className="relative mb-12">
-                    {/* Glow background based on position */}
-                    <div className={cn(
-                      "absolute inset-0 rounded-full blur-[80px] opacity-20 animate-pulse",
-                      highlightIndex === 0 ? "bg-yellow-400" : highlightIndex === 1 ? "bg-zinc-400" : highlightIndex === 2 ? "bg-amber-800" : "bg-primary"
-                    )}></div>
-                    
-                    <Avatar className={cn(
-                      "w-72 h-72 border-[12px] shadow-[0_0_80px_rgba(0,0,0,0.5)] transition-all",
-                      highlightIndex === 0 ? "border-yellow-400" : highlightIndex === 1 ? "border-zinc-300" : highlightIndex === 2 ? "border-amber-700" : "border-primary/40"
-                    )}>
+                    <div className={cn("absolute inset-0 rounded-full blur-[80px] opacity-20 animate-pulse bg-primary")}></div>
+                    <Avatar className="w-72 h-72 border-[12px] border-primary/40 shadow-[0_0_80px_rgba(0,0,0,0.5)]">
                       <AvatarImage src={getParticipantAvatar(sortedParticipants[highlightIndex])} className="object-cover" />
-                      <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">
-                        {sortedParticipants[highlightIndex].name[0]}
-                      </AvatarFallback>
+                      <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">{sortedParticipants[highlightIndex].name[0]}</AvatarFallback>
                     </Avatar>
-
-                    <div className={cn(
-                      "absolute -top-6 -right-6 text-white text-3xl w-24 h-24 rounded-full flex items-center justify-center font-black italic border-4 border-white/20 shadow-2xl rotate-12",
-                      highlightIndex === 0 ? "bg-yellow-400 text-black" : highlightIndex === 1 ? "bg-zinc-300 text-black" : highlightIndex === 2 ? "bg-amber-700 text-white" : "bg-primary text-white"
-                    )}>
+                    <div className="absolute -top-6 -right-6 bg-primary text-white text-3xl w-24 h-24 rounded-full flex items-center justify-center font-black italic border-4 border-white/20 shadow-2xl rotate-12">
                       {highlightIndex + 1}º
                     </div>
                   </div>
-
                   <div className="text-center space-y-4">
-                    <h2 className="text-8xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl">
-                      {sortedParticipants[highlightIndex].name}
-                    </h2>
-                    
+                    <h2 className="text-8xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl">{sortedParticipants[highlightIndex].name}</h2>
                     <div className="flex items-center justify-center gap-6 bg-black/40 backdrop-blur-xl px-12 py-6 rounded-full border-2 border-white/10 shadow-2xl">
-                      <span className="text-9xl font-black text-primary drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-none">
-                        {sortedParticipants[highlightIndex].count}
-                      </span>
-                      <div className="text-left">
-                        <p className="text-[14px] font-black uppercase text-white/40 tracking-[0.3em] leading-none mb-2">PONTOS ATUAIS</p>
-                        <p className="text-2xl font-black italic uppercase text-secondary tracking-tighter leading-none">
-                          {sortedParticipants[highlightIndex].category}
-                        </p>
-                      </div>
+                      <span className="text-9xl font-black text-primary drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-none">{sortedParticipants[highlightIndex].count}</span>
                     </div>
                   </div>
                 </div>
@@ -779,57 +671,21 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-6 animate-in fade-in zoom-in duration-300">
           <div className={cn(
             "relative max-w-5xl w-full p-16 rounded-[5rem] border-8 text-center shadow-[0_0_150px_rgba(0,0,0,0.9)] backdrop-blur-3xl flex flex-col items-center justify-center overflow-hidden transition-all duration-500",
-            notification.type === 'leader' 
-              ? "bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 border-yellow-200 text-black rotate-1" 
-              : notification.type === 'lantern'
-                ? "bg-gradient-to-br from-red-600 via-red-700 to-red-900 border-red-400 text-white -rotate-1"
-                : "bg-gradient-to-br from-primary via-purple-600 to-indigo-900 border-white/20 text-white rotate-1"
+            notification.type === 'leader' ? "bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 border-yellow-200 text-black rotate-1" : (notification.type === 'lantern' ? "bg-gradient-to-br from-red-600 via-red-700 to-red-900 border-red-400 text-white -rotate-1" : "bg-gradient-to-br from-primary via-purple-600 to-indigo-900 border-white/20 text-white rotate-1")
           )}>
-            <div className="absolute -top-24 -left-24 w-[40rem] h-[40rem] bg-white/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-[40rem] h-[40rem] bg-black/20 rounded-full blur-[120px] pointer-events-none" />
-
             <div className="relative z-10 flex flex-col items-center gap-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl animate-pulse"></div>
-                <Avatar className="w-64 h-64 border-8 border-white/30 shadow-2xl relative z-10">
-                  <AvatarImage src={notification.imageUrl} className="object-cover" />
-                  <AvatarFallback className="bg-white/10 text-6xl font-black">{notification.userName[0]}</AvatarFallback>
-                </Avatar>
-              </div>
-
+              <Avatar className="w-64 h-64 border-8 border-white/30 shadow-2xl relative z-10">
+                <AvatarImage src={notification.imageUrl} className="object-cover" />
+                <AvatarFallback className="bg-white/10 text-6xl font-black">{notification.userName[0]}</AvatarFallback>
+              </Avatar>
               <div className="space-y-2">
-                {notification.title && (
-                  <p className="text-3xl font-black uppercase tracking-[0.5em] opacity-70 italic drop-shadow-sm">
-                    {notification.title}
-                  </p>
-                )}
-                
-                <h2 className="text-[10rem] font-black italic uppercase tracking-tighter drop-shadow-[0_10px_10px_rgba(0,0,0,0.4)] leading-none">
-                  {notification.userName}
-                </h2>
+                {notification.title && <p className="text-3xl font-black uppercase tracking-[0.5em] opacity-70 italic">{notification.title}</p>}
+                <h2 className="text-[10rem] font-black italic uppercase tracking-tighter leading-none">{notification.userName}</h2>
               </div>
-
               <div className="flex items-center gap-8 bg-black/30 backdrop-blur-2xl px-12 py-6 rounded-full border-4 border-white/10 shadow-2xl">
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-black italic uppercase tracking-widest opacity-60 leading-none mb-1">
-                    {notification.type === 'lantern' ? "TÁ DEVENDO" : "JÁ FORAM"}
-                  </span>
-                  <div className={cn(
-                    "text-[8rem] font-black italic tabular-nums leading-none drop-shadow-md",
-                    notification.type === 'leader' ? "text-white" : "text-secondary"
-                  )}>
-                    {notification.count}
-                  </div>
-                </div>
-                
+                <div className="text-[8rem] font-black italic tabular-nums leading-none">{notification.count}</div>
                 <div className="bg-white/10 p-4 rounded-full border border-white/10">
-                  {notification.type === 'leader' ? (
-                    <Trophy className="w-16 h-16 text-white animate-bounce" />
-                  ) : notification.type === 'point' ? (
-                    <CustomIcon className="w-16 h-16 text-white animate-pulse" />
-                  ) : (
-                    <AlertCircle className="w-16 h-16 text-white animate-pulse" />
-                  )}
+                  {notification.type === 'leader' ? <Trophy className="w-16 h-16 text-white animate-bounce" /> : <CustomIcon className="w-16 h-16 text-white animate-pulse" />}
                 </div>
               </div>
             </div>

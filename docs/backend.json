@@ -5,7 +5,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Counter",
       "type": "object",
-      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio, mensagens de correio elegante, pedidos de música, redes sociais e piadinhas.",
+      "description": "Estado global do contador, incluindo participantes, configurações de marca, estado de sorteio, mensagens de correio elegante, pedidos de música, solicitações de pontos, redes sociais e piadinhas.",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string", "description": "Título do evento." },
@@ -74,6 +74,19 @@
             }
           }
         },
+        "pointRequests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "participantId": { "type": "string" },
+              "participantName": { "type": "string" },
+              "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+              "timestamp": { "type": "number" }
+            }
+          }
+        },
         "jokes": {
           "type": "array",
           "items": {
@@ -132,6 +145,14 @@
             "url": { "type": "string" },
             "isActive": { "type": "boolean" },
             "timestamp": { "type": "number" }
+          }
+        },
+        "lastWinner": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "count": { "type": "number" },
+            "imageUrl": { "type": "string" }
           }
         },
         "updatedAt": { "type": "string", "format": "date-time" }

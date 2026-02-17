@@ -38,6 +38,14 @@ export interface MusicRequest {
   timestamp: number;
 }
 
+export interface PointRequest {
+  id: string;
+  participantId: string;
+  participantName: string;
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: number;
+}
+
 export interface SocialLink {
   id: string;
   type: 'instagram' | 'youtube';
@@ -97,6 +105,7 @@ export interface CounterState {
   participants: Participant[];
   messages: ElegantMessage[];
   musicRequests: MusicRequest[];
+  pointRequests: PointRequest[];
   jokes: Joke[];
   categories: string[];
   customPhrases: string[];
@@ -125,6 +134,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   participants: [],
   messages: [],
   musicRequests: [],
+  pointRequests: [],
   jokes: [],
   categories: VALID_CATEGORIES,
   customPhrases: [
@@ -197,6 +207,7 @@ export function useCounter() {
       })),
       messages: state.messages || [],
       musicRequests: state.musicRequests || [],
+      pointRequests: state.pointRequests || [],
       jokes: state.jokes || [],
       customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
         ? state.customPhrases 
@@ -458,6 +469,7 @@ export function useCounter() {
       participants: [],
       messages: [],
       musicRequests: [],
+      pointRequests: [],
       jokes: [],
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
       challenge: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
@@ -568,6 +580,43 @@ export function useCounter() {
     updateDocField({
       musicRequests: updatedRequests
     });
+  };
+
+  const sendPointRequest = (participantId: string, participantName: string) => {
+    if (!counterRef) return;
+    const newRequest: PointRequest = {
+      id: Math.random().toString(36).substring(2, 11),
+      participantId,
+      participantName,
+      status: 'pending',
+      timestamp: Date.now()
+    };
+    updateDocField({
+      pointRequests: [...(data?.pointRequests || []), newRequest]
+    });
+  };
+
+  const moderatePointRequest = (id: string, status: 'approved' | 'rejected') => {
+    if (!counterRef || !data) return;
+    
+    const request = data.pointRequests.find(r => r.id === id);
+    if (!request) return;
+
+    const updatedRequests = data.pointRequests.filter(r => r.id !== id);
+    
+    if (status === 'approved') {
+      const updatedParticipants = data.participants.map(p => 
+        p.id === request.participantId ? { ...p, count: p.count + 1 } : p
+      );
+      updateDocField({
+        pointRequests: updatedRequests,
+        participants: updatedParticipants
+      });
+    } else {
+      updateDocField({
+        pointRequests: updatedRequests
+      });
+    }
   };
 
   const triggerRaffle = () => {
@@ -719,6 +768,8 @@ export function useCounter() {
     sendMusicRequest,
     moderateMusic,
     removeMusicRequest,
+    sendPointRequest,
+    moderatePointRequest,
     triggerRaffle,
     triggerSurpriseChallenge,
     clearRaffle,
