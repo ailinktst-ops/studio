@@ -1,8 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite leitura pública para todos os documentos e sub-coleções (Telão e Painel)
-    // Permite escrita apenas para usuários autenticados (Anônimos ou Admin)
+    // Regras para a aplicação RankUp Counter
+    // Filosofia: Leitura pública para Telão/Overlay, Escrita autenticada para App/Painel
+    
+    match /counters/{counterId} {
+      // Permite leitura do documento principal e listagem para qualquer visitante
+      allow read: if true;
+      // Permite escrita apenas para usuários autenticados (incluindo anônimos do app)
+      allow write: if request.auth != null;
+      
+      // Regras específicas para a sub-coleção de memes (jokes)
+      match /jokes/{jokeId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Fallback de segurança para outras coleções futuras
     match /{path=**} {
       allow read: if true;
       allow write: if request.auth != null;

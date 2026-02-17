@@ -60,8 +60,7 @@ export interface RaffleState {
 }
 
 export interface PiadinhaState {
-  jokeId?: string; // Referência ao ID na sub-coleção para evitar excesso de tamanho no doc principal
-  audioUrl?: string; // Mantido para compatibilidade temporária
+  jokeId?: string; 
   imageUrl?: string;
   isActive: boolean;
   timestamp: number | null;
@@ -359,8 +358,8 @@ export function useCounter() {
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
-    // Agora enviamos apenas a referência por ID para o telão
-    // Isso evita problemas de tamanho no documento principal
+    // REMANEJAMENTO IDEAL: Sincroniza apenas o ID. 
+    // O áudio pesado (Base64) permanece na sub-coleção 'jokes' para evitar o limite de 1MB do doc principal.
     updateDocField({
       piadinha: {
         jokeId: joke.id,
@@ -370,6 +369,7 @@ export function useCounter() {
       }
     });
 
+    // Auto-limpeza após 1 minuto
     setTimeout(() => {
       updateDocField({ piadinha: { isActive: false, timestamp: Date.now() } });
     }, 60000);

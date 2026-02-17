@@ -43,7 +43,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const [challengePhase, setChallengePhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
   const [correioPhase, setCorreioPhase] = useState<'hidden' | 'center' | 'docked'>('hidden');
 
-  // Busca o meme ativo da sub-coleção de forma independente
+  // REMANEJAMENTO IDEAL: Busca o meme completo usando o ID sincronizado no documento principal
   const activeJokeRef = useMemoFirebase(() => {
     if (!firestore || !data.piadinha?.jokeId) return null;
     return doc(firestore, 'counters', 'current', 'jokes', data.piadinha.jokeId);
@@ -234,8 +234,10 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.announcement, overlay, isAudioStarted]);
 
+  // Listener Definitivo para o Áudio do Meme
   useEffect(() => {
     if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && activeJokeData?.audioUrl) {
+      // Para qualquer áudio anterior
       if (piadinhaAudioRef.current) {
         piadinhaAudioRef.current.pause();
         piadinhaAudioRef.current = null;
@@ -247,6 +249,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       audio.play().catch((err) => {
         console.warn("Meme audio failed:", err);
+        // Fallback: limpa o meme se não conseguir tocar
         setTimeout(() => clearPiadinha(), 5000);
       });
 
