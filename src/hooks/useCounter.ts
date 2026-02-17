@@ -350,7 +350,6 @@ export function useCounter() {
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
-    // Restauração definitiva: sincroniza o áudio diretamente no estado do documento principal
     updateDocField({
       piadinha: {
         audioUrl: joke.audioUrl,
@@ -360,7 +359,6 @@ export function useCounter() {
       }
     });
 
-    // Auto-limpeza após 30 segundos para permitir novos disparos
     setTimeout(() => {
       updateDocField({ 
         piadinha: { 
@@ -427,6 +425,17 @@ export function useCounter() {
     if (!counterRef || !data) return;
     const updatedParticipants = data.participants.map(p => 
       p.id === id ? { ...p, count: Math.max(0, p.count - 1) } : p
+    );
+    updateDocField({
+      participants: updatedParticipants
+    });
+  };
+
+  const updateParticipantCount = (id: string, count: number) => {
+    if (!counterRef || !data) return;
+    const finalCount = Math.max(0, count);
+    const updatedParticipants = data.participants.map(p => 
+      p.id === id ? { ...p, count: finalCount } : p
     );
     updateDocField({
       participants: updatedParticipants
@@ -672,6 +681,7 @@ export function useCounter() {
     updateParticipantImage,
     incrementCount,
     decrementCount,
+    updateParticipantCount,
     resetAll,
     resetOnlyPoints,
     removeParticipant,

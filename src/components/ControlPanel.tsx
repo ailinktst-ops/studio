@@ -42,7 +42,7 @@ import Link from 'next/link';
 export function ControlPanel() {
   const { 
     data, jokes, loading, isInitializing, 
-    addParticipant, updateParticipantImage, incrementCount, decrementCount, resetAll, resetOnlyPoints,
+    addParticipant, updateParticipantImage, incrementCount, decrementCount, updateParticipantCount, resetAll, resetOnlyPoints,
     removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
     moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
@@ -55,6 +55,9 @@ export function ControlPanel() {
   
   const [editingJokeId, setEditingJokeId] = useState<string | null>(null);
   const [editingJokeName, setEditingJokeName] = useState("");
+  
+  const [editingCountId, setEditingCountId] = useState<string | null>(null);
+  const [newCountValue, setNewCountValue] = useState<number>(0);
 
   const participantFilesRef = useRef<Record<string, HTMLInputElement | null>>({});
   const seenIdsRef = useRef<Set<string>>(new Set());
@@ -200,6 +203,19 @@ export function ControlPanel() {
       updateJokeName(editingJokeId, editingJokeName.trim());
       setEditingJokeId(null);
       toast({ title: "Nome Atualizado", description: "O nome do meme foi alterado com sucesso." });
+    }
+  };
+  
+  const startEditingCount = (p: Participant) => {
+    setEditingCountId(p.id);
+    setNewCountValue(p.count);
+  };
+  
+  const handleSaveCount = () => {
+    if (editingCountId !== null) {
+      updateParticipantCount(editingCountId, newCountValue);
+      setEditingCountId(null);
+      toast({ title: "Pontuação Atualizada", description: "O valor foi definido com sucesso." });
     }
   };
 
@@ -464,6 +480,32 @@ export function ControlPanel() {
                     </Dialog>
                     <div className="flex items-center gap-1">
                       <Button size="lg" onClick={() => decrementCount(p.id)} className="bg-destructive/20 hover:bg-destructive/30 text-destructive w-12 h-14 text-2xl font-black rounded-2xl border border-destructive/20"><Minus className="w-6 h-6" /></Button>
+                      
+                      <Dialog open={editingCountId === p.id} onOpenChange={(open) => !open && setEditingCountId(null)}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => startEditingCount(p)} className="h-14 w-10 text-white/20 hover:text-white">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card border-white/10 backdrop-blur-xl max-w-[300px]">
+                          <DialogHeader>
+                            <DialogTitle className="text-white font-black italic uppercase">Editar Pontos</DialogTitle>
+                            <DialogDescription className="text-white/40 font-bold uppercase text-[10px]">{p.name}</DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <Input 
+                              type="number" 
+                              value={newCountValue}
+                              onChange={(e) => setNewCountValue(parseInt(e.target.value) || 0)}
+                              className="bg-black/40 border-white/10 h-12 text-center font-bold text-xl"
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={handleSaveCount} className="w-full bg-primary text-white font-black uppercase italic h-12">Salvar</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
                       <Button size="lg" onClick={() => incrementCount(p.id)} className="bg-secondary hover:bg-secondary/90 w-16 h-14 text-2xl font-black rounded-2xl"><Plus className="w-8 h-8" /></Button>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => removeParticipant(p.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></Button>
