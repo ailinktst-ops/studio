@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useCounter, Participant } from '@/hooks/useCounter';
-import { useFirestore } from '@/firebase';
 import { 
   Trophy, Loader2, 
   Beer, Wine, CupSoda, GlassWater, Music, Pizza, Zap,
@@ -224,7 +223,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.announcement, overlay, isAudioStarted]);
 
-  // Listener Definitivo para o Áudio do Meme (Restaurado para o modelo original)
+  // Listener Definitivo para o Áudio do Meme (Modelo original estável)
   useEffect(() => {
     if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
       // Para qualquer áudio anterior
@@ -239,7 +238,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       audio.play().catch((err) => {
         console.warn("Meme audio failed:", err);
-        // Fallback: limpa o meme se não conseguir tocar
+        // Fallback: limpa o meme se não conseguir tocar após 5 segundos
         setTimeout(() => clearPiadinha(), 5000);
       });
 

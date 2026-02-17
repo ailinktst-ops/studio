@@ -367,7 +367,7 @@ export function useCounter() {
   };
 
   const triggerPiadinha = useCallback((joke: Joke) => {
-    // Restauração para o comportamento original: sincroniza o audioUrl diretamente no estado
+    // Restauração definitiva: sincroniza o áudio diretamente no estado do documento principal
     updateDocField({
       piadinha: {
         audioUrl: joke.audioUrl,
@@ -377,7 +377,7 @@ export function useCounter() {
       }
     });
 
-    // Auto-limpeza após 1 minuto para resetar o estado no telão
+    // Auto-limpeza após 30 segundos para permitir novos disparos
     setTimeout(() => {
       updateDocField({ 
         piadinha: { 
@@ -386,7 +386,7 @@ export function useCounter() {
           audioUrl: ""
         } 
       });
-    }, 60000);
+    }, 30000);
   }, [updateDocField]);
 
   const moderateParticipant = (id: string, status: 'approved' | 'rejected', category?: string) => {
