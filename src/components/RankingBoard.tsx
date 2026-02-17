@@ -591,26 +591,26 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      <div className="text-center space-y-4 mb-12">
+      <div className="text-center space-y-4 mb-6">
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
       {!hasPoints ? (
-        <div className="flex justify-center items-center w-full max-w-6xl mt-4 min-h-[450px]">
+        <div className="flex justify-center items-center w-full max-w-6xl mt-4 min-h-[400px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
-               <Avatar className="w-56 h-56 border-8 border-white/10 shadow-2xl mb-8">
+               <Avatar className="w-52 h-52 border-8 border-white/10 shadow-2xl mb-6">
                 <AvatarImage src={getParticipantAvatar(approvedParticipants[rotatingIndex])} className="object-cover" />
                 <AvatarFallback className="bg-white/10 text-6xl font-black text-white/20">{approvedParticipants[rotatingIndex]?.name[0]}</AvatarFallback>
                </Avatar>
-               <h2 className="text-6xl font-black italic text-white uppercase tracking-tighter mb-4 text-center">{approvedParticipants[rotatingIndex]?.name}</h2>
+               <h2 className="text-5xl font-black italic text-white uppercase tracking-tighter mb-4 text-center">{approvedParticipants[rotatingIndex]?.name}</h2>
             </div>
           ) : (
             <div className="text-center space-y-4"><Loader2 className="w-12 h-12 text-white/10 animate-spin mx-auto" /></div>
           )}
         </div>
       ) : (
-        <div className="w-full max-w-6xl flex justify-center items-center min-h-[500px]">
+        <div className="w-full max-w-6xl flex justify-center items-center min-h-[450px]">
           {viewMode === 'PODIUM' ? (
             <div className="flex flex-row justify-center items-end gap-12 w-full animate-in zoom-in fade-in duration-700">
               {[1, 0, 2].map((actualIndex) => {
@@ -643,21 +643,21 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           ) : (
             <div className="flex justify-center items-center w-full animate-in zoom-in fade-in duration-700">
               {sortedParticipants[highlightIndex] && (
-                <div key={sortedParticipants[highlightIndex].id} className="flex flex-col items-center scale-[1.35] transition-transform duration-1000">
-                  <div className="relative mb-12">
-                    <div className={cn("absolute inset-0 rounded-full blur-[80px] opacity-20 animate-pulse bg-primary")}></div>
-                    <Avatar className="w-72 h-72 border-[12px] border-primary/40 shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+                <div key={sortedParticipants[highlightIndex].id} className="flex flex-col items-center scale-110 transition-transform duration-1000">
+                  <div className="relative mb-8">
+                    <div className={cn("absolute inset-0 rounded-full blur-[60px] opacity-20 animate-pulse bg-primary")}></div>
+                    <Avatar className="w-60 h-60 border-[10px] border-primary/40 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
                       <AvatarImage src={getParticipantAvatar(sortedParticipants[highlightIndex])} className="object-cover" />
                       <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">{sortedParticipants[highlightIndex].name[0]}</AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-6 -right-6 bg-primary text-white text-3xl w-24 h-24 rounded-full flex items-center justify-center font-black italic border-4 border-white/20 shadow-2xl rotate-12">
+                    <div className="absolute -top-4 -right-4 bg-primary text-white text-2xl w-20 h-20 rounded-full flex items-center justify-center font-black italic border-4 border-white/20 shadow-2xl rotate-12">
                       {highlightIndex + 1}º
                     </div>
                   </div>
-                  <div className="text-center space-y-4">
-                    <h2 className="text-5xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl">{sortedParticipants[highlightIndex].name}</h2>
-                    <div className="flex items-center justify-center gap-6 bg-black/40 backdrop-blur-xl px-12 py-6 rounded-full border-2 border-white/10 shadow-2xl">
-                      <span className="text-7xl font-black text-primary drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-none">{sortedParticipants[highlightIndex].count}</span>
+                  <div className="text-center space-y-3">
+                    <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter drop-shadow-2xl">{sortedParticipants[highlightIndex].name}</h2>
+                    <div className="flex items-center justify-center gap-4 bg-black/40 backdrop-blur-xl px-10 py-4 rounded-full border-2 border-white/10 shadow-2xl">
+                      <span className="text-6xl font-black text-primary drop-shadow-[0_0_15px_rgba(168,85,247,0.5)] leading-none">{sortedParticipants[highlightIndex].count}</span>
                     </div>
                   </div>
                 </div>
