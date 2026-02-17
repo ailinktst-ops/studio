@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useCounter } from '@/hooks/useCounter';
 import { Mic, Square, Send, Loader2, Play, Trash2, Volume2, Image as ImageIcon, Camera, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,9 +18,14 @@ export default function MemesPage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const startRecording = async () => {
     try {
@@ -222,7 +228,10 @@ export default function MemesPage() {
                     {isRecording ? (
                       <div className="flex gap-1 items-end h-12">
                          {[...Array(5)].map((_, i) => (
-                           <div key={i} className="w-1.5 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.1}s`, height: `${Math.random() * 100}%` }}></div>
+                           <div key={i} className="w-1.5 bg-red-500 rounded-full animate-bounce" style={{ 
+                             animationDelay: `${i * 0.1}s`, 
+                             height: isMounted ? `${Math.floor(Math.random() * 60) + 40}%` : '50%' 
+                           }}></div>
                          ))}
                       </div>
                     ) : (
