@@ -1,9 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regra definitiva para RankUp Counter (Protótipo)
+    // Permissões Globais para RankUp Counter
     // Permite que qualquer pessoa veja o ranking e os memes (Leitura Pública)
-    // Permite que apenas usuários do app (Autenticados via Anon) alterem dados
+    // Permite que apenas usuários autenticados (Anon/Admin) alterem dados
+    // O uso de {document=**} garante que sub-coleções herdem as permissões corretamente
     
     match /{document=**} {
       allow read, get, list: if true;

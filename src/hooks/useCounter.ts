@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useCallback, useMemo } from 'react';
-import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { doc, setDoc, Timestamp, getDoc, collection, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
+import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
@@ -90,6 +90,7 @@ export interface CounterState {
   participants: Participant[];
   messages: ElegantMessage[];
   musicRequests: MusicRequest[];
+  jokes: Joke[];
   categories: string[];
   customPhrases: string[];
   updatedAt: any;
@@ -116,6 +117,7 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   participants: [],
   messages: [],
   musicRequests: [],
+  jokes: [],
   categories: VALID_CATEGORIES,
   customPhrases: [
     "A ELITE DA RESENHA EM TEMPO REAL", 
@@ -164,13 +166,7 @@ export function useCounter() {
     return doc(firestore, 'counters', DEFAULT_ID);
   }, [firestore]);
 
-  const jokesColRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'counters', DEFAULT_ID, 'jokes');
-  }, [firestore]);
-
   const { data: rawData, isLoading: isDocLoading } = useDoc<CounterState>(counterRef);
-  const { data: jokesData, isLoading: isJokesLoading } = useCollection<Joke>(jokesColRef);
 
   const isLoading = isDocLoading || isUserLoading;
 
@@ -192,6 +188,7 @@ export function useCounter() {
       })),
       messages: state.messages || [],
       musicRequests: state.musicRequests || [],
+      jokes: state.jokes || [],
       customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
         ? state.customPhrases 
         : DEFAULT_STATE.customPhrases,
@@ -222,7 +219,7 @@ export function useCounter() {
   };
 
   const data = cleanData(rawData || {});
-  const jokes = useMemo(() => jokesData || [], [jokesData]);
+  const jokes = useMemo(() => data.jokes || [], [data.jokes]);
 
   useEffect(() => {
     async function initDoc() {
@@ -326,43 +323,29 @@ export function useCounter() {
   };
 
   const submitJoke = (audioUrl: string, name: string, imageUrl?: string) => {
-    if (!jokesColRef || !user) return;
-    const newJoke: Omit<Joke, 'id'> = {
+    const newJoke: Joke = {
+      id: Math.random().toString(36).substring(2, 11),
       name: name || `Meme ${Date.now().toString().slice(-4)}`,
       audioUrl,
       imageUrl: imageUrl || "",
       timestamp: Date.now()
     };
-    
-    addDoc(jokesColRef, newJoke).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: jokesColRef.path,
-        operation: 'create',
-        requestResourceData: { name: newJoke.name, timestamp: newJoke.timestamp }
-      } satisfies SecurityRuleContext));
+    updateDocField({
+      jokes: [...data.jokes, newJoke]
     });
   };
 
   const updateJokeName = (id: string, name: string) => {
-    if (!firestore || !user) return;
-    const jokeRef = doc(firestore, 'counters', DEFAULT_ID, 'jokes', id);
-    updateDoc(jokeRef, { name }).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: jokeRef.path,
-        operation: 'update',
-        requestResourceData: { name }
-      } satisfies SecurityRuleContext));
+    const updatedJokes = data.jokes.map(j => j.id === id ? { ...j, name } : j);
+    updateDocField({
+      jokes: updatedJokes
     });
   };
 
   const removeJoke = (id: string) => {
-    if (!firestore || !user) return;
-    const jokeRef = doc(firestore, 'counters', DEFAULT_ID, 'jokes', id);
-    deleteDoc(jokeRef).catch(e => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: jokeRef.path,
-        operation: 'delete'
-      } satisfies SecurityRuleContext));
+    const updatedJokes = data.jokes.filter(j => j.id !== id);
+    updateDocField({
+      jokes: updatedJokes
     });
   };
 
@@ -456,6 +439,7 @@ export function useCounter() {
       participants: [],
       messages: [],
       musicRequests: [],
+      jokes: [],
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
       challenge: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
       activeMessageId: null,
