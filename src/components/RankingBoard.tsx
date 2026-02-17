@@ -426,9 +426,11 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* ALERTAS DE ANÚNCIO (MEGAPHONE) */}
       {overlay && data.announcement?.isActive && (
         <div className="fixed inset-0 z-[220] flex items-center justify-center p-10 bg-red-600/90 backdrop-blur-2xl animate-in fade-in duration-300">
            <div className="flex flex-col items-center gap-12 text-center animate-bounce">
+              <Megaphone className="w-32 h-32 text-white" />
               <h2 className="text-8xl font-black italic uppercase text-white tracking-tighter drop-shadow-2xl">
                 {data.announcement.message}
               </h2>
@@ -436,6 +438,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* ALERTA SOCIAL (INSTAGRAM/YOUTUBE) */}
       {overlay && data.socialAnnouncement?.isActive && (
         <div className="fixed right-8 top-[30%] z-[110] animate-in slide-in-from-right-full duration-700">
           <div className={cn(
@@ -458,6 +461,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* ALERTA DE MEMES (PIADINHA) */}
       {overlay && data.piadinha?.isActive && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
@@ -474,6 +478,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* ALERTA DE CORREIO ELEGANTE */}
       {overlay && activeMessage && correioPhase !== 'hidden' && (
         <div className={cn(
           "transition-all duration-1000 ease-in-out",
@@ -497,6 +502,49 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* SORTEIO GERAL */}
+      {overlay && (data.raffle?.isRaffling || raffleWinner) && rafflePhase !== 'hidden' && (
+        <div className={cn(
+          "transition-all duration-1000 ease-in-out",
+          rafflePhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed left-8 top-1/2 -translate-y-1/2 z-[100]"
+        )}>
+          <div className={cn(
+            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
+            rafflePhase === 'center' ? "bg-yellow-400 border-white scale-150" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1 scale-100"
+          )}>
+            <Trophy className="w-12 h-12 text-black animate-bounce" />
+            <p className="text-xs font-black uppercase tracking-widest opacity-70">Sorteio Geral</p>
+            <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
+              <span className="text-4xl font-black italic uppercase tracking-tighter">
+                {data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOVO DESAFIO */}
+      {overlay && (data.challenge?.isRaffling || challengeWinner) && challengePhase !== 'hidden' && (
+        <div className={cn(
+          "transition-all duration-1000 ease-in-out",
+          challengePhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed right-8 top-1/2 -translate-y-1/2 z-[100]"
+        )}>
+          <div className={cn(
+            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
+            challengePhase === 'center' ? "bg-purple-500 border-white scale-150" : "bg-purple-600/95 border-purple-300 text-white -rotate-1 scale-100"
+          )}>
+            <Zap className="w-12 h-12 text-white animate-pulse" />
+            <p className="text-xs font-black uppercase tracking-widest opacity-70">Desafio Surpresa!</p>
+            <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
+              <span className="text-4xl font-black italic uppercase tracking-tighter">
+                {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR CODES DE SERVIÇO */}
       {overlay && (
         <div className="fixed right-8 bottom-32 z-[80] flex flex-col items-end gap-3 animate-in slide-in-from-right-10 duration-700">
           <div className="flex flex-row gap-6">
@@ -516,6 +564,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* LISTA LATERAL DE CLASSIFICAÇÃO */}
       {overlay && visibleSideList.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
@@ -537,97 +586,30 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && approvedMusic.length > 0 && (
-        <div className="fixed right-8 top-8 z-[70] w-72 space-y-2 animate-in slide-in-from-right-20 duration-1000 text-right">
-          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">Playlist <Disc className="w-3 h-3 animate-spin" /></h3>
-          <div className="space-y-3">
-            {approvedMusic.map((m, i) => (
-              <div key={m.id} className="animate-in fade-in slide-in-from-right-4" style={{ animationDelay: `${i * 100}ms` }}>
-                <p className="text-[9px] font-black uppercase text-blue-500/60 tracking-wider truncate">{m.artist}</p>
-                <p className="text-xs font-bold text-white/80 uppercase italic truncate">{m.song}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {overlay && previousRanking.length > 0 && currentPrevItem && (
-        <div className="fixed right-8 top-[45%] z-[70] w-72 animate-in slide-in-from-right-20 duration-1000 text-right">
-          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2 justify-end">
-            Ranking Rodada Anterior <Trophy className="w-3 h-3 text-yellow-500" />
-          </h3>
-          <div key={prevRankingIndex} className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex items-center justify-end gap-4 animate-in zoom-in slide-in-from-right-4 duration-500">
-            <div className="text-right">
-              <p className="text-xs font-black text-white italic uppercase truncate">{currentPrevItem.name}</p>
-              <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">{currentPrevItem.count} Pontos</p>
-              <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">{prevRankingIndex + 1}º Lugar</p>
-            </div>
-            <Avatar className="w-12 h-12 border-2 border-yellow-500 shadow-lg">
-              <AvatarImage src={getParticipantAvatar(currentPrevItem)} className="object-cover" />
-              <AvatarFallback className="bg-white/5 font-bold uppercase">{currentPrevItem.name[0]}</AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-      )}
-
-      {overlay && (data.raffle?.isRaffling || raffleWinner) && rafflePhase !== 'hidden' && (
-        <div className={cn(
-          "transition-all duration-1000 ease-in-out",
-          rafflePhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed left-8 top-1/2 -translate-y-1/2 z-[100]"
-        )}>
-          <div className={cn(
-            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
-            rafflePhase === 'center' ? "bg-yellow-400 border-white scale-150" : "bg-yellow-500/95 border-yellow-300 text-black rotate-1 scale-100"
-          )}>
-            <div className="bg-black/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
-              <span className="text-4xl font-black italic uppercase tracking-tighter">
-                {data.raffle?.isRaffling ? currentRaffleName : raffleWinner?.name}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {overlay && (data.challenge?.isRaffling || challengeWinner) && challengePhase !== 'hidden' && (
-        <div className={cn(
-          "transition-all duration-1000 ease-in-out",
-          challengePhase === 'center' ? "fixed inset-0 z-[160] flex items-center justify-center" : "fixed right-8 top-1/2 -translate-y-1/2 z-[100]"
-        )}>
-          <div className={cn(
-            "px-8 py-6 rounded-[2.5rem] border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center gap-4 transition-all duration-1000",
-            challengePhase === 'center' ? "bg-purple-500 border-white scale-150" : "bg-purple-600/95 border-purple-300 text-white -rotate-1 scale-100"
-          )}>
-            <div className="bg-white/10 px-6 py-4 rounded-2xl w-full text-center border-2 border-black/5">
-              <span className="text-4xl font-black italic uppercase tracking-tighter">
-                {data.challenge?.isRaffling ? currentChallengeName : challengeWinner?.name}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cabeçalho da Marca no Overlay */}
+      {/* CABEÇALHO DO OVERLAY (LOGO + MARCA) */}
       {overlay && (
-        <div className="flex flex-col items-center gap-4 mt-2 mb-2 animate-in fade-in slide-in-from-top-10 duration-1000">
+        <div className="flex flex-col items-center gap-4 mt-[-20px] mb-2 animate-in fade-in slide-in-from-top-10 duration-1000">
           {brandImageUrl ? (
-            <img src={brandImageUrl} className="w-32 h-32 object-cover rounded-3xl border-4 border-white/10 shadow-2xl rotate-3" alt="Logo" />
+            <img src={brandImageUrl} className="w-24 h-24 object-cover rounded-3xl border-4 border-white/10 shadow-2xl rotate-3" alt="Logo" />
           ) : (
-            <div className="bg-primary p-6 rounded-3xl shadow-2xl rotate-3">
-              <CustomIcon className="w-16 h-16 text-white" />
+            <div className="bg-primary p-4 rounded-3xl shadow-2xl rotate-3">
+              <CustomIcon className="w-12 h-12 text-white" />
             </div>
           )}
-          <h2 className="text-3xl font-black italic uppercase tracking-[0.3em] text-secondary drop-shadow-md">
+          <h2 className="text-2xl font-black italic uppercase tracking-[0.3em] text-secondary drop-shadow-md">
             {data.brandName}
           </h2>
         </div>
       )}
 
+      {/* TÍTULO PRINCIPAL */}
       <div className={cn("text-center space-y-4", overlay ? "mb-4 mt-0" : "mb-6")}>
-        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
+        <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-5xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
+      {/* ÁREA CENTRAL DE PARTICIPANTES / PÓDIO */}
       {!hasPoints ? (
-        <div className="flex justify-center items-center w-full max-w-6xl mt-4 min-h-[350px]">
+        <div className="flex justify-center items-center w-full max-w-6xl mt-[-20px] min-h-[350px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
                <Avatar className="w-80 h-80 border-[12px] border-primary shadow-[0_0_50px_rgba(168,85,247,0.5)] mb-8">
@@ -642,7 +624,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-6xl flex justify-center items-center min-h-[400px] mt-4">
+        <div className="w-full max-w-6xl flex justify-center items-center min-h-[400px] mt-[-20px]">
           {viewMode === 'PODIUM' ? (
             <div className="flex flex-row justify-center items-end gap-12 w-full animate-in zoom-in fade-in duration-700">
               {[1, 0, 2].map((actualIndex) => {
@@ -697,6 +679,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* NOTIFICAÇÃO FLUTUANTE (NOVO PONTO / LÍDER / LANTERNINHA) */}
       {overlay && notification && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none p-6 animate-in fade-in zoom-in duration-300">
           <div className={cn(
@@ -723,6 +706,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
+      {/* LETREIRO DE FRASES (ROXO) */}
       {overlay && (
         <div className="fixed bottom-8 left-0 right-0 flex justify-center px-4">
           <div className="bg-black/60 backdrop-blur-2xl px-12 py-4 rounded-full border border-white/10 flex items-center shadow-2xl min-w-[500px] justify-center overflow-hidden">
