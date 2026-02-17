@@ -608,7 +608,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
 
       {/* Cabeçalho da Marca no Overlay */}
       {overlay && (
-        <div className="flex flex-col items-center gap-4 mt-8 mb-4 animate-in fade-in slide-in-from-top-10 duration-1000">
+        <div className="flex flex-col items-center gap-4 mt-2 mb-2 animate-in fade-in slide-in-from-top-10 duration-1000">
           {brandImageUrl ? (
             <img src={brandImageUrl} className="w-32 h-32 object-cover rounded-3xl border-4 border-white/10 shadow-2xl rotate-3" alt="Logo" />
           ) : (
@@ -622,12 +622,12 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      <div className={cn("text-center space-y-4", overlay ? "mb-8 mt-4" : "mb-6")}>
+      <div className={cn("text-center space-y-4", overlay ? "mb-4 mt-0" : "mb-6")}>
         <h1 className={cn("font-black italic text-white uppercase tracking-tighter drop-shadow-lg", overlay ? "text-6xl md:text-7xl" : "text-5xl md:text-6xl")}>{data.title}</h1>
       </div>
 
       {!hasPoints ? (
-        <div className="flex justify-center items-center w-full max-w-6xl mt-8 min-h-[400px]">
+        <div className="flex justify-center items-center w-full max-w-6xl mt-4 min-h-[350px]">
           {approvedParticipants.length > 0 ? (
             <div key={approvedParticipants[rotatingIndex]?.id} className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
                <Avatar className="w-80 h-80 border-[12px] border-primary shadow-[0_0_50px_rgba(168,85,247,0.5)] mb-8">
@@ -642,7 +642,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
           )}
         </div>
       ) : (
-        <div className="w-full max-w-6xl flex justify-center items-center min-h-[450px] mt-12">
+        <div className="w-full max-w-6xl flex justify-center items-center min-h-[400px] mt-4">
           {viewMode === 'PODIUM' ? (
             <div className="flex flex-row justify-center items-end gap-12 w-full animate-in zoom-in fade-in duration-700">
               {[1, 0, 2].map((actualIndex) => {
@@ -678,7 +678,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
                     <div className={cn("absolute inset-0 rounded-full blur-[60px] opacity-20 animate-pulse bg-primary")}></div>
                     <Avatar className="w-80 h-80 border-[10px] border-primary/40 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
                       <AvatarImage src={getParticipantAvatar(sortedParticipants[highlightIndex])} className="object-cover" />
-                      <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">{sortedParticipants[highlightIndex].name[0]}</AvatarFallback>
+                      <AvatarFallback className="bg-white/10 text-8xl font-black text-white/20">{highlightIndex !== -1 ? sortedParticipants[highlightIndex]?.name[0] : "?"}</AvatarFallback>
                     </Avatar>
                     <div className="absolute -top-4 -right-4 bg-primary text-white text-2xl w-20 h-20 rounded-full flex items-center justify-center font-black italic border-4 border-white/20 shadow-2xl rotate-12">
                       {highlightIndex + 1}º
@@ -715,7 +715,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               <div className="flex items-center gap-8 bg-black/30 backdrop-blur-2xl px-12 py-6 rounded-full border-4 border-white/10 shadow-2xl">
                 <div className="text-[8rem] font-black italic tabular-nums leading-none">{notification.count}</div>
                 <div className="bg-white/10 p-4 rounded-full border border-white/10">
-                  {notification.type === 'leader' ? <Trophy className="w-16 h-16 text-white animate-pulse" /> : < beer className="w-16 h-16 text-white animate-pulse" />}
+                  {notification.type === 'leader' ? <Trophy className="w-16 h-16 text-white animate-pulse" /> : <Beer className="w-16 h-16 text-white animate-pulse" />}
                 </div>
               </div>
             </div>
