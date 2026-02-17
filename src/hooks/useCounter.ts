@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useCallback, useMemo } from 'react';
@@ -350,7 +349,7 @@ export function useCounter() {
       imageUrl: imageUrl || "",
       timestamp: Timestamp.now().toMillis()
     };
-    // LIMITE CRÍTICO: Reduzido para 3 memes para garantir que o documento não estoure 1MB
+    // LIMITE EXTREMO: Reduzido para 3 memes para estabilidade máxima do documento de 1MB
     const updatedJokes = [...data.jokes, newJoke].slice(-3);
     updateDocField({
       jokes: updatedJokes
@@ -527,9 +526,10 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
-    const updatedMessages = [...(data?.messages || []), newMessage].slice(-10);
+    // Espaço otimizado: O correio agora mantém apenas a mensagem mais recente
     updateDocField({
-      messages: updatedMessages
+      messages: [newMessage],
+      activeMessageId: null
     });
   };
 
@@ -543,6 +543,8 @@ export function useCounter() {
     };
     if (status === 'approved') {
       updatePayload.activeMessageId = id;
+    } else {
+      updatePayload.activeMessageId = null;
     }
     updateDocField(updatePayload);
   };
@@ -561,7 +563,8 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
-    const updatedRequests = [...(data?.pointRequests || []), newRequest].slice(-5);
+    // Espaço aumentado para pedidos de bebidas (fila de até 15 itens)
+    const updatedRequests = [...(data?.pointRequests || []), newRequest].slice(-15);
     updateDocField({
       pointRequests: updatedRequests
     });

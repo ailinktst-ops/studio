@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState } from 'react';
 import { useCounter } from '@/hooks/useCounter';
-import { Plus, Check, Loader2, Beer, UserCheck } from 'lucide-react';
+import { Plus, Check, Loader2, Beer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,8 +19,8 @@ export default function PedirPontoPage() {
     setRequestedId(participantId);
     
     toast({
-      title: "Solicitação Enviada!",
-      description: `Ponto solicitado para ${participantName}. Aguarde a aprovação.`,
+      title: "Pedido de Bebida Enviado!",
+      description: `Sua bebida já foi solicitada, ${participantName}.`,
     });
 
     setTimeout(() => setRequestedId(null), 3000);
@@ -48,10 +47,10 @@ export default function PedirPontoPage() {
             <Beer className="w-10 h-10 text-secondary" />
           </div>
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white leading-none">
-            Pedir <span className="text-secondary">Ponto</span>
+            Pedir <span className="text-secondary">Bebida</span>
           </h1>
           <p className="text-white/40 font-bold uppercase tracking-widest text-xs mt-2">
-            {data.brandName} • Quem bebeu?
+            {data.brandName} • O que vai ser?
           </p>
         </div>
 

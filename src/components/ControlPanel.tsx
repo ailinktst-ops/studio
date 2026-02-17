@@ -202,7 +202,7 @@ export function ControlPanel() {
             <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-white/5 bg-white/5">
               <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                 {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : <Beer className="w-3 h-3" />}
-                {alert.alertType === 'participant' ? 'Novo Participante' : 'Novo Ponto Solicitado'}
+                {alert.alertType === 'participant' ? 'Novo Participante' : 'Novo Pedido de Bebida'}
               </span>
               <Button variant="ghost" size="icon" onClick={() => removeAlert(alert.id)} className="h-6 w-6 text-white/20 hover:text-white">
                 <X className="w-4 h-4" />
@@ -265,7 +265,7 @@ export function ControlPanel() {
             <Mic className="w-4 h-4 mr-2" /> Memes
           </Button>
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/pedir-ponto', 'Pedir Ponto')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-green-600 hover:text-white">
-            <Beer className="w-4 h-4 mr-2" /> Ponto
+            <Beer className="w-4 h-4 mr-2" /> Pedidos
           </Button>
           <Link href={formatUrlWithCorrectPort('/overlay')} target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
@@ -556,11 +556,11 @@ export function ControlPanel() {
 
           <Card className="bg-white/5 border-white/10">
             <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-orange-500">Solicitações de Pontos</CardTitle>
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-orange-500">Pedidos de Bebidas</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-3">
               {pendingPoints.length === 0 ? (
-                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4">Nenhuma solicitação ativa.</p>
+                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4">Nenhum pedido ativo.</p>
               ) : (
                 pendingPoints.map((pt) => (
                   <div key={pt.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
@@ -571,7 +571,7 @@ export function ControlPanel() {
                       <span className="text-xs font-black uppercase italic text-white">{pt.participantName}</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={() => moderatePointRequest(pt.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic"><Plus className="w-3 h-3 mr-1" /> Adicionar</Button>
+                      <Button onClick={() => moderatePointRequest(pt.id, 'approved')} size="sm" className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic"><Plus className="w-3 h-3 mr-1" /> Entregar</Button>
                       <Button onClick={() => moderatePointRequest(pt.id, 'rejected')} size="sm" variant="destructive" className="h-8 text-[10px] font-black uppercase italic"><X className="w-3 h-3" /></Button>
                     </div>
                   </div>
