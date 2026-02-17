@@ -403,11 +403,6 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
   const challengeWinner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
 
-  const approvedMusic = (data.musicRequests || [])
-    .filter(m => m.status === 'approved')
-    .sort((a, b) => a.timestamp - b.timestamp) 
-    .slice(0, 10);
-
   const socialHandleText = data.socialAnnouncement?.isActive ? (
     data.socialAnnouncement.url.includes('instagram.com') 
       ? `@${data.socialAnnouncement.url.split('instagram.com/')[1]?.split('/')[0] || 'Social'}`
@@ -562,7 +557,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && visibleSideList.length > 0 && (
+      {overlay && sideList.length > 0 && (
         <div className="fixed left-8 top-8 z-[70] w-72 space-y-1 animate-in slide-in-from-left-20 duration-1000">
           <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 flex items-center gap-2"><ListOrdered className="w-3 h-3" /> Classificação</h3>
           <div className="space-y-0.5 max-h-[90vh] overflow-hidden pr-2">
@@ -580,6 +575,29 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {overlay && previousRanking.length > 0 && (
+        <div className="fixed right-8 top-8 z-[70] w-64 animate-in slide-in-from-right-20 duration-1000">
+          <h3 className="text-white/40 font-black italic uppercase text-[10px] tracking-[0.3em] mb-4 text-right">Rodada Anterior</h3>
+          {currentPrevItem && (
+            <div key={currentPrevItem.name} className="bg-white/5 backdrop-blur-xl p-4 rounded-2xl border border-white/10 shadow-2xl flex items-center gap-4 animate-in zoom-in fade-in duration-500">
+              <div className="relative">
+                <Avatar className="w-12 h-12 border-2 border-yellow-500/50">
+                  <AvatarImage src={currentPrevItem.imageUrl || `https://picsum.photos/seed/${currentPrevItem.name}/200/200`} className="object-cover" />
+                  <AvatarFallback className="font-bold">{currentPrevItem.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black">
+                  {prevRankingIndex + 1}
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-black italic uppercase text-xs truncate">{currentPrevItem.name}</p>
+                <p className="text-yellow-500 font-black text-lg leading-none">{currentPrevItem.count}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

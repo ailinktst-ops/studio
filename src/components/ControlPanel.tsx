@@ -6,7 +6,7 @@ import {
   Plus, Minus, RotateCcw, UserPlus, Trash2, 
   Sparkles, Loader2, Zap,
   Heart, Check, Ban, Upload, History, UserCheck,
-  Music, Mic, Send,
+  Mic, Send,
   ExternalLink, Eraser, Volume2, Smartphone, X, Edit, QrCode, Beer
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -45,16 +45,13 @@ export function ControlPanel() {
     addParticipant, updateParticipantImage, incrementCount, decrementCount, updateParticipantCount, resetAll, resetOnlyPoints,
     clearLastWinner, removeParticipant, triggerRaffle, triggerSurpriseChallenge, clearRaffle, clearChallenge, 
     clearActiveMessage, moderateMessage, moderateParticipant, updateParticipantCategory,
-    moderateMusic, removeMusicRequest, resetRaffleHistory, resetChallengeHistory,
+    resetRaffleHistory, resetChallengeHistory,
     triggerPiadinha, removeJoke, updateJokeName, moderatePointRequest
   } = useCounter();
 
   const [newParticipantName, setNewParticipantName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Gole");
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
-  
-  const [editingJokeId, setEditingJokeId] = useState<string | null>(null);
-  const [editingJokeName, setEditingJokeName] = useState("");
   
   const [editingCountId, setEditingCountId] = useState<string | null>(null);
   const [newCountValue, setNewCountValue] = useState<number>(0);
@@ -96,15 +93,6 @@ export function ControlPanel() {
     });
   };
 
-  const handleAddParticipant = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newParticipantName.trim()) {
-      const success = addParticipant(newParticipantName.trim(), selectedCategory, "", true);
-      if (success) setNewParticipantName("");
-      else toast({ variant: "destructive", title: "Nome duplicado", description: "Já existe um participante com este nome." });
-    }
-  };
-
   const handleParticipantImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -139,19 +127,16 @@ export function ControlPanel() {
 
   const pendingMessages = data.messages.filter(m => m.status === 'pending');
   const pendingParticipants = data.participants.filter(p => p.status === 'pending');
-  const pendingMusic = (data.musicRequests || []).filter(m => m.status === 'pending');
   const pendingPoints = (data.pointRequests || []).filter(p => p.status === 'pending');
-  const approvedMusic = (data.musicRequests || []).filter(m => m.status === 'approved').sort((a,b) => a.timestamp - b.timestamp);
   const approvedParticipants = data.participants.filter(p => p.status === 'approved');
   
-  const totalPending = pendingMessages.length + pendingParticipants.length + pendingMusic.length + pendingPoints.length;
+  const totalPending = pendingMessages.length + pendingParticipants.length + pendingPoints.length;
 
   useEffect(() => {
     if (isInitializing) return;
 
     if (!initializedAlertsRef.current) {
       pendingParticipants.forEach(p => seenIdsRef.current.add(p.id));
-      pendingMusic.forEach(m => seenIdsRef.current.add(m.id));
       pendingPoints.forEach(pt => seenIdsRef.current.add(pt.id));
       initializedAlertsRef.current = true;
       return;
@@ -165,13 +150,6 @@ export function ControlPanel() {
       }
     });
 
-    pendingMusic.forEach(m => {
-      if (!seenIdsRef.current.has(m.id)) {
-        newItems.push({ ...m, alertType: 'music' });
-        seenIdsRef.current.add(m.id);
-      }
-    });
-
     pendingPoints.forEach(pt => {
       if (!seenIdsRef.current.has(pt.id)) {
         newItems.push({ ...pt, alertType: 'point' });
@@ -182,23 +160,10 @@ export function ControlPanel() {
     if (newItems.length > 0) {
       setActiveAlerts(prev => [...prev, ...newItems]);
     }
-  }, [pendingParticipants, pendingMusic, pendingPoints, isInitializing]);
+  }, [pendingParticipants, pendingPoints, isInitializing]);
 
   const removeAlert = (id: string) => {
     setActiveAlerts(prev => prev.filter(a => a.id !== id));
-  };
-
-  const handleApproveMusic = (id: string) => {
-    if (approvedMusic.length >= 10) {
-      toast({
-        variant: "destructive",
-        title: "Limite Atingido!",
-        description: "A playlist já tem 10 músicas. Delete uma da lista ativa para adicionar novas.",
-      });
-      return;
-    }
-    moderateMusic(id, 'approved');
-    removeAlert(id);
   };
 
   const startEditingCount = (id: string, count: number) => {
@@ -233,8 +198,8 @@ export function ControlPanel() {
           <Card key={alert.id} className="bg-card/95 backdrop-blur-xl border-2 border-primary/50 shadow-2xl animate-in slide-in-from-right-10 duration-500 overflow-hidden">
             <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b border-white/5 bg-white/5">
               <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : alert.alertType === 'music' ? <Music className="w-3 h-3" /> : <Beer className="w-3 h-3" />}
-                {alert.alertType === 'participant' ? 'Novo Participante' : alert.alertType === 'music' ? 'Novo Pedido de Música' : 'Novo Ponto Solicitado'}
+                {alert.alertType === 'participant' ? <UserPlus className="w-3 h-3" /> : <Beer className="w-3 h-3" />}
+                {alert.alertType === 'participant' ? 'Novo Participante' : 'Novo Ponto Solicitado'}
               </span>
               <Button variant="ghost" size="icon" onClick={() => removeAlert(alert.id)} className="h-6 w-6 text-white/20 hover:text-white">
                 <X className="w-4 h-4" />
@@ -242,34 +207,20 @@ export function ControlPanel() {
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center gap-4">
-                {alert.alertType === 'participant' || alert.alertType === 'point' ? (
-                  <Avatar className="w-12 h-12 border-2 border-primary/20">
-                    <AvatarImage src={getParticipantAvatar(alert)} className="object-cover" />
-                    <AvatarFallback className="bg-white/5 font-bold">{alert.name?.[0] || alert.participantName?.[0]}</AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/20">
-                    <Music className="w-6 h-6 text-blue-500" />
-                  </div>
-                )}
+                <Avatar className="w-12 h-12 border-2 border-primary/20">
+                  <AvatarImage src={getParticipantAvatar(alert)} className="object-cover" />
+                  <AvatarFallback className="bg-white/5 font-bold">{alert.name?.[0] || alert.participantName?.[0]}</AvatarFallback>
+                </Avatar>
                 <div className="flex-1 min-w-0">
-                  {alert.alertType === 'participant' ? (
-                    <p className="text-white font-black italic uppercase truncate">{alert.name}</p>
-                  ) : alert.alertType === 'point' ? (
-                    <p className="text-white font-black italic uppercase truncate">{alert.participantName}</p>
-                  ) : (
-                    <>
-                      <p className="text-white font-black italic uppercase text-xs truncate">{alert.artist}</p>
-                      <p className="text-white/40 font-bold uppercase text-[9px] truncate">{alert.song}</p>
-                    </>
-                  )}
+                  <p className="text-white font-black italic uppercase truncate">
+                    {alert.alertType === 'participant' ? alert.name : alert.participantName}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button 
                   onClick={() => {
                     if (alert.alertType === 'participant') moderateParticipant(alert.id, 'approved');
-                    else if (alert.alertType === 'music') handleApproveMusic(alert.id);
                     else moderatePointRequest(alert.id, 'approved');
                     removeAlert(alert.id);
                   }}
@@ -280,7 +231,6 @@ export function ControlPanel() {
                 <Button 
                   onClick={() => {
                     if (alert.alertType === 'participant') moderateParticipant(alert.id, 'rejected');
-                    else if (alert.alertType === 'music') moderateMusic(alert.id, 'rejected');
                     else moderatePointRequest(alert.id, 'rejected');
                     removeAlert(alert.id);
                   }}
@@ -301,7 +251,7 @@ export function ControlPanel() {
             <Smartphone className="w-3 h-3" /> QR Codes & Compartilhamento
           </span>
         </div>
-        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Button variant="outline" size="sm" onClick={openCadastroWindow} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-secondary hover:text-white">
             <UserPlus className="w-4 h-4 mr-2" /> Cadastro
           </Button>
@@ -310,9 +260,6 @@ export function ControlPanel() {
           </Button>
           <Button variant="outline" size="sm" onClick={() => copyToClipboard('/pedir-ponto', 'Pedir Ponto')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-600 hover:text-white">
             <Beer className="w-4 h-4 mr-2" /> Pedir Ponto
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => window.open(formatUrlWithCorrectPort('/piadinha'), '_blank')} className="h-12 bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-orange-500 hover:text-white">
-            <Mic className="w-4 h-4 mr-2" /> Memes
           </Button>
           <Link href={formatUrlWithCorrectPort('/overlay')} target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="h-12 w-full bg-white/5 border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all">
@@ -440,7 +387,7 @@ export function ControlPanel() {
                   <div className="flex items-center gap-3">
                     <Button size="lg" onClick={() => decrementCount(p.id)} className="bg-destructive/20 text-destructive w-12 h-14 rounded-2xl"><Minus className="w-6 h-6" /></Button>
                     <Button size="lg" onClick={() => incrementCount(p.id)} className="bg-secondary hover:bg-secondary/90 w-16 h-14 rounded-2xl"><Plus className="w-8 h-8" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => removeParticipant(p.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></Button>
+                    <button onClick={() => removeParticipant(p.id)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity ml-2"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               ))}
@@ -491,30 +438,6 @@ export function ControlPanel() {
                     <div className="flex gap-2 pt-2">
                       <Button onClick={() => moderateMessage(m.id, 'approved')} className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-[10px] font-black uppercase italic">Aprovar & Mostrar</Button>
                       <Button onClick={() => moderateMessage(m.id, 'rejected')} variant="outline" className="flex-1 border-white/10 h-8 text-[10px] font-black uppercase italic">Ignorar</Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="py-3 px-6 bg-white/5 border-b border-white/5">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-blue-500">Pedidos de Música</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              {pendingMusic.length === 0 ? (
-                <p className="text-[10px] text-white/20 font-bold uppercase italic text-center py-4">Nenhum pedido novo.</p>
-              ) : (
-                pendingMusic.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                    <div className="min-w-0">
-                      <p className="text-xs font-black uppercase italic text-white truncate">{m.artist}</p>
-                      <p className="text-[10px] font-bold text-white/40 truncate">{m.song}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={() => handleApproveMusic(m.id)} size="icon" className="bg-green-600 hover:bg-green-700 h-8 w-8"><Check className="w-4 h-4" /></Button>
-                      <Button onClick={() => moderateMusic(m.id, 'rejected')} size="icon" variant="destructive" className="h-8 w-8"><Ban className="w-4 h-4" /></Button>
                     </div>
                   </div>
                 ))
