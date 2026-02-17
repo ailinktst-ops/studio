@@ -61,19 +61,6 @@
             }
           }
         },
-        "musicRequests": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "artist": { "type": "string" },
-              "song": { "type": "string" },
-              "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-              "timestamp": { "type": "number" }
-            }
-          }
-        },
         "pointRequests": {
           "type": "array",
           "items": {
@@ -124,8 +111,7 @@
         "piadinha": {
           "type": "object",
           "properties": {
-            "audioUrl": { "type": "string" },
-            "imageUrl": { "type": "string" },
+            "activeJokeId": { "type": "string", "nullable": true },
             "isActive": { "type": "boolean" },
             "timestamp": { "type": "number" }
           }
@@ -183,6 +169,6 @@
         }
       }
     ],
-    "reasoning": "Utilizamos um modelo de documento único para o contador para garantir que todas as atualizações sejam propagadas instantaneamente."
+    "reasoning": "Utilizamos um modelo de documento único otimizado com poda automática de arrays para garantir que o limite de 1MB não seja atingido."
   }
 }

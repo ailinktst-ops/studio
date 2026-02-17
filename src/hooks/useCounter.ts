@@ -30,14 +30,6 @@ export interface ElegantMessage {
   timestamp: number;
 }
 
-export interface MusicRequest {
-  id: string;
-  artist: string;
-  song: string;
-  status: 'pending' | 'approved' | 'rejected';
-  timestamp: number;
-}
-
 export interface PointRequest {
   id: string;
   participantId: string;
@@ -69,8 +61,7 @@ export interface RaffleState {
 }
 
 export interface PiadinhaState {
-  audioUrl?: string; 
-  imageUrl?: string;
+  activeJokeId?: string | null; 
   isActive: boolean;
   timestamp: number | null;
 }
@@ -110,7 +101,6 @@ export interface CounterState {
   socialLinks: SocialLink[];
   participants: Participant[];
   messages: ElegantMessage[];
-  musicRequests: MusicRequest[];
   pointRequests: PointRequest[];
   jokes: Joke[];
   categories: string[];
@@ -140,7 +130,6 @@ const DEFAULT_STATE: Omit<CounterState, 'id'> = {
   socialLinks: [],
   participants: [],
   messages: [],
-  musicRequests: [],
   pointRequests: [],
   jokes: [],
   categories: VALID_CATEGORIES,
@@ -214,7 +203,6 @@ export function useCounter() {
         category: sanitize(p.category)
       })),
       messages: state.messages || [],
-      musicRequests: state.musicRequests || [],
       pointRequests: state.pointRequests || [],
       jokes: state.jokes || [],
       customPhrases: (state.customPhrases && state.customPhrases.length > 0) 
@@ -298,7 +286,7 @@ export function useCounter() {
       piadinha: { 
         isActive: false, 
         timestamp: Timestamp.now().toMillis(),
-        audioUrl: ""
+        activeJokeId: null
       } 
     });
   }, [updateDocField]);
@@ -362,8 +350,10 @@ export function useCounter() {
       imageUrl: imageUrl || "",
       timestamp: Timestamp.now().toMillis()
     };
+    // Limita para 12 memes para evitar estouro de documento
+    const updatedJokes = [...data.jokes, newJoke].slice(-12);
     updateDocField({
-      jokes: [...data.jokes, newJoke]
+      jokes: updatedJokes
     });
   };
 
@@ -384,23 +374,17 @@ export function useCounter() {
   const triggerPiadinha = useCallback((joke: Joke) => {
     updateDocField({
       piadinha: {
-        audioUrl: joke.audioUrl,
-        imageUrl: joke.imageUrl || "",
+        activeJokeId: joke.id,
         isActive: true,
         timestamp: Timestamp.now().toMillis()
       }
     });
 
     setTimeout(() => {
-      updateDocField({ 
-        piadinha: { 
-          isActive: false, 
-          timestamp: Timestamp.now().toMillis(),
-          audioUrl: ""
-        } 
-      });
+      // Usamos callback para pegar o estado mais recente
+      clearPiadinha();
     }, 30000);
-  }, [updateDocField]);
+  }, [updateDocField, clearPiadinha]);
 
   const moderateParticipant = (id: string, status: 'approved' | 'rejected', category?: string) => {
     if (!counterRef || !data) return;
@@ -479,7 +463,6 @@ export function useCounter() {
     const resetData = {
       participants: [],
       messages: [],
-      musicRequests: [],
       pointRequests: [],
       jokes: [],
       raffle: { isRaffling: false, winnerId: null, candidates: [], startTime: null, winnersHistory: [] },
@@ -487,7 +470,7 @@ export function useCounter() {
       activeMessageId: null,
       announcement: { message: "", isActive: false, timestamp: null },
       socialAnnouncement: { type: null, url: "", isActive: false, timestamp: null },
-      piadinha: { audioUrl: "", imageUrl: "", isActive: false, timestamp: null },
+      piadinha: { imageUrl: "", isActive: false, timestamp: null, activeJokeId: null },
       lastWinner: null,
       previousRanking: []
     };
@@ -545,8 +528,10 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
+    // Limita mensagens para manter documento pequeno
+    const updatedMessages = [...(data?.messages || []), newMessage].slice(-15);
     updateDocField({
-      messages: [...(data?.messages || []), newMessage]
+      messages: updatedMessages
     });
   };
 
@@ -569,40 +554,6 @@ export function useCounter() {
     updateDocField({ activeMessageId: null });
   };
 
-  const sendMusicRequest = (artist: string, song: string) => {
-    if (!counterRef) return;
-    const newRequest: MusicRequest = {
-      id: Math.random().toString(36).substring(2, 11),
-      artist,
-      song,
-      status: 'pending',
-      timestamp: Timestamp.now().toMillis()
-    };
-    updateDocField({
-      musicRequests: [...(data?.musicRequests || []), newRequest]
-    });
-  };
-
-  const moderateMusic = (id: string, status: 'approved' | 'rejected') => {
-    if (!counterRef || !data) return;
-    
-    const updatedRequests = data.musicRequests.map(m => 
-      m.id === id ? { ...m, status } : m
-    );
-
-    updateDocField({
-      musicRequests: updatedRequests
-    });
-  };
-
-  const removeMusicRequest = (id: string) => {
-    if (!counterRef || !data) return;
-    const updatedRequests = data.musicRequests.filter(m => m.id !== id);
-    updateDocField({
-      musicRequests: updatedRequests
-    });
-  };
-
   const sendPointRequest = (participantId: string, participantName: string) => {
     if (!counterRef) return;
     const newRequest: PointRequest = {
@@ -612,8 +563,10 @@ export function useCounter() {
       status: 'pending',
       timestamp: Timestamp.now().toMillis()
     };
+    // Limita fila de pontos para manter documento pequeno
+    const updatedRequests = [...(data?.pointRequests || []), newRequest].slice(-10);
     updateDocField({
-      pointRequests: [...(data?.pointRequests || []), newRequest]
+      pointRequests: updatedRequests
     });
   };
 
@@ -792,9 +745,6 @@ export function useCounter() {
     sendElegantMessage,
     moderateMessage,
     clearActiveMessage,
-    sendMusicRequest,
-    moderateMusic,
-    removeMusicRequest,
     sendPointRequest,
     moderatePointRequest,
     triggerRaffle,

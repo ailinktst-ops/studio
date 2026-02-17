@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -274,14 +275,18 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
     }
   }, [data.announcement, overlay, isAudioStarted]);
 
+  // Efeito para disparar memes (Piadinha)
   useEffect(() => {
-    if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.audioUrl) {
+    if (overlay && isAudioStarted && data.piadinha?.isActive && data.piadinha.timestamp !== lastPiadinhaTimestampRef.current && data.piadinha.activeJokeId) {
+      const joke = data.jokes.find(j => j.id === data.piadinha?.activeJokeId);
+      if (!joke) return;
+
       if (piadinhaAudioRef.current) {
         piadinhaAudioRef.current.pause();
         piadinhaAudioRef.current = null;
       }
       
-      const audio = new Audio(data.piadinha.audioUrl);
+      const audio = new Audio(joke.audioUrl);
       piadinhaAudioRef.current = audio;
       lastPiadinhaTimestampRef.current = data.piadinha.timestamp;
 
@@ -294,7 +299,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         piadinhaAudioRef.current = null;
       };
     }
-  }, [data.piadinha, overlay, clearPiadinha, isAudioStarted]);
+  }, [data.piadinha, data.jokes, overlay, clearPiadinha, isAudioStarted]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -402,6 +407,7 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
   const activeMessage = data.messages.find(m => m.id === data.activeMessageId);
   const raffleWinner = approvedParticipants.find(p => p.id === data.raffle?.winnerId);
   const challengeWinner = approvedParticipants.find(p => p.id === data.challenge?.winnerId);
+  const activeJoke = data.piadinha?.isActive ? data.jokes.find(j => j.id === data.piadinha?.activeJokeId) : null;
 
   const socialHandleText = data.socialAnnouncement?.isActive ? (
     data.socialAnnouncement.url.includes('instagram.com') 
@@ -453,13 +459,13 @@ export function RankingBoard({ overlay = false }: { overlay?: boolean }) {
         </div>
       )}
 
-      {overlay && data.piadinha?.isActive && (
+      {overlay && data.piadinha?.isActive && activeJoke && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-10 bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
            <div className="relative">
               <div className="absolute inset-0 bg-orange-500 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
               <div className="relative bg-white/10 p-4 rounded-full border-4 border-orange-500/50 shadow-[0_0_80px_rgba(249,115,22,0.6)]">
                 <div className="w-64 h-64 rounded-full overflow-hidden border-8 border-orange-500 bg-black flex items-center justify-center">
-                  {data.piadinha.imageUrl ? <img src={data.piadinha.imageUrl} className="w-full h-full object-cover" alt="Meme" /> : <Mic className="w-32 h-32 text-orange-500" />}
+                  {activeJoke.imageUrl ? <img src={activeJoke.imageUrl} className="w-full h-full object-cover" alt="Meme" /> : <Mic className="w-32 h-32 text-orange-500" />}
                 </div>
               </div>
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-8 py-2 rounded-full font-black uppercase italic shadow-lg animate-pulse whitespace-nowrap">
